@@ -2,7 +2,9 @@
 
 `rpmbuilder` is RPM package build helper
 
-#### Demo
+#### Usage demo
+
+Building git rpm on three remote build nodes:
 
 [![asciicast](https://asciinema.org/a/34544.png)](https://asciinema.org/a/34544)
 
