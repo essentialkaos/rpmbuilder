@@ -194,8 +194,8 @@ usage() {
 about() {
   show "${CL_BL_CYAN}$APP${CL_NORM} ${CL_CYAN}$VER${CL_NORM} - Source rpm package unbuilder"
   show ""
-  show "Copyright (C) 2009-2013 Essential Kaos LLC" $BOLD
-  show "This utility is licenced under the terms of MIT license." $BOLD
+  show "Copyright (C) 2009-2016 Essential Kaos LLC" $GREY
+  show "Essential Kaos Open Source License <https://essentialkaos.com/ekol?en>" $GREY
 }
 
 ## ARGUMENTS PARSING ##########################################################

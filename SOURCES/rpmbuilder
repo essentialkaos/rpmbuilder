@@ -2748,8 +2748,8 @@ usage() {
 about() {
   show "${CL_BL_CYAN}$APP${CL_NORM} ${CL_CYAN}$VER${CL_NORM} - RPM package build helper"
   show ""
-  show "Copyright (C) 2009-2014 Essential Kaos" $BOLD
-  show "Essential Kaos Open Source License <http://essentialkaos.com/ekol?en>" $BOLD
+  show "Copyright (C) 2009-2016 Essential Kaos" $GREY
+  show "Essential Kaos Open Source License <http://essentialkaos.com/ekol?en>" $GREY
 }
 
 ## PREFS PARSING ##############################################################
