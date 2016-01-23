@@ -2,6 +2,10 @@
 
 `rpmbuilder` is RPM package build helper
 
+#### Demo
+
+[![asciicast](https://asciinema.org/a/34544.png)](https://asciinema.org/a/34544)
+
 #### Installation
 
 ###### From ESSENTIAL KAOS Public repo for RHEL6/CentOS6
