@@ -2,6 +2,24 @@
 
 `rpmbuilder` is RPM package build helper
 
+#### Installation
+
+###### From ESSENTIAL KAOS Public repo for RHEL6/CentOS6
+
+```
+sudo yum install -y http://release.yum.kaos.io/i386/kaos-repo-6.8-0.el6.noarch.rpm
+sudo yum install rpmbuilder
+```
+
+Build node:
+```
+sudo yum install -y http://release.yum.kaos.io/i386/kaos-repo-6.8-0.el6.noarch.rpm
+sudo yum install rpmbuilder-node
+sudo passwd builder
+... change builder user password here
+sudo service buildmon start
+```
+
 #### Usage
 
 ```
