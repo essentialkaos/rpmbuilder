@@ -1,0 +1,295 @@
+#!/usr/bin/env bash
+
+APP="RPMUnBuilder"
+VER="1.0.0"
+
+NORM=0
+BOLD=1
+UNLN=4
+RED=31
+GREEN=32
+BROWN=33
+BLUE=34
+MAG=35
+CYAN=36
+GREY=37
+
+CL_NORM="\e[${NORM}m"
+CL_BOLD="\e[${BOLD}m"
+CL_UNLN="\e[${UNLN}m"
+CL_RED="\e[${RED}m"
+CL_GREEN="\e[${GREEN}m"
+CL_BROWN="\e[${BROWN}m"
+CL_BLUE="\e[${BLUE}m"
+CL_MAG="\e[${MAG}m"
+CL_CYAN="\e[${CYAN}m"
+CL_GREY="\e[${GREY}m"
+CL_BL_RED="\e[${RED};1m"
+CL_BL_GREEN="\e[${GREEN};1m"
+CL_BL_BROWN="\e[${BROWN};1m"
+CL_BL_BLUE="\e[${BLUE};1m"
+CL_BL_MAG="\e[${MAG};1m"
+CL_BL_CYAN="\e[${CYAN};1m"
+CL_BL_GREY="\e[${GREY};1m"
+CL_UL_RED="\e[${RED};4m"
+CL_UL_GREEN="\e[${GREEN};4m"
+CL_UL_BROWN="\e[${BROWN};4m"
+CL_UL_BLUE="\e[${BLUE};4m"
+CL_UL_MAG="\e[${MAG};4m"
+CL_UL_CYAN="\e[${CYAN};4m"
+CL_UL_GREY="\e[${GREY};4m"
+CL_BG_RED="\e[${RED};7m"
+CL_BG_GREEN="\e[${GREEN};7m"
+CL_BG_BROWN="\e[${BROWN};7m"
+CL_BG_BLUE="\e[${BLUE};7m"
+CL_BG_MAG="\e[${MAG};7m"
+CL_BG_CYAN="\e[${CYAN};7m"
+CL_BG_GREY="\e[${GREY};7m"
+
+SUPPORTED_ARGS="help usage"
+SHORT_ARGS="h:help"
+
+DEPS="rpm rpm2cpio cpio"
+
+####################################################################
+
+main() {
+  if [[ $# -eq 0 || $help || $usage ]] ; then
+    usage
+    exit 0
+  fi
+
+  if [[ $ver || $version ]] ; then
+    about
+    exit 0
+  fi
+
+  if [[ ! `checkDeps $DEPS` ]] ; then
+    show "For usage this utility install this packages first: $DEPS" $BROWN
+    exit 2
+  fi
+
+  local pkg="$1"
+  local path="$2"
+
+  if [[ ! `isRPMPackage "$pkg"` ]] ; then
+    show "Error! [$pkg] is not a rpm package!" $RED
+    exit 1
+  fi
+
+  if [[ -n "$path" ]] ; then
+    if [[ ! `checkPerms "$path" "DWX"` ]] ; then
+      show "Error! Please check permissions for directory [$path]." $RED
+      exit 3
+    fi
+  else
+    path=`pwd`
+    
+    if [[ ! `checkPerms "$path" "DWX"` ]] ; then
+      show "Error! Please check permissions for directory [$path]." $RED
+      exit 3
+    fi
+  fi
+
+  processPackage "$pkg" "$path"
+}
+
+processPackage() {
+  local pkg="$1"
+  local path="$2"
+  
+  showm "Unbuilding package: " $BOLD
+
+  local src_name
+  local src_list=`rpm2cpio $pkg | cpio -div --quiet 2>&1 | grep -v "cpio:"`
+
+  mkdir -p $path/SOURCES
+
+  for src_name in $src_list ; do
+    if [[ $src_name =~ .spec ]] ; then
+      mv $src_name $path &> /dev/null
+    else
+      mv $src_name $path/SOURCES &> /dev/null
+    fi
+  done
+
+  show "DONE" $GREEN
+}
+
+isRPMPackage() {
+  if [[ ! `LC_ALL=C rpm -K $1 | grep "error"` ]] ; then
+    echo 1 && return 0
+  else
+    echo "" && return 1
+  fi
+}
+
+checkPerms() {
+  local path="$1"
+  local perms=`echo $2 | tr [a-z] [A-Z]`
+  
+  for perm in `echo $perms | fold -w1` ; do
+    case $perm in
+      "R") [[ ! -r $path ]] && echo "" && return 1 ;;
+      "W") [[ ! -w $path ]] && echo "" && return 1 ;;
+      "E") [[ ! -e $path ]] && echo "" && return 1 ;;
+      "D") [[ ! -d $path ]] && echo "" && return 1 ;;
+      "F") [[ ! -f $path ]] && echo "" && return 1 ;;
+      "S") [[ ! -s $path ]] && echo "" && return 1 ;;
+      "H") [[ ! -h $path ]] && echo "" && return 1 ;;
+      "X") [[ ! -x $path ]] && echo "" && return 1 ;;
+      *) echo "" && return 1
+    esac
+  done
+  
+  echo 1
+  return 0
+}
+
+####################################################################
+
+checkDeps() { 
+  for app in $@ ; do
+    type -P $app &> /dev/null
+    
+    if [[ $? -eq 1 ]] ; then     
+      echo ""
+      return 1
+    fi
+  done
+
+  echo 1
+  return 0
+}
+
+show() { 
+  if [[ $2 ]] ; then       
+    echo -e "\e["$2"m"$1"${CL_NORM}"
+  else  
+    echo -e "$@"
+  fi
+}
+
+showm() {
+  local message
+  
+  if [[ $2 ]] ; then       
+    message=`echo "\e["$2"m"$1"${CL_NORM}"`
+  else  
+    message="$@"
+  fi
+  
+  printf "$message"
+}
+
+showArgWarn() {
+  show "Error! Unknown argument $1." $RED
+  doExit 1
+}
+
+usage() {
+  show "${CL_BOLD}Usage:${CL_NORM} rpmunbuilder ${CL_BROWN}<rpm-file>${CL_NORM} ${CL_GREEN}<path>${CL_NORM}"
+}
+
+about() {
+  show "${CL_BL_CYAN}$APP${CL_NORM} ${CL_CYAN}$VER${CL_NORM} - Source rpm package unbuilder"
+  show ""
+  show "Copyright (C) 2009-2016 Essential Kaos LLC" $GREY
+  show "Essential Kaos Open Source License <https://essentialkaos.com/ekol?en>" $GREY
+}
+
+## ARGUMENTS PARSING ##########################################################
+ 
+[[ $# -eq 0 ]] && main && exit
+ 
+unset arg argn argm argv argt
+ 
+argv="$@"
+argt=""
+ 
+while [[ -n "$1" ]] ; do
+  if [[ "$1" =~ ' ' && -n "$argn" ]] ; then
+    declare $argn="$1"
+    
+    unset argn
+    shift && continue
+  elif [[ $1 =~ ^-{1}[a-zA-Z0-9]{1,2}+.*$ ]] ; then
+    argm=${1:1}
+ 
+    if [[ " $SHORT_ARGS " =~ \ ${argm}:([a-zA-Z0-9_]*) ]] ; then 
+      arg="${BASH_REMATCH[1]}"
+    else
+      showArgWarn "-${argm}" 2> /dev/null || :
+      shift && continue
+    fi
+ 
+    if [[ -z "$argn" ]] ; then
+      argn=$arg
+    else
+      declare $argn=true
+      unset argn
+      argn=$arg
+    fi
+      
+    if [[ ! "$SUPPORTED_ARGS " =~ "$argn " ]] ; then
+      showArgWarn "-${argm}" 2> /dev/null || :
+      shift && continue
+    fi
+ 
+    shift && continue
+  elif [[ "$1" =~ ^-{2}[a-zA-Z]{1}[a-zA-Z0-9_-]+.*$ ]] ; then  
+    arg=${1:2}
+ 
+    if [[ $arg == *=* ]] ; then
+      IFS="=" arg=($arg)
+      
+      argm="${arg[0]}" ; argm=${argm//-/_}
+      
+      if [[ ! "$SUPPORTED_ARGS " =~ "${arg[0]} " ]] ; then
+        showArgWarn "--${arg[0]//_/-}" 2> /dev/null || :
+        shift && continue
+      fi
+ 
+      [[ -n "${!argm}" && "$MERGEABLE_ARGS " =~ "${argm} " ]] && declare ${argm}="${!argm} ${arg[@]:1:99}" || declare ${argm}="${arg[@]:1:99}"
+      
+      unset argm
+      shift && continue
+    else 
+      arg=${arg//-/_}
+      
+      if [[ -z "$argn" ]] ; then
+        argn=$arg
+      else
+        declare $argn=true
+        unset argn
+        argn=$arg
+      fi
+      
+      if [[ ! "$SUPPORTED_ARGS " =~ "$argn " ]] ; then
+        showArgWarn "--${argn//_/-}" 2> /dev/null || :
+        shift && continue
+      fi
+ 
+      shift && continue
+    fi
+  else
+    if [[ -n "$argn" ]] ; then
+      [[ -n "${!argn}" && "$MERGEABLE_ARGS " =~ "${argn} " ]] && declare $argn="${!argn} $1" || declare $argn="$1"
+      
+      unset argn
+      shift && continue
+    fi
+  fi
+ 
+  argt="$argt $1"
+  shift
+ 
+done
+ 
+[[ -n "$argn" ]] && declare $argn=true
+ 
+unset arg argn argm 
+ 
+[[ -n "$KEEP_ARGS" ]] && main $argv || main $argt
+ 
+###############################################################################

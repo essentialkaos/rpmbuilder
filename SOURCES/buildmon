@@ -1,0 +1,79 @@
+#!/usr/bin/env bash
+
+APP="BuildMonitor"
+VER="1.0"
+
+###############################################################################
+
+BUILDER_USER="builder"
+BUILDER_DIR="/home/builder"
+EXEC="$BUILDER_DIR/buildmon"
+BUILD_LOCK="$BUILDER_DIR/.buildlock"
+CLEAN_DELAY=600
+KEEP_DAYS=7 # 1 Week
+DIR_LIST="BUILD BUILDROOT RPMS SOURCES SPECS SRPMS"
+
+CWD=`pwd`
+
+###############################################################################
+
+main() {
+  trap doExit SIGINT SIGTERM
+  check
+  doExit
+}
+
+check() {
+  local has_lock
+  local dl=0
+
+  while : ; do
+    sleep 1
+
+    if [[ `ps -U $BUILDER_USER | grep -v grep | grep rpmbuild` ]] ; then
+      touch $BUILD_LOCK
+      has_lock=true
+    else
+      if [[ $has_lock ]] ; then
+        rm -f $BUILD_LOCK
+        has_lock=""
+      fi
+    fi
+
+    ((dl++))
+
+    if [[ $dl -eq $CLEAN_DELAY ]] ; then
+      dl=0 ; clean
+    fi
+  done
+}
+
+clean() {
+  local keep_sec=$(( $KEEP_DAYS * 86400 ))
+  local now=`date +%s`
+
+  local dirname dir target mdate datediff
+
+  for dirname in $DIR_LIST ; do
+    local dir=$BUILDER_DIR/rpmbuild/$dirname
+
+    for target in `ls -1 $dir` ; do
+      mdate=`stat -c %Y $BUILDER_DIR/rpmbuild/$dirname/$target`
+
+      datediff=$(( $now - $mdate ))
+
+      if [[ $datediff -gt $keep_sec ]] ; then
+        rm -rf $BUILDER_DIR/rpmbuild/$dirname/$target
+      fi
+    done
+  done
+}
+
+doExit() {
+  rm -f $BUILD_LOCK
+  exit 0
+}
+
+###############################################################################
+
+main $0

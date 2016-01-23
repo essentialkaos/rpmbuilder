@@ -1,0 +1,55 @@
+#!/bin/bash
+
+# buildmon        Startup script for buildmon
+
+# chkconfig: - 85 15
+# processname: buildmon
+# pidfile: /var/run/buildmon.pid
+# description: simple daemon for monitoring build process
+
+###############################################################################
+
+source /etc/init.d/kaosv
+
+###############################################################################
+
+kv[prog_name]="buildmon"
+
+user="builder"
+srv_dir="/home/$user"
+binary="$srv_dir/${kv[prog_name]}"
+
+kv[daemonize_user]="${user}"
+kv[search_pattern]="$binary"
+
+###############################################################################
+
+kv.addHandler "start"   "startServiceHandler"
+kv.addHandler "stop"    "stopServiceHandler"
+
+###############################################################################
+
+startServiceHandler() {
+  kv.daemonize $binary
+  
+  kv.getStartStatus
+
+  return $?
+}
+
+stopServiceHandler() {
+  local pid=`kv.getPid`
+
+  kv.sendSignal "TERM"
+
+  if kv.getStopStatus "$pid" ; then
+    return $ACTION_OK
+  else
+    kv.killProcess $pid
+    return $ACTION_FORCED
+  fi
+}
+
+###############################################################################
+
+kv.go $@
