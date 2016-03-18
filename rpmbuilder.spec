@@ -2,7 +2,7 @@
 
 Summary:         RPM package build helper
 Name:            rpmbuilder
-Version:         1.0.3
+Version:         1.0.4
 Release:         0%{?dist}
 License:         EKOL
 Group:           Applications/System
@@ -49,6 +49,9 @@ rm -rf %{buildroot}
 ###############################################################################
 
 %changelog
+* Fri Mar 18 2016 Anton Novojilov <andy@essentialkaos.com> - 1.0.4-0
+- Fixed bug with downloading local files which contains http/ftp/https in name
+
 * Sun Oct 04 2015 Anton Novojilov <andy@essentialkaos.com> - 1.0.3-0
 - Suppressing packing errors
 
