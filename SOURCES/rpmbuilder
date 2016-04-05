@@ -2368,7 +2368,8 @@ getSSHOpts() {
 
 getYumOpts() {
   local verb="$1"
-  local opts=""
+
+  local opts
 
   [[ -z "$verb" ]] && opts="-q"
 
