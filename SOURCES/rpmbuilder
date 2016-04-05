@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 
 APP="RPMBuilder"
-VER="1.0.4"
+VER="1.0.5"
 
 ####################################################################
 
@@ -129,6 +129,8 @@ BUILD_LOCK=".buildlock"
 BUILD_LOCK_LOCAL="/tmp/rpmbuilder-local-lock"
 BUILD_LOCK_PARALELL="/tmp/rpmbuilder-paralell-lock"
 LOCK_TIME_MAX_DIFF=10800 # 3 Hours
+
+SSH_BASE_OPTS="-o UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no -o LogLevel=quiet"
 
 CHECK_QUEUE_DELAY=10
 CHECK_LOCAL_QUEUE_DELAY=2
@@ -755,10 +757,6 @@ remoteCheckEnv() {
   show "Connecting to remote build server on ${CL_CYAN}$host${CL_NORM}."
 
   if isRemoteServerReachable "$host" ; then
-    if [[ ! `egrep "$host(,| )" ~/.ssh/known_hosts` ]] ; then
-      sshCommand "$user@$host" "exit" true
-    fi
-
     if ! isSSHConnectionWorks "$user" "$host" ; then
       show "Can't connect to host ${CL_CYAN}$host${CL_NORM}." $RED
       doExit $ERROR_REMOTE
@@ -2266,9 +2264,9 @@ sshCommand() {
   local ssh_opts=`getSSHOpts`
 
   if [[ $pass && ! $no_pass ]] ; then
-    sshpass -p $pass ssh -t -t -q $ssh_opts $host "$comm"
+    sshpass -p $pass ssh $SSH_BASE_OPTS -t -t -q $ssh_opts $host "$comm"
   else
-    ssh -t -t -q $ssh_opts $host "$comm"
+    ssh $SSH_BASE_OPTS -t -t -q $ssh_opts $host "$comm"
   fi
 
   return $?
@@ -2281,9 +2279,9 @@ scpCommand() {
   local ssh_opts=`getSSHOpts`
 
   if [[ $pass ]] ; then
-    sshpass -p $pass scp $ssh_opts "$from" "$to"
+    sshpass -p $pass scp $SSH_BASE_OPTS $ssh_opts "$from" "$to"
   else
-    scp $ssh_opts "$from" "$to"
+    scp $SSH_BASE_OPTS $ssh_opts "$from" "$to"
   fi
 
   return $?
