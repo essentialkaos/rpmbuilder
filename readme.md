@@ -41,33 +41,33 @@ Spec file:
 
 Source packaging:
 
-  --pack, -p <files>                  Pack specified files to tgz archive with default source name (mergeable)
+  --pack, -p files                    Pack specified files to tgz archive with default source name (mergeable)
   --relative-pack, -R                 Use relative path in source archive instead of absolute
-  --source-dir, -sd <path>            Path to directory which contains source files specified in spec file
-  --source-list, -sl <file>           Path to file which contains list of source files specified in spec file,
+  --source-dir, -sd path              Path to directory which contains source files specified in spec file
+  --source-list, -sl file             Path to file which contains list of source files specified in spec file,
                                       and will be packed to tgz archive with default source name
-  --dlcache, -dc <path>               Path to directory for downloads caching
-  --download, -dl <path>              Download all remote sources to specified directory
+  --dlcache, -dc path                 Path to directory for downloads caching
+  --download, -dl path                Download all remote sources to specified directory
 
-  --git <url>                         Fetch sources from Git repository (macro supported)
-  --svn <url>                         Fetch sources from SVN repository (macro supported)
-  --hg <url>                          Fetch sources from Mercurial repository (macro supported)
-  --bzr <url>                         Fetch sources from Bazar repository (macro supported)
-  --path, -rp <path>                  Path to directory with sources in repo
-  --branch, -rb <name>                Use specified repository branch (macro supported)
-  --revision, -rr <name>              Use specified revision
-  --tag, -rt <name>                   Use specified tag (macro supported)
-  --svn-user, -su <username>          Username for access to svn repository
-  --svn-pass, -sp <password>          Password for access to svn repository
+  --git url                           Fetch sources from Git repository (macro supported)
+  --svn url                           Fetch sources from SVN repository (macro supported)
+  --hg url                            Fetch sources from Mercurial repository (macro supported)
+  --bzr url                           Fetch sources from Bazar repository (macro supported)
+  --path, -rp path                    Path to directory with sources in repo
+  --branch, -rb name                  Use specified repository branch (macro supported)
+  --revision, -rr name                Use specified revision
+  --tag, -rt name                     Use specified tag (macro supported)
+  --svn-user, -su username            Username for access to svn repository
+  --svn-pass, -sp password            Password for access to svn repository
 
-  --github, -gh <url>                 Fetch sources from github.com repository by url (macro supported)
-  --github, -gh <user>:<project>      Fetch sources from github.com repository by user and project
-  --github, -gh <user>/<project>      Fetch sources from github.com repository by user and project
-  --bitbucket, -bb <url>              Fetch sources from bitbucket.org repository by url (macro supported)
-  --bitbucket, -bb <user>:<project>   Fetch sources from bitbucket.org repository by user and project
-  --bitbucket, -bb <user>/<project>   Fetch sources from bitbucket.org repository by user and project
-  --launchpad, -lp <url>              Fetch sources from launchpad.net repository by url (macro supported)
-  --launchpad, -lp <project-name>     Fetch sources from launchpad.net repository by project name
+  --github, -gh url                   Fetch sources from github.com repository by url (macro supported)
+  --github, -gh user>:<project        Fetch sources from github.com repository by user and project
+  --github, -gh user>/<project        Fetch sources from github.com repository by user and project
+  --bitbucket, -bb url                Fetch sources from bitbucket.org repository by url (macro supported)
+  --bitbucket, -bb user>:<project     Fetch sources from bitbucket.org repository by user and project
+  --bitbucket, -bb user>/<project     Fetch sources from bitbucket.org repository by user and project
+  --launchpad, -lp url                Fetch sources from launchpad.net repository by url (macro supported)
+  --launchpad, -lp project-name       Fetch sources from launchpad.net repository by project name
 
   Examples:
 
@@ -84,20 +84,21 @@ Source packaging:
 
 Dependencies install:
 
-  --dep-install, --depinstall, -di     Automatically install necessary packages for build
-  --enable-repo, -ER <repo-name>       Enable repositories (mergeable)
-  --disable-repo, -DR <repo-name>      Disable repositories (mergeable)
+  --dep-install, --depinstall, -di     Automatically install build dependencies before build process
+  --pkg-install, -i package            Install given package before build process (mergeable)
+  --enable-repo, -ER repo-name         Enable repositories (mergeable)
+  --disable-repo, -DR repo-name        Disable repositories (mergeable)
 
 Remote build:
 
   --parallel, -P                       Parallel build on all build servers in same time
   --remote, -r                         Build rpm package on remote server
   --remote, -r user:pass@host          Build rpm package on the remote server with specified host, user and pass
-  --remote, -r <file>                  Build rpm package on the remote servers listed in specified file
-  --host, -hh <host>                   Remote host ip or domain name
-  --user, -uu <user>                   Remote host user
-  --pass, -pp <password>               Password for specified user
-  --key, -kk <file>                    Path to private key for specified user
+  --remote, -r file                    Build rpm package on the remote servers listed in specified file
+  --host, -hh host                     Remote host ip or domain name
+  --user, -uu user                     Remote host user
+  --pass, -pp password                 Password for specified user
+  --key, -kk file                      Path to private key for specified user
 
   Examples:
 
@@ -112,13 +113,13 @@ Build options:
   --no-deps, -nd                       Don't verify build dependencies
   --no-binary, -nr                     Don't build binary packages
   --no-source, -ns                     Don't build source package
-  --arch, -a <arch>                    Override target arch for build
+  --arch, -a arch                      Override target arch for build
   --qa-rpaths="<value>,<value>,..."    Ignoring rpaths check
 
 Arguments passing:
 
-  --with, -w <params>                  Pass conditional parameters into a rpmbuild (mergeable)
-  --without, -W <params>               Pass conditional parameters into a rpmbuild (mergeable)
+  --with, -w params                    Pass conditional parameters into a rpmbuild (mergeable)
+  --without, -W params                 Pass conditional parameters into a rpmbuild (mergeable)
   --define, -D "<macro>"               Define MACRO with value (exist macro will be not redefined)
 
   Examples:
@@ -139,14 +140,15 @@ Spec validation:
 Other:
 
   --sign, -s                           Sign package after build
-  --dest, --dest-dir, -d <path>        Save builded packages to specified directory
+  --dest, --dest-dir, -d path          Save builded packages to specified directory
   --keep-log, -kl                      Save build log after unsuccessful build
   --bump, -b                           Bump release in spec file after successful package build
-  --bump-comment, -bc <comment>        Comment which will be added while release bump
-  --tmp <path>                         Path to temporary directory
+  --bump-comment, -bc comment          Comment which will be added while release bump
+  --tmp path                           Path to temporary directory
   --verbose, -V                        Verbose output
   --help, --usage, -h                  Show this help message
   --ver, --version, -v                 Show information about version
+
 ```
 
 #### License
