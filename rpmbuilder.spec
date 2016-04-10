@@ -2,7 +2,7 @@
 
 Summary:         RPM package build helper
 Name:            rpmbuilder
-Version:         1.0.5
+Version:         1.0.6
 Release:         0%{?dist}
 License:         EKOL
 Group:           Applications/System
@@ -49,6 +49,10 @@ rm -rf %{buildroot}
 ###############################################################################
 
 %changelog
+* Thu Apr 07 2016 Anton Novojilov <andy@essentialkaos.com> - 1.0.6-0
+- Package install feature
+- Code refactoring
+
 * Tue Apr 05 2016 Anton Novojilov <andy@essentialkaos.com> - 1.0.5-0
 - Host key checking disabled by default
 
