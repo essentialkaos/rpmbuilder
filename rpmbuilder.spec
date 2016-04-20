@@ -2,7 +2,7 @@
 
 Summary:         RPM package build helper
 Name:            rpmbuilder
-Version:         1.0.7
+Version:         1.0.8
 Release:         0%{?dist}
 License:         EKOL
 Group:           Applications/System
@@ -50,6 +50,9 @@ rm -rf %{buildroot}
 ###############################################################################
 
 %changelog
+* Wed Apr 20 2016 Anton Novojilov <andy@essentialkaos.com> - 1.0.8-0
+- Improved wroking with yum cache
+
 * Wed Apr 20 2016 Anton Novojilov <andy@essentialkaos.com> - 1.0.7-0
 - Fixed bug with parsing remote build definition
 
