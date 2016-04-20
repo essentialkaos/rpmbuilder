@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 
 APP="RPMBuilder"
-VER="1.0.7"
+VER="1.0.8"
 
 ####################################################################
 
@@ -799,7 +799,7 @@ remoteDepsInstall() {
 
   local yum_opts=$(getYumOpts "$verbose")
 
-  sshCommand "$user@$host" "sudo yum $yum_opts clean metadata && sudo yum $yum_opts -y install $not_installed_pkgs"
+  sshCommand "$user@$host" "sudo yum $yum_opts clean expire-cache && sudo yum $yum_opts -y install $not_installed_pkgs"
 
   not_installed_pkgs=$(getNotInstalledRemoteDeps "$user@$host" "$pkg_list")
 
@@ -930,7 +930,7 @@ remoteBuildProcess() {
       if [[ $? -eq 0 ]] ; then
         show "Result: ${CL_CYAN}$package_name${CL_NORM}"
       else
-        show "Result: ${CL_CYAN}$package_name${CL_NORM} ${CL_BOLD}(ALREADY EXIST)${CL_NORM}"
+        show "Result: ${CL_CYAN}$package_name${CL_NORM} ${CL_GREY}(ALREADY EXIST)${CL_NORM}"
       fi
     done
 
@@ -1070,10 +1070,10 @@ localDepsInstall() {
   local yum_opts=$(getYumOpts "$verbose")
 
   if [[ "$user" == "root" ]] ; then
-    yum $yum_opts clean metadata
+    yum $yum_opts clean expire-cache
     yum $yum_opts -y install $not_installed_pkgs
   else
-    sudo yum $yum_opts clean metadata
+    sudo yum $yum_opts clean expire-cache
     sudo yum $yum_opts -y install $not_installed_pkgs
   fi
 
