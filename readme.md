@@ -85,7 +85,6 @@ Source packaging:
 Dependencies install:
 
   --dep-install, --depinstall, -di     Automatically install build dependencies before build process
-  --pkg-install, -i package            Install given package before build process (mergeable)
   --enable-repo, -ER repo-name         Enable repositories (mergeable)
   --disable-repo, -DR repo-name        Disable repositories (mergeable)
 
