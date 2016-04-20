@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 
 APP="RPMBuilder"
-VER="1.0.8"
+VER="1.1.0"
 
 ####################################################################
 
@@ -94,7 +94,7 @@ SUPPORTED_ARGS="remote !parallel host user pass key source_dir source_list
  svn_pass path !bump bump_comment tmp dlcache !depinstall !dep_install github 
  bitbucket launchpad with without define output !verbose !help !usage !ver 
  !version !raw_version qa_rpaths !tmuxl no_colors source_path !keep_log notify 
- arch download !relative_pack enable_repo disable_repo pkg_install"
+ arch download !relative_pack enable_repo disable_repo"
 
 SHORT_ARGS="r:remote P:!parallel hh:host uu:user pp:pass kk:key sd:source_dir 
  sl:source_list nb:!no_build nc:!no_clean nd:!no_deps nr:!no_binary ns:!no_source 
@@ -103,12 +103,12 @@ SHORT_ARGS="r:remote P:!parallel hh:host uu:user pp:pass kk:key sd:source_dir
  di:!depinstall rb:branch rt:tag rr:revision gh:github bb:bitbucket lp:launchpad 
  w:with W:without s:!sign D:define O:output V:!verbose h:help v:!version 
  C:no_colors kl:!keep_log n:notify a:arch dl:download R:relative_pack 
- ER:enable_repo DR:disable_repo i:pkg_install"
+ ER:enable_repo DR:disable_repo"
 
 INSPEC_ARGS="git svn hg bzr branch revision tag svn_user svn_pass github 
  bitbucket launchpad qa_rpaths pedantic strict no_lint relative_pack"
 
-MERGEABLE_ARGS="pack with without enable_repo disable_repo pkg_install"
+MERGEABLE_ARGS="pack with without enable_repo disable_repo"
 
 KEEP_ARGS=true
 
@@ -737,14 +737,14 @@ remoteRunBuild() {
 
   remoteCheckEnv
 
-  if [[ $depinstall || $dep_install || $pkg_install ]] ; then
-    showSeparator "DEPENDENCIES INSTALL"
-    remoteDepsInstall "$spec"
-  fi
-
   showSeparator "SOURCES UPLOADING"
 
   uploadSourcesToRemoteHost "$spec"
+
+  if [[ $depinstall || $dep_install ]] ; then
+    showSeparator "DEPENDENCIES INSTALL"
+    remoteDepsInstall "$spec"
+  fi
 
   [[ $no_build ]] && show "" && return
 
@@ -776,66 +776,19 @@ remoteCheckEnv() {
 
 remoteDepsInstall() {
   local spec="$1"
-  local pkg_list
 
-  if [[ $pkg_install ]] ; then
-    pkg_list="$pkg_install"
-  else
-    pkg_list=$(getSpecValue "$MACRO_BUILD_REQS" "$spec")
-  fi
-
-  [[ -z "$pkg_list" ]] && return
-
-  pkg_list=$(prepareDeps "$pkg_list")
-
-  local not_installed_pkgs=$(getNotInstalledRemoteDeps "$user@$host" "$pkg_list")
-
-  if [[ ! $not_installed_pkgs ]] ; then
-    show "All required packages already installed." $GREEN
-    return
-  fi
+  local rpmbuild_dir=$(getRPMBuildDir)
+  local specs_dir="$rpmbuild_dir/SPECS"
 
   show "Installing required packages for build...\n"
 
   local yum_opts=$(getYumOpts "$verbose")
 
-  sshCommand "$user@$host" "sudo yum $yum_opts clean expire-cache && sudo yum $yum_opts -y install $not_installed_pkgs"
+  sshCommand "$user@$host" "sudo yum $yum_opts clean expire-cache && cd $specs_dir && sudo yum-builddep $yum_opts -y $spec"
 
-  not_installed_pkgs=$(getNotInstalledRemoteDeps "$user@$host" "$pkg_list")
+  show ""
 
-  if [[ $not_installed_pkgs ]] ; then
-    show ""
-    show "Required packages were not installed:" $RED
-    show "$not_installed_pkgs" $BOLD
-    show ""
-    doExit $ERROR_BUILD
-  fi
-
-  show "All required packages installed." $GREEN
-}
-
-getNotInstalledRemoteDeps() {
-  local host="$1"
-  local deps="$2"
-
-  local deps_grp=$(prepareDeps "$deps")
-  deps_grp=$(echo "${deps_grp//+/\+}" | sed 's/ /|/g' | sed 's/|$//g')
-
-  local pkg_list=$(sshCommand "$host" "rpm -qa --queryformat='%{name}\n' | egrep \"^($deps_grp)$\" | tr '\n' ' '")
-
-  local dep rep dep_list has_pkg
-
-  for dep in $deps ; do
-    has_pkg=""
-
-    for pkg in $pkg_list ; do
-      [[ "$pkg" == "$dep" ]] && has_pkg=true && break
-    done
-
-    [[ ! $has_pkg ]] && dep_list="$dep_list $dep"
-  done
-
-  echo "${dep_list:1:9999}"
+  show "All available packages installed." $GREEN
 }
 
 remoteSpecValidate() {
@@ -1034,7 +987,7 @@ localBuild() {
 
   copySourcesToBuildDir "$spec"
 
-  if [[ $depinstall || $dep_install || $pkg_install ]] ; then
+  if [[ $depinstall || $dep_install ]] ; then
     showSeparator "DEPENDENCIES INSTALL"
     localDepsInstall "$spec"
   fi
@@ -1046,24 +999,6 @@ localBuild() {
 
 localDepsInstall() {
   local spec="$1"
-  local pkg_list
-
-  if [[ $pkg_install ]] ; then
-    pkg_list="$pkg_install"
-  else
-    pkg_list=$(getSpecValue "$MACRO_BUILD_REQS" "$spec")
-  fi
-
-  [[ -z "$pkg_list" ]] && return
-
-  pkg_list=$(prepareDeps "$pkg_list")
-
-  local not_installed_pkgs=$(getNotInstalledLocalDeps "$pkg_list")
-
-  if [[ ! $not_installed_pkgs ]] ; then
-    show "All required packages already installed." $GREEN
-    return
-  fi
 
   show "Installing required packages for build...\n"
 
@@ -1071,40 +1006,20 @@ localDepsInstall() {
 
   if [[ "$user" == "root" ]] ; then
     yum $yum_opts clean expire-cache
-    yum $yum_opts -y install $not_installed_pkgs
+    yum-builddep $yum_opts -y $spec
   else
     sudo yum $yum_opts clean expire-cache
-    sudo yum $yum_opts -y install $not_installed_pkgs
+    sudo yum-builddep $yum_opts -y $spec
   fi
+
+  show ""
 
   if [[ $? -ne 0 ]] ; then
     show "Can't install required packages." $RED
     doExit $ERROR_BUILD
   fi
 
-  not_installed_pkgs=$(getNotInstalledLocalDeps "$pkg_list")
-
-  if [[ $not_installed_pkgs ]] ; then
-    show ""
-    show "Required packages were not installed:" $RED
-    show "$not_installed_pkgs" $BOLD
-    show ""
-    doExit $ERROR_BUILD
-  fi
-
-  show "All required packages installed." $GREEN
-}
-
-getNotInstalledLocalDeps() {
-  local deps="$1"
-  local dep dep_list
-
-  for dep in $deps ; do
-    rpm -q $dep &> /dev/null
-    [[ $? -ne 0 ]] && dep_list="$dep_list $dep"
-  done
-
-  echo "${dep_list:1:9999}"
+  show "All available packages installed." $GREEN
 }
 
 localSpecValidate() {
@@ -2691,7 +2606,6 @@ usage() {
   show "Dependencies install:" $BOLD
   show ""
   show "  ${CL_GREEN}--dep-install, --depinstall, -di${CL_NORM}     Automatically install build dependencies before build process"
-  show "  ${CL_GREEN}--pkg-install, -i${CL_NORM} ${CL_GREY}package${CL_NORM}            Install given package before build process ${CL_CYAN}(mergeable)${CL_NORM}"
   show "  ${CL_GREEN}--enable-repo, -ER${CL_NORM} ${CL_GREY}repo-name${CL_NORM}         Enable repositories ${CL_CYAN}(mergeable)${CL_NORM}"
   show "  ${CL_GREEN}--disable-repo, -DR${CL_NORM} ${CL_GREY}repo-name${CL_NORM}        Disable repositories ${CL_CYAN}(mergeable)${CL_NORM}"
   show ""

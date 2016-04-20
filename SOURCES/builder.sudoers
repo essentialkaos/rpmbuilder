@@ -1,1 +1,1 @@
-builder   ALL=(root)   NOPASSWD:/usr/bin/yum
+builder   ALL=(root)   NOPASSWD:/usr/bin/yum, /usr/bin/yum-builddep
