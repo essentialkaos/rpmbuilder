@@ -2,7 +2,7 @@
 
 Summary:         RPM package build helper
 Name:            rpmbuilder
-Version:         1.0.8
+Version:         1.1.0
 Release:         0%{?dist}
 License:         EKOL
 Group:           Applications/System
@@ -14,7 +14,7 @@ Source0:         https://source.kaos.io/%{name}/%{name}-%{version}.tar.bz2
 BuildArch:       noarch
 BuildRoot:       %{_tmppath}/%{name}-%{version}-%{release}-root-%(%{__id_u} -n)
 
-Requires:        rpm >= 4.8.0 rpm-build rpmdevtools
+Requires:        rpm >= 4.8.0 rpm-build rpmdevtools yum-utils
 Requires:        rpmlint sshpass coreutils tmux
 
 Provides:        %{name} = %{version}-%{release}
@@ -50,8 +50,11 @@ rm -rf %{buildroot}
 ###############################################################################
 
 %changelog
+* Thu Apr 21 2016 Anton Novojilov <andy@essentialkaos.com> - 1.1.0-0
+- Improved dependecies installation process
+
 * Wed Apr 20 2016 Anton Novojilov <andy@essentialkaos.com> - 1.0.8-0
-- Improved wroking with yum cache
+- Improved working with yum cache
 
 * Wed Apr 20 2016 Anton Novojilov <andy@essentialkaos.com> - 1.0.7-0
 - Fixed bug with parsing remote build definition
