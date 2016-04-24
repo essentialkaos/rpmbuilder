@@ -2,7 +2,7 @@
 
 Summary:         RPM package build helper
 Name:            rpmbuilder
-Version:         1.1.1
+Version:         1.1.2
 Release:         0%{?dist}
 License:         EKOL
 Group:           Applications/System
@@ -50,6 +50,9 @@ rm -rf %{buildroot}
 ###############################################################################
 
 %changelog
+* Mon Apr 25 2016 Anton Novojilov <andy@essentialkaos.com> - 1.1.2-0
+- Fixed bug with disabling repository
+
 * Sun Apr 24 2016 Anton Novojilov <andy@essentialkaos.com> - 1.1.1-0
 - -dl without given path download files to current directory
 

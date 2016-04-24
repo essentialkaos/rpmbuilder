@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 
 APP="RPMBuilder"
-VER="1.1.1"
+VER="1.1.2"
 
 ####################################################################
 
@@ -2314,7 +2314,7 @@ getYumOpts() {
 
   if [[ -n "$disable_repo" ]] ; then
     for repo in $disable_repo ; do
-      opts="$opts --disblerepo=$repo"
+      opts="$opts --disablerepo=$repo"
     done
   fi
 
