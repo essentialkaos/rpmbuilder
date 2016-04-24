@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 
 APP="RPMBuilder"
-VER="1.1.0"
+VER="1.1.1"
 
 ####################################################################
 
@@ -364,11 +364,6 @@ checkArgs() {
     doExit $ERROR_ARGS
   fi
 
-  if [[ $download && ! -d $download ]] ; then
-    show "Can't download sources - download destination directory is not exist." $RED
-    doExit $ERROR_ARGS
-  fi
-
   if [[ $remote && ! $host && ! -r $remote && ! "$remote" =~ @|~ && ! "$remote" =~ :[0-9]{1,} ]] ; then
     show "Can't start remote build process - you must define remote host." $RED
     doExit $ERROR_ARGS
@@ -614,6 +609,15 @@ makeTemp() {
 downloadRemoteSources() {
   local spec="$1"
   local download_count=0
+
+  if [[ "$download" == "true" ]] ; then
+    download="."
+  fi
+
+  if [[ ! -d $download ]] ; then
+    show "Can't download sources - download destination directory is not exist." $RED
+    doExit $ERROR_ARGS
+  fi
 
   showSeparator "DOWNLOADING"
 
