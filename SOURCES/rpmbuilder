@@ -2074,7 +2074,7 @@ packDir() {
     elif [[ "$ext" == "tar.bz" || "$ext" == "tbz" ]]; then
       tar cjfv $arch_name.$ext $dir_name &> $verb_output
     elif [[ "$ext" == "tar.xz" || "$ext" == "txz" ]] ; then
-      tar cf - $dir_name | lzma > $arch_name.$ext
+      tar cf - $dir_name | xz -9 -c - > $arch_name.$ext
     else
       show "Error! Unknown archive type." $RED
       doExit $ERROR_SOURCE
