@@ -2,12 +2,11 @@
 
 Summary:         RPM package build helper
 Name:            rpmbuilder
-Version:         1.1.2
+Version:         1.1.3
 Release:         0%{?dist}
 License:         EKOL
-Group:           Applications/System
-Vendor:          ESSENTIALKAOS
-URL:             http://essentialkaos.com
+Group:           Development/Tools
+URL:             https://github.com/essentialkaos/rpmbuilder
 
 Source0:         https://source.kaos.io/%{name}/%{name}-%{version}.tar.bz2
 
@@ -19,8 +18,10 @@ Requires:        rpmlint sshpass coreutils tmux
 
 Provides:        %{name} = %{version}-%{release}
 
+###############################################################################
+
 %description
-RPM package build helper
+RPM package build helper.
 
 ###############################################################################
 
@@ -50,6 +51,12 @@ rm -rf %{buildroot}
 ###############################################################################
 
 %changelog
+* Wed May 11 2016 Anton Novojilov <andy@essentialkaos.com> - 1.1.3-0
+- Code refactoring
+
+* Wed May 11 2016 Anton Novojilov <andy@essentialkaos.com> - 1.1.2-1
+- Improved spec file
+
 * Mon Apr 25 2016 Anton Novojilov <andy@essentialkaos.com> - 1.1.2-0
 - Fixed bug with disabling repository
 

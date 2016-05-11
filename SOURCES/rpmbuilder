@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 
 APP="RPMBuilder"
-VER="1.1.2"
+VER="1.1.3"
 
 ####################################################################
 
@@ -86,15 +86,15 @@ SEPARATOR="---------------------------------------------------------------------
 
 ###############################################################################
 
-PREFS_FILE="~/.rpmbld"
+PREFS_FILE="~/.rpmbuilder"
 
 SUPPORTED_ARGS="remote !parallel host user pass key source_dir source_list 
  !sign !no_build !no_clean !no_deps !no_lint !no_source pack !pedantic !strict 
  pre post dest dest_dir upload git svn hg bzr branch revision tag svn_user 
  svn_pass path !bump bump_comment tmp dlcache !depinstall !dep_install github 
  bitbucket launchpad with without define output !verbose !help !usage !ver 
- !version !raw_version qa_rpaths !tmuxl no_colors source_path !keep_log notify 
- arch download !relative_pack enable_repo disable_repo"
+ !version !raw_version qa_rpaths !tmuxl no_colors !keep_log notify arch 
+ download !relative_pack enable_repo disable_repo"
 
 SHORT_ARGS="r:remote P:!parallel hh:host uu:user pp:pass kk:key sd:source_dir 
  sl:source_list nb:!no_build nc:!no_clean nd:!no_deps nr:!no_binary ns:!no_source 
@@ -138,6 +138,12 @@ CHECK_LOCAL_QUEUE_DELAY=2
 LOG_QUOTE_SIZE=50
 REPO_LOG_QUOTE_SIZE=25
 
+SOURCE_PATHS=". SOURCES SOURCE sources source src"
+
+CWD=$(pwd)
+
+###############################################################################
+
 tmp="/tmp"
 tmp_dir="rpmbuilder-XXXXXXXX"
 tmp_file="rpmbuilder-XXXXXXXX.out"
@@ -147,12 +153,8 @@ packager=""
 
 verb_output=/dev/null
 
-source_path=". SOURCES SOURCE sources source src"
-
-START=0
-END=0
-
-CWD=$(pwd)
+build_start=0
+build_end=0
 
 ###############################################################################
 
@@ -170,8 +172,6 @@ main() {
   [[ $# -eq 0 || $help || $usage ]] && usage && doExit
 
   local spec="$1"
-
-  [[ ! $source_path ]] && source_path="."
 
   if ! isSpecFile "$spec" ; then
     if isSpecFile "${spec}.spec" ; then
@@ -841,7 +841,7 @@ remoteBuildProcess() {
 
   checkRemoteAvailability
 
-  START=$(now)
+  build_start=$(now)
 
   startStatusObserver
 
@@ -857,8 +857,8 @@ remoteBuildProcess() {
   local has_errors=$(tail -1 $tmp_file | grep -v "exit 0")
 
   if [[ ! $has_errors ]] ; then
-    END=$(now)
-    local bld_time=$(($END - $START))
+    build_end=$(now)
+    local bld_time=$(($build_end - $build_start))
     local grc_time=$(getGraceTime "$bld_time")
 
     show "Build complete! Build took $grc_time." $GREEN
@@ -1076,7 +1076,7 @@ localBuildProcess() {
 
     checkLocalBuildAvailability
 
-    START=$(now)
+    build_start=$(now)
 
     createLocalLock
 
@@ -1131,8 +1131,8 @@ localBuildProcess() {
       stopStatusObserver
       show ""
 
-      END=$(now)
-      local bld_time=$(($END - $START))
+      build_end=$(now)
+      local bld_time=$(($build_end - $build_start))
       local grc_time=$(getGraceTime "$bld_time")
 
       show "Build complete! Build took $grc_time." $GREEN
@@ -1929,7 +1929,7 @@ findSource() {
       fi
     fi
   else
-    for dir in $source_path ; do
+    for dir in $SOURCE_PATHS ; do
       local abs_dir=$(getAbsPath "$dir")
 
       if [[ -r $abs_dir/$name ]] ; then
@@ -2029,7 +2029,7 @@ downloadFromRemoteHost() {
   if [[ -f $dir/$file_name ]] ; then
     local mod_ts=$(stat -c "%Y" $dir/$file_name)
 
-    if [[ $mod_ts -ge $START && $mod_ts -le $END ]] ; then
+    if [[ $mod_ts -ge $build_start && $mod_ts -le $build_end ]] ; then
       return 1
     else
       scpCommand "$user@$host:$file" "$dir" &> $verb_output

@@ -50,9 +50,10 @@
 Summary:         Configuration package for rpmbuilder node
 Name:            rpmbuilder-node
 Version:         1.0.1
-Release:         0%{?dist}
+Release:         2%{?dist}
 License:         EKOL
-Vendor:          ESSENTIALKAOS
+Group:           Development/Tools
+URL:             https://github.com/essentialkaos/rpmbuilder
 
 Source0:         rpmmacros
 Source1:         %{service_name}
@@ -62,8 +63,10 @@ Source3:         %{user_name}.sudoers
 BuildArch:       noarch
 BuildRoot:       %{_tmppath}/%{name}-%{version}-%{release}-root-%(%{__id_u} -n)
 
-Requires:        rpm >= 4.8.0 rpm-build rpmdevtools rpmlint kaosv
-Requires:        atrpms-repo epel-repo yum-utils
+Requires:        rpm >= 4.8.0 rpm-build rpmdevtools
+Requires:        rpmlint kaosv yum-utils
+
+Provides:        %{name} = %{version}-%{release}
 
 ###############################################################################
 
@@ -80,7 +83,7 @@ getent group %{user_name} >/dev/null || groupadd -r %{user_name}
 getent passwd %{user_name} >/dev/null || useradd -r -g %{user_name} -d %{_home}/%{user_name} -s /bin/bash %{user_name}
 
 %install
-%{__rm} -rf %{buildroot}
+rm -rf %{buildroot}
 
 install -dm 755 %{buildroot}%{_initddir}
 install -dm 755 %{buildroot}%{_sysconfdir}/sysconfig
@@ -94,7 +97,7 @@ install -pm 755 %{SOURCE2} %{buildroot}%{_initddir}/%{service_name}
 install -pm 644 %{SOURCE3} %{buildroot}%{_sysconfdir}/sudoers.d/%{user_name}
 
 %clean
-%{__rm} -rf %{buildroot}
+rm -rf %{buildroot}
 
 ###############################################################################
 
@@ -119,7 +122,7 @@ if [[ $1 -eq 0 ]] ; then
   %{__service} %{service_name} stop &> /dev/null || :
   %{__chkconfig} --del %{service_name}
   %{__userdel} -r %{user_name}
-  %{__rm} -rf %{home_dir}
+  rm -rf %{home_dir}
 fi
 
 ###############################################################################
@@ -133,6 +136,12 @@ fi
 ###############################################################################
 
 %changelog
+* Wed May 11 2016 Anton Novojilov <andy@essentialkaos.com> - 1.0.1-2
+- Improved spec file
+
+* Fri May 06 2016 Anton Novojilov <andy@essentialkaos.com> - 1.0.1-1
+- Removed epel and atrpms repositories from dependencies
+
 * Thu Apr 21 2016 Anton Novojilov <andy@essentialkaos.com> - 1.0.1-0
 - yum-utils added to dependencies
 
