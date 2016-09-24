@@ -14,7 +14,7 @@ BROWN=33
 BLUE=34
 MAG=35
 CYAN=36
-GREY=37
+GREY=90
 
 CL_NORM="\e[${NORM}m"
 CL_BOLD="\e[${BOLD}m"
@@ -2556,7 +2556,7 @@ showArgWarn() {
 
 usage() {
   show ""
-  show "${CL_BOLD}Usage:${CL_NORM} rpmbuilder ${CL_BROWN}<spec-file>${CL_NORM} ${CL_GREEN}<options>${CL_NORM}"
+  show "${CL_BOLD}Usage:${CL_NORM} rpmbuilder ${CL_BROWN}{spec-file}${CL_NORM} ${CL_GREEN}{options}${CL_NORM}"
   show ""
   show "${CL_BOLD}Spec file:${CL_NORM}"
   show ""
@@ -2586,11 +2586,11 @@ usage() {
   show "  ${CL_GREEN}--svn-pass, -sp${CL_NORM} ${CL_GREY}password${CL_NORM}            Password for access to svn repository"
   show ""
   show "  ${CL_GREEN}--github, -gh${CL_NORM} ${CL_GREY}url${CL_NORM}                   Fetch sources from github.com repository by url ${CL_CYAN}(macro supported)${CL_NORM}"
-  show "  ${CL_GREEN}--github, -gh${CL_NORM} ${CL_GREY}user>:<project${CL_NORM}        Fetch sources from github.com repository by user and project"
-  show "  ${CL_GREEN}--github, -gh${CL_NORM} ${CL_GREY}user>/<project${CL_NORM}        Fetch sources from github.com repository by user and project"
+  show "  ${CL_GREEN}--github, -gh${CL_NORM} ${CL_GREY}user:project${CL_NORM}          Fetch sources from github.com repository by user and project"
+  show "  ${CL_GREEN}--github, -gh${CL_NORM} ${CL_GREY}user/project${CL_NORM}          Fetch sources from github.com repository by user and project"
   show "  ${CL_GREEN}--bitbucket, -bb${CL_NORM} ${CL_GREY}url${CL_NORM}                Fetch sources from bitbucket.org repository by url ${CL_CYAN}(macro supported)${CL_NORM}"
   show "  ${CL_GREEN}--bitbucket, -bb${CL_NORM} ${CL_GREY}user>:<project${CL_NORM}     Fetch sources from bitbucket.org repository by user and project"
-  show "  ${CL_GREEN}--bitbucket, -bb${CL_NORM} ${CL_GREY}user>/<project${CL_NORM}     Fetch sources from bitbucket.org repository by user and project"
+  show "  ${CL_GREEN}--bitbucket, -bb${CL_NORM} ${CL_GREY}user/project${CL_NORM}       Fetch sources from bitbucket.org repository by user and project"
   show "  ${CL_GREEN}--launchpad, -lp${CL_NORM} ${CL_GREY}url${CL_NORM}                Fetch sources from launchpad.net repository by url ${CL_CYAN}(macro supported)${CL_NORM}"
   show "  ${CL_GREEN}--launchpad, -lp${CL_NORM} ${CL_GREY}project-name${CL_NORM}       Fetch sources from launchpad.net repository by project name"
   show ""
