@@ -2,7 +2,7 @@
 
 Summary:         RPM package build helper
 Name:            rpmbuilder
-Version:         1.1.3
+Version:         1.1.4
 Release:         0%{?dist}
 License:         EKOL
 Group:           Development/Tools
@@ -51,6 +51,11 @@ rm -rf %{buildroot}
 ###############################################################################
 
 %changelog
+* Sun Sep 25 2016 Anton Novojilov <andy@essentialkaos.com> - 1.1.4-0
+- UI improvements
+- Fixed typos in help output
+- Fixed bug with processing "remote" argument
+
 * Wed May 11 2016 Anton Novojilov <andy@essentialkaos.com> - 1.1.3-0
 - Code refactoring
 
