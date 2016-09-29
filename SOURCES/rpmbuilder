@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 
 APP="RPMBuilder"
-VER="1.1.4"
+VER="1.1.5"
 
 ####################################################################
 
@@ -366,14 +366,14 @@ checkArgs() {
     doExit $ERROR_ARGS
   fi
 
-  if [[ $remote && ! $host && ! -r $remote && ! "$remote" =~ @|~ && ! "$remote" =~ :[0-9]{1,} ]] ; then
+  if [[ $remote && ! $host && ! -r $remote && ! "$remote" =~ @|~ && ! "$remote" =~ :[0-9]{1,}$ ]] ; then
     show "Can't start remote build process - you must define remote host." $RED
     doExit $ERROR_ARGS
   fi
 
-  if [[ $remote && "$remote" =~ :[0-9]{1,} ]] ; then
+  if [[ $remote && "$remote" =~ :[0-9]{1,}$ ]] ; then
     if [[ ! -r ${remote%%:*} ]] ; then
-      show "Can't start remote build process - you must define remote host." $RED
+      show "Can't start remote build process - host list ${remote%%:*} is not readable." $RED
       doExit $ERROR_ARGS
     fi
   fi
