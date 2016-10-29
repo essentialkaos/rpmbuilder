@@ -4,11 +4,9 @@
 
 #### Usage demo
 
-Building git rpm on three remote build nodes:
+Building redis rpm on three remote build nodes:
 
-_In the middle of record all separators between windows disappears — it's not a bug in rpmbuilder, it's problem with recording console output with tmux sessions._
-
-[![asciicast](https://asciinema.org/a/34544.png)](https://asciinema.org/a/34544)
+[![asciicast](https://essentialkaos.com/github/rpmbuilder-115.gif)](https://asciinema.org/a/90959)
 
 #### Installation
 
