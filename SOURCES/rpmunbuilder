@@ -140,7 +140,7 @@ checkPerms() {
   local path="$1"
   local perms
 
-  perms=$(echo "$2" | tr "[a-z]" "[A-Z]")
+  perms=$(echo "$2" | tr "a-z" "A-Z")
 
   for perm in $(echo "$perms" | fold -w1) ; do
     case $perm in
