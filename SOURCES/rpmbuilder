@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 
 APP="RPMBuilder"
-VER="1.1.6"
+VER="1.2.0"
 
 ####################################################################
 
@@ -88,7 +88,7 @@ SEPARATOR="---------------------------------------------------------------------
 
 ###############################################################################
 
-PREFS_FILE="~/.rpmbuilder"
+PREFS_FILE="$HOME/.rpmbuilder"
 
 SUPPORTED_ARGS="remote !parallel host user pass key source_dir source_list 
  !sign !no_build !no_clean !no_deps !no_lint !no_source pack !pedantic !strict 
@@ -187,15 +187,16 @@ main() {
 
   checkArgs
 
-  if [[ $parallel && $(cat $remote | wc -l) -gt 1 ]] ; then
+  if [[ $parallel && $(cat "$remote" | wc -l) -gt 1 ]] ; then
     parallelBuild $@
   else
-    local start_ts=$(now)
+    local start_ts
+    start_ts=$(now)
 
     [[ $dest ]] && dest_dir="$dest"
-    [[ $dest_dir ]] && dest_dir=$(getAbsPath $dest_dir)
-    [[ $dlcache ]] && dlcache=$(getAbsPath $dlcache)
-    [[ $download ]] && dlcache=$(getAbsPath $download)
+    [[ $dest_dir ]] && dest_dir=$(getAbsPath "$dest_dir")
+    [[ $dlcache ]] && dlcache=$(getAbsPath "$dlcache")
+    [[ $download ]] && dlcache=$(getAbsPath "$download")
 
     makeTemp
 
@@ -237,9 +238,11 @@ main() {
 notify() {
   [[ $notify ]] && bell && return
 
-  local start_ts=$1
-  local end_ts=$(now)
-  local time_diff=$(( $end_ts - $start_ts ))
+  local start_ts end_ts time_diff
+
+  start_ts=$1
+  end_ts=$(now)
+  time_diff=$(( end_ts - start_ts ))
 
   [[ $time_diff -ge $LONG_BUILD ]] && bell
 }
@@ -275,17 +278,17 @@ parallelBuild() {
   local serv sess
 
   while read serv ; do
-    local serv_name=$(echo $serv | cut -f2 -d"@")
+    local serv_name=$(echo "$serv" | cut -f2 -d"@")
 
     if [[ ! $sess ]] ; then
-      tmux new-session -s "rpmbuilder" -d "$0 $args -r $serv --tmuxl" 2>&1 1>/dev/null
+      tmux new-session -s "rpmbuilder" -d "$0 $args -r $serv --tmuxl" >/dev/null 2>&1
       sess=true
     else
-      tmux split-window "$0 $args -r $serv --tmuxl" 2>&1 1>/dev/null
+      tmux split-window "$0 $args -r $serv --tmuxl" >/dev/null 2>&1
     fi
-  done < $remote
+  done < "$remote"
 
-  tmux attach-session -t "rpmbuilder" 2>&1 1>/dev/null
+  tmux attach-session -t "rpmbuilder" >/dev/null 2>&1
 
   removeParalellLock
 
@@ -2521,20 +2524,16 @@ show() {
   if [[ $2 ]] ; then
     echo -e "\e[${2}m${1}\e[0m"
   else
-    echo -e "$@"
+    echo -e "$*"
   fi
 }
 
 showm() {
-  local message
-
-  if [[ $2 ]] ; then
-    message=$(echo "\e[${2}m${1}\e[0m")
+  if [[ -n "$2" ]] ; then
+    echo -e -n "\e[${2}m${1}${CL_NORM}"
   else
-    message="$@"
+    echo -e -n "$*"
   fi
-
-  printf "$message"
 }
 
 showt() {
