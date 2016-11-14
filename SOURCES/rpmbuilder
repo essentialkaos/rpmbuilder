@@ -2244,8 +2244,15 @@ getBuildArgs() {
   [[ $arch ]] && args="$args --target=$arch"
   [[ $with ]] && args=$(getBuildArgsWith "$args")
   [[ $without ]] && args=$(getBuildArgsWithout "$args")
-  [[ $define ]] && args="$args --define=\"$define\""
   [[ $verbose ]] && args="$args --verbose"
+
+  local def
+
+  if [[ $define ]] ; then
+    for def in $define ; do
+      args="$args --define=$def"
+    done
+  fi
 
   echo "$args"
 }
