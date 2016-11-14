@@ -963,7 +963,9 @@ remoteBuildProcess() {
 }
 
 checkRemoteAvailability() {
-  local remote_available=$(sshCommand "$user@$host" "stat $BUILD_LOCK &> /dev/null || echo 1")
+  local remote_available
+  
+  remote_available=$(sshCommand "$user@$host" "stat $BUILD_LOCK &> /dev/null || echo 1")
 
   if [[ ! $remote_available ]] ; then
     showt "\r${CL_GREEN}Executing:${CL_NORM} ${CL_BROWN}waiting in queue${CL_NORM}"
@@ -1010,7 +1012,7 @@ localBuild() {
 
   [[ $pack || $source_list ]] && packSources "$spec"
 
-  processSpec $spec
+  processSpec "$spec"
 
   show "All source files are ready for build." $GREEN
 
@@ -1061,7 +1063,7 @@ localSpecValidate() {
   local spec="$1"
   
   local result
-  local result=$(rpmlint "$spec")
+  result=$(rpmlint "$spec")
 
   show "Spec file check result:" $CYAN
   show "$result"
@@ -1085,14 +1087,16 @@ localSpecValidate() {
 
 localBuildProcess() {
   local spec="$1"
-  local spec_name=$(basename $spec)
 
-  local build_args=$(getBuildArgs)
-  local build_prfx=$(getBuildPrfx)
-  local rpmbuild_dir=$(getRPMBuildDir)
-  local specs_dir="$rpmbuild_dir/SPECS"
+  local spec_name build_args build_prfx rpmbuild_dir specs_dir
+  
+  spec_name=$(basename "$spec")
+  build_args=$(getBuildArgs)
+  build_prfx=$(getBuildPrfx)
+  rpmbuild_dir=$(getRPMBuildDir)
+  specs_dir="$rpmbuild_dir/SPECS"
 
-  local has_errors=""
+  local has_errors
 
   pushd $specs_dir &> /dev/null
     if [[ ! $no_lint ]] ; then
@@ -1113,14 +1117,16 @@ localBuildProcess() {
     # We use eval in this case because using --define, contains quotes
     # and if we simply run command, we will get error
 
+    local exit_status pipe_status
+
     if [[ $verbose ]] ; then
       export $build_prfx
-      eval "rpmbuild $build_args $spec_name" | tee $tmp_file &> $verb_output
-      local pipe_status=${PIPESTATUS[0]}
+      eval "rpmbuild $build_args $spec_name" | tee "$tmp_file" &> $verb_output
+      pipe_status=${PIPESTATUS[0]}
     else
       export $build_prfx
-      eval "rpmbuild $build_args $spec_name" &> $tmp_file
-      local exit_status=$?
+      eval "rpmbuild $build_args $spec_name" &> "$tmp_file"
+      exit_status=$?
     fi
 
     if [[ $verbose ]] ; then
@@ -1141,15 +1147,17 @@ localBuildProcess() {
         show "Last $LOG_QUOTE_SIZE lines from build log:" $RED
 
         showSeparator
-        tail -${LOG_QUOTE_SIZE} $tmp_file
+        tail -${LOG_QUOTE_SIZE} "$tmp_file"
         showSeparator
       fi
 
       if [[ $keep_log ]] ; then
-        local ldate=$(getLogDate)
-        local lname="${spec_name/.spec/}+$ldate.log"
+        local ldate lname
 
-        cp $tmp_file $CWD/$lname
+        ldate=$(getLogDate)
+        lname="${spec_name/.spec/}+$ldate.log"
+
+        cp "$tmp_file" "$CWD/$lname"
 
         show "Build log saved to current dir as $lname" $BROWN
       fi
