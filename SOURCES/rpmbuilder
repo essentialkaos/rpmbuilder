@@ -278,7 +278,7 @@ parallelBuild() {
   local serv serv_name sess
 
   while read serv ; do
-    local serv_name=$(echo "$serv" | cut -f2 -d"@")
+    serv_name=$(echo "$serv" | cut -f2 -d"@")
 
     if [[ ! $sess ]] ; then
       tmux new-session -s "rpmbuilder" -d "$0 $args -r $serv --tmuxl" >/dev/null 2>&1
@@ -327,9 +327,10 @@ checkParalellBuildAvailability() {
 hasParalellLock() {
   [[ ! -f $BUILD_LOCK_PARALLEL ]] && return 1
 
-  local pid=$(cat $BUILD_LOCK_PARALLEL)
+  local pid
+  pid=$(cat "$BUILD_LOCK_PARALLEL")
 
-  [[ ! -d /proc/$pid ]] && removeParalellLock && return 1
+  [[ ! -d "/proc/$pid" ]] && removeParalellLock && return 1
 
   return 0
 }
@@ -571,10 +572,12 @@ processBitbucketSource() {
 }
 
 processLaunchpadSource() {
-  if [[ "$launchpad" =~ (http|https) ]] ; then
-    local launchpad_repo=$(echo "$launchpad" | cut -d"/" -f4-99)
+  local launchpad_repo
 
-    if [[ "$launchpad_repo" =~ "revision/" ]] ; then
+  if [[ "$launchpad" =~ (http|https) ]] ; then
+    launchpad_repo=$(echo "$launchpad" | cut -d"/" -f4-99)
+
+    if [[ "$launchpad_repo" =~ revision/ ]] ; then
       bzr=$(echo "$launchpad_repo" | cut -f1-3 -d"/")
       revision=$(echo "$launchpad_repo" | cut -f5 -d"/")
     else
@@ -587,13 +590,15 @@ processLaunchpadSource() {
 
 parseSourceURL() {
   local spec="$1"
-  local url=$(getSpecValue "$MACRO_URL" "$spec")
+  
+  local url
+  url=$(getSpecValue "$MACRO_URL" "$spec")
 
-  if [[ "$url" =~ "github" ]] ; then
+  if [[ "$url" =~ github ]] ; then
     github="$url"
-  elif [[ "$url" =~ "bitbucket" ]] ; then
+  elif [[ "$url" =~ bitbucket ]] ; then
     bitbucket="$url"
-  elif [[ "$url" =~ "launchpad" ]] ; then
+  elif [[ "$url" =~ launchpad ]] ; then
     launchpad="$url"
   else
     return 1
@@ -625,16 +630,18 @@ downloadRemoteSources() {
 
   showSeparator "DOWNLOADING"
 
-  local source_list=$(getSpecValue "$MACRO_SOURCE" "$spec")
-  local patch_list=$(getSpecValue "$MACRO_PATCH" "$spec")
+  local source_file source_list patch_list files
 
-  local files="$source_list $patch_list"
+  source_list=$(getSpecValue "$MACRO_SOURCE" "$spec")
+  patch_list=$(getSpecValue "$MACRO_PATCH" "$spec")
+
+  files="$source_list $patch_list"
 
   for source_file in $files ; do
     if [[ "$source_file" =~ ^(http|https|ftp) ]] ; then
       local source_file_name=$(basename "$source_file")
 
-      if [[ -f $download/$source_file_name ]] ; then
+      if [[ -f "$download/$source_file_name" ]] ; then
         show "File ${CL_CYAN}${source_file_name}${CL_NORM} already downloaded."
         continue
       fi
