@@ -129,7 +129,7 @@ LONG_BUILD=300
 BUILD_LOCK=".buildlock"
 
 BUILD_LOCK_LOCAL="/tmp/rpmbuilder-local-lock"
-BUILD_LOCK_PARALELL="/tmp/rpmbuilder-paralell-lock"
+BUILD_LOCK_PARALLEL="/tmp/rpmbuilder-parallel-lock"
 LOCK_TIME_MAX_DIFF=10800 # 3 Hours
 
 SSH_BASE_OPTS="-o UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no -o LogLevel=quiet"
@@ -297,13 +297,13 @@ checkParalellBuildAvailability() {
     return
   fi
 
-  local cdt=$(stat $BUILD_LOCK_PARALELL -c "%Y")
+  local cdt=$(stat $BUILD_LOCK_PARALLEL -c "%Y")
   local ct=$(now)
   local cdf=$(( $ct - $cdt ))
 
   if [[ $cdf -gt $LOCK_TIME_MAX_DIFF ]] ; then
     show "We found lock file created more than 3 hours ago. It's too much time for usual build process."
-    show "If another build process does not occur, you must remove file $BUILD_LOCK_PARALELL manually."
+    show "If another build process does not occur, you must remove file $BUILD_LOCK_PARALLEL manually."
     show "We will continue build when this file will be removed." $BROWN
   else
     show "Another parallel build process in progress." $BROWN
@@ -320,9 +320,9 @@ checkParalellBuildAvailability() {
 }
 
 hasParalellLock() {
-  [[ ! -f $BUILD_LOCK_PARALELL ]] && return 1
+  [[ ! -f $BUILD_LOCK_PARALLEL ]] && return 1
 
-  local pid=$(cat $BUILD_LOCK_PARALELL)
+  local pid=$(cat $BUILD_LOCK_PARALLEL)
 
   [[ ! -d /proc/$pid ]] && removeParalellLock && return 1
 
@@ -330,17 +330,17 @@ hasParalellLock() {
 }
 
 createParalellLock() {
-  echo $$ > $BUILD_LOCK_PARALELL
-  chmod 666 $BUILD_LOCK_PARALELL
+  echo $$ > $BUILD_LOCK_PARALLEL
+  chmod 666 $BUILD_LOCK_PARALLEL
 }
 
 removeParalellLock() {
-  if [[ -f $BUILD_LOCK_PARALELL ]] ; then
+  if [[ -f $BUILD_LOCK_PARALLEL ]] ; then
     local cur_user=$(whoami)
-    local lock_owner=$(stat $BUILD_LOCK_PARALELL -c "%U")
+    local lock_owner=$(stat $BUILD_LOCK_PARALLEL -c "%U")
 
     if [[ "$cur_user" == "$lock_owner" ]] ; then
-      rm -f $BUILD_LOCK_PARALELL &> /dev/null
+      rm -f $BUILD_LOCK_PARALLEL &> /dev/null
     fi
   fi
 }
