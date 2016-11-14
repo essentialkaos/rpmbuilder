@@ -73,7 +73,7 @@ main() {
     exit 0
   fi
 
-  if [[ ! $(checkDeps $DEPS) ]] ; then
+  if [[ ! $(checkDeps "$DEPS") ]] ; then
     show "For usage this utility install this packages first: $DEPS" $BROWN
     exit 2
   fi
@@ -111,7 +111,7 @@ processPackage() {
 
   local src_name src_list
 
-  src_list=$(rpm2cpio $pkg | cpio -div --quiet 2>&1 | grep -v "cpio:")
+  src_list=$(rpm2cpio "$pkg" | cpio -div --quiet 2>&1 | grep -v "cpio:")
 
   mkdir -p "$path/SOURCES"
 
@@ -127,7 +127,7 @@ processPackage() {
 }
 
 isRPMPackage() {
-  if [[ ! $(LC_ALL=C rpm -K $1 | grep "error") ]] ; then
+  if [[ ! $(LC_ALL=C rpm -K "$1" | grep "error") ]] ; then
     echo 1 && return 0
   else
     echo "" && return 1
@@ -138,9 +138,9 @@ checkPerms() {
   local path="$1"
   local perms
 
-  perms=$(echo $2 | tr [a-z] [A-Z])
+  perms=$(echo "$2" | tr [a-z] [A-Z])
 
-  for perm in $(echo $perms | fold -w1) ; do
+  for perm in $(echo "$perms" | fold -w1) ; do
     case $perm in
       "R") [[ ! -r $path ]] && echo "" && return 1 ;;
       "W") [[ ! -w $path ]] && echo "" && return 1 ;;
@@ -217,7 +217,7 @@ argt=""
 
 while [[ -n "$1" ]] ; do
   if [[ "$1" =~ ' ' && -n "$argn" ]] ; then
-    declare $argn="$1"
+    declare "$argn=$1"
 
     unset argn
     shift && continue
@@ -234,7 +234,7 @@ while [[ -n "$1" ]] ; do
     if [[ -z "$argn" ]] ; then
       argn=$arg
     else
-      declare $argn=true
+      declare "$argn=true"
       unset argn
       argn=$arg
     fi
@@ -258,7 +258,7 @@ while [[ -n "$1" ]] ; do
         shift && continue
       fi
 
-      [[ -n "${!argm}" && "$MERGEABLE_ARGS " =~ "${argm} " ]] && declare ${argm}="${!argm} ${arg[@]:1:99}" || declare ${argm}="${arg[@]:1:99}"
+      [[ -n "${!argm}" && "$MERGEABLE_ARGS " =~ "${argm} " ]] && declare "${argm}=${!argm} ${arg[@]:1:99}" || declare "${argm}=${arg[@]:1:99}"
 
       unset argm
       shift && continue
@@ -268,7 +268,7 @@ while [[ -n "$1" ]] ; do
       if [[ -z "$argn" ]] ; then
         argn=$arg
       else
-        declare $argn=true
+        declare "$argn=true"
         unset argn
         argn=$arg
       fi
@@ -282,7 +282,7 @@ while [[ -n "$1" ]] ; do
     fi
   else
     if [[ -n "$argn" ]] ; then
-      [[ -n "${!argn}" && "$MERGEABLE_ARGS " =~ "${argn} " ]] && declare $argn="${!argn} $1" || declare $argn="$1"
+      [[ -n "${!argn}" && "$MERGEABLE_ARGS " =~ "${argn} " ]] && declare "$argn=${!argn} $1" || declare "$argn=$1"
 
       unset argn
       shift && continue
@@ -294,7 +294,7 @@ while [[ -n "$1" ]] ; do
 
 done
 
-[[ -n "$argn" ]] && declare $argn=true
+[[ -n "$argn" ]] && declare "$argn=true"
 
 unset arg argn argm
 
