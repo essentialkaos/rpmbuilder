@@ -127,7 +127,9 @@ processPackage() {
 }
 
 isRPMPackage() {
-  if [[ ! $(LC_ALL=C rpm -K "$1" | grep "error") ]] ; then
+  LC_ALL=C rpm -K "$1" &> /dev/null
+
+  if [[ $? -eq 0 ]] ; then
     echo 1 && return 0
   else
     echo "" && return 1
@@ -138,7 +140,7 @@ checkPerms() {
   local path="$1"
   local perms
 
-  perms=$(echo "$2" | tr [a-z] [A-Z])
+  perms=$(echo "$2" | tr "[a-z]" "[A-Z]")
 
   for perm in $(echo "$perms" | fold -w1) ; do
     case $perm in
@@ -161,7 +163,7 @@ checkPerms() {
 ####################################################################
 
 checkDeps() {
-  for app in "$@" ; do
+  for app in $@ ; do
     type -P "$app" &> /dev/null
 
     if [[ $? -eq 1 ]] ; then
@@ -203,7 +205,7 @@ about() {
   show "${CL_BL_CYAN}$APP${CL_NORM} ${CL_CYAN}$VER${CL_NORM} - Source RPM unbuilder"
   show ""
   show "Copyright (C) 2009-2016 ESSENTIAL KAOS" $DARK
-  show "Essential Kaos Open Source License <https://essentialkaos.com/ekol?en>" $DARK
+  show "Essential Kaos Open Source License <https://essentialkaos.com/ekol>" $DARK
 }
 
 ## ARGUMENTS PARSING ##########################################################
@@ -216,7 +218,7 @@ argv="$*"
 argt=""
 
 while [[ -n "$1" ]] ; do
-  if [[ "$1" =~ ' ' && -n "$argn" ]] ; then
+  if [[ "$1" =~ \  && -n "$argn" ]] ; then
     declare "$argn=$1"
 
     unset argn
@@ -239,7 +241,7 @@ while [[ -n "$1" ]] ; do
       argn=$arg
     fi
 
-    if [[ ! "$SUPPORTED_ARGS " =~ "$argn " ]] ; then
+    if [[ ! "$SUPPORTED_ARGS " =~ $argn\  ]] ; then
       showArgWarn "-${argm}" 2> /dev/null || :
       shift && continue
     fi
@@ -253,12 +255,12 @@ while [[ -n "$1" ]] ; do
 
       argm="${arg[0]}" ; argm=${argm//-/_}
 
-      if [[ ! "$SUPPORTED_ARGS " =~ "${arg[0]} " ]] ; then
+      if [[ ! "$SUPPORTED_ARGS " =~ ${arg[0]}\  ]] ; then
         showArgWarn "--${arg[0]//_/-}" 2> /dev/null || :
         shift && continue
       fi
 
-      [[ -n "${!argm}" && "$MERGEABLE_ARGS " =~ "${argm} " ]] && declare "${argm}=${!argm} ${arg[@]:1:99}" || declare "${argm}=${arg[@]:1:99}"
+      [[ -n "${!argm}" && "$MERGEABLE_ARGS " =~ ${argm}\  ]] && declare "${argm}=${!argm} ${arg[@]:1:99}" || declare "${argm}=${arg[@]:1:99}"
 
       unset argm
       shift && continue
@@ -273,7 +275,7 @@ while [[ -n "$1" ]] ; do
         argn=$arg
       fi
 
-      if [[ ! "$SUPPORTED_ARGS " =~ "$argn " ]] ; then
+      if [[ ! "$SUPPORTED_ARGS " =~ $argn\  ]] ; then
         showArgWarn "--${argn//_/-}" 2> /dev/null || :
         shift && continue
       fi
@@ -282,7 +284,7 @@ while [[ -n "$1" ]] ; do
     fi
   else
     if [[ -n "$argn" ]] ; then
-      [[ -n "${!argn}" && "$MERGEABLE_ARGS " =~ "${argn} " ]] && declare "$argn=${!argn} $1" || declare "$argn=$1"
+      [[ -n "${!argn}" && "$MERGEABLE_ARGS " =~ ${argn}\  ]] && declare "$argn=${!argn} $1" || declare "$argn=$1"
 
       unset argn
       shift && continue
