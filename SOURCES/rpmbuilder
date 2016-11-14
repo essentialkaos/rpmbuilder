@@ -730,7 +730,7 @@ remoteRunBuild() {
   if [[ "$remote" =~ :[0-9]{1,}$ ]] ; then
     r_file=$(echo "$remote" | cut -f1 -d":")
     r_line=$(echo "$remote" | cut -f2 -d":")
-    tlines=$(cat $r_file | wc -l)
+    tlines=$(cat "$r_file" | wc -l)
 
     if [[ $r_line -gt $tlines ]] ; then
       show "\nError - file $r_file don't contain line with number $r_line." $RED
@@ -847,7 +847,7 @@ remoteBuildProcess() {
 
   local spec_name build_args build_prfx rpmbuild_dir specs_dir
 
-  spec_name=$(basename $spec)
+  spec_name=$(basename "$spec")
   build_args=$(getBuildArgs)
   build_prfx=$(getBuildPrfx)
   rpmbuild_dir=$(getRPMBuildDir)
@@ -867,9 +867,9 @@ remoteBuildProcess() {
   startStatusObserver
 
   if [[ $verbose ]] ; then
-    sshCommand "$user@$host" "cd $specs_dir && $build_prfx rpmbuild $spec_name $build_args" | tee $tmp_file &> $verb_output
+    sshCommand "$user@$host" "cd $specs_dir && $build_prfx rpmbuild $spec_name $build_args" | tee "$tmp_file" &> $verb_output
   else
-    sshCommand "$user@$host" "cd $specs_dir && $build_prfx rpmbuild $spec_name $build_args" 1> $tmp_file 2> /dev/null
+    sshCommand "$user@$host" "cd $specs_dir && $build_prfx rpmbuild $spec_name $build_args" 1> "$tmp_file" 2> /dev/null
   fi
 
   stopStatusObserver
@@ -948,10 +948,12 @@ remoteBuildProcess() {
     fi
 
     if [[ $keep_log ]] ; then
-      local ldate=$(getLogDate)
-      local lname="${spec_name/.spec/}+$host+$ldate.log"
+      local ldate lname
 
-      cp $tmp_file $CWD/$lname
+      ldate=$(getLogDate)
+      lname="${spec_name/.spec/}+$host+$ldate.log"
+
+      cp "$tmp_file" "$CWD/$lname"
 
       show "Build log saved to current dir as $lname" $BROWN
     fi
@@ -1029,7 +1031,8 @@ localDepsInstall() {
 
   show "Installing required packages for build...\n"
 
-  local yum_opts=$(getYumOpts "$verbose")
+  local yum_opts
+  yum_opts=$(getYumOpts "$verbose")
 
   if [[ "$user" == "root" ]] ; then
     yum $yum_opts clean expire-cache
@@ -1056,7 +1059,9 @@ localSpecValidate() {
   fi
 
   local spec="$1"
-  local result=$(rpmlint $spec)
+  
+  local result
+  local result=$(rpmlint "$spec")
 
   show "Spec file check result:" $CYAN
   show "$result"
