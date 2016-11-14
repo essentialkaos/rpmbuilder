@@ -9,4 +9,6 @@ engines:
 
 ratings:
    paths:
-     - "SOURCES/kaosv"
+     - "SOURCES/rpmbuilder"
+     - "SOURCES/rpmunbuilder"
+     - "SOURCES/buildmon"
