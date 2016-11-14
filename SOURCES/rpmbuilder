@@ -275,7 +275,7 @@ parallelBuild() {
 
   createParalellLock
 
-  local serv sess
+  local serv serv_name sess
 
   while read serv ; do
     local serv_name=$(echo "$serv" | cut -f2 -d"@")
@@ -300,9 +300,11 @@ checkParalellBuildAvailability() {
     return
   fi
 
-  local cdt=$(stat $BUILD_LOCK_PARALLEL -c "%Y")
-  local ct=$(now)
-  local cdf=$(( $ct - $cdt ))
+  local cdt ct cdf
+
+  cdt=$(stat $BUILD_LOCK_PARALLEL -c "%Y")
+  ct=$(now)
+  cdf=$(( ct - cdt ))
 
   if [[ $cdf -gt $LOCK_TIME_MAX_DIFF ]] ; then
     show "We found lock file created more than 3 hours ago. It's too much time for usual build process."
@@ -333,17 +335,19 @@ hasParalellLock() {
 }
 
 createParalellLock() {
-  echo $$ > $BUILD_LOCK_PARALLEL
-  chmod 666 $BUILD_LOCK_PARALLEL
+  echo "$$" > $BUILD_LOCK_PARALLEL
+  chmod 666 "$BUILD_LOCK_PARALLEL"
 }
 
 removeParalellLock() {
+  local cur_user lock_owner
+
   if [[ -f $BUILD_LOCK_PARALLEL ]] ; then
-    local cur_user=$(whoami)
-    local lock_owner=$(stat $BUILD_LOCK_PARALLEL -c "%U")
+    cur_user=$(whoami)
+    lock_owner=$(stat "$BUILD_LOCK_PARALLEL" -c "%U")
 
     if [[ "$cur_user" == "$lock_owner" ]] ; then
-      rm -f $BUILD_LOCK_PARALLEL &> /dev/null
+      rm -f "$BUILD_LOCK_PARALLEL" &> /dev/null
     fi
   fi
 }
@@ -453,22 +457,17 @@ readInspecArgs() {
     argn="${arg[0]//-/_}"
 
     if [[ -z "${!argn}" && $INSPEC_ARGS\  =~ $argn\  ]] ; then
-      eval $argn='${arg[@]:1:99}'
+      eval "$argn=${arg[@]:1:99}"
     fi
-  done < <(grep "$INSPEC_ARG_PREFIX" $spec | sed "s/# \?$INSPEC_ARG_PREFIX//g" | tr -s " ")
+  done < <(grep "$INSPEC_ARG_PREFIX" "$spec" | sed "s/# \?$INSPEC_ARG_PREFIX//g" | tr -s " ")
 }
 
 processGithubSource() {
-  local github_user
-  local github_repo
-  local github_tag
-  local github_branch
-  local github_act
+  local github_user github_repo github_tag github_branch github_act
 
   local delim
 
-  local is_branch
-  local is_tag
+  local is_branch is_tag
 
   if [[ $branch ]] ; then
     is_branch=true
@@ -477,30 +476,30 @@ processGithubSource() {
   fi
 
   if [[ "$github" =~ (http|https) ]] ; then
-    github_user=$(echo $github | cut -f4 -d"/")
-    github_repo=$(echo $github | cut -f5 -d"/")
-    github_act=$(echo $github | cut -f6 -d"/")
+    github_user=$(echo "$github" | cut -f4 -d"/")
+    github_repo=$(echo "$github" | cut -f5 -d"/")
+    github_act=$(echo "$github" | cut -f6 -d"/")
 
     if [[ "$github_act" =~ (zip|tar)ball ]] ; then
-      github_tag=$(echo $github | cut -f7 -d"/")
+      github_tag=$(echo "$github" | cut -f7 -d"/")
 
       [[ $is_tag ]] && tag="$github_tag"
       [[ $is_branch ]] && branch="$github_tag"
     elif [[ "$github_act" == "tree" ]] ; then
-      github_branch=$(echo $github | cut -f7 -d"/")
+      github_branch=$(echo "$github" | cut -f7 -d"/")
       branch="$github_branch"
     fi
   else
-    if [[ "$github" =~ ":" ]] ; then
+    if [[ "$github" =~ : ]] ; then
       delim=":"
-    elif [[ "$github" =~ "/" ]] ; then
+    elif [[ "$github" =~ / ]] ; then
       delim="/"
     else
       return 1
     fi
 
-    github_user=$(echo $github | cut -f1 -d"$delim")
-    github_repo=$(echo $github | cut -f2 -d"$delim")
+    github_user=$(echo "$github" | cut -f1 -d"$delim")
+    github_repo=$(echo "$github" | cut -f2 -d"$delim")
 
     [[ -z "$github_user" || -z "$github_repo" ]] && return
   fi
@@ -509,18 +508,11 @@ processGithubSource() {
 }
 
 processBitbucketSource() {
-  local bitbucket_user
-  local bitbucket_repo
-  local bitbucket_tag
-  local bitbucket_branch
-  local bitbucket_act
+  local bitbucket_user bitbucket_repo bitbucket_tag bitbucket_branch bitbucket_act
 
   local delim
-
-  local is_branch
-  local is_tag
-  local is_git
-  local is_hg
+ 
+  local is_branch is_tag is_git is_hg
 
   if [[ $hg ]] ; then
     is_hg=true
@@ -529,12 +521,12 @@ processBitbucketSource() {
   fi
 
   if [[ "$bitbucket" =~ (http|https) ]] ; then
-    bitbucket_user=$(echo $bitbucket | cut -f4 -d"/")
-    bitbucket_repo=$(echo $bitbucket | cut -f5 -d"/")
-    bitbucket_act=$(echo $bitbucket | cut -f6 -d"/")
+    bitbucket_user=$(echo "$bitbucket" | cut -f4 -d"/")
+    bitbucket_repo=$(echo "$bitbucket" | cut -f5 -d"/")
+    bitbucket_act=$(echo "$bitbucket" | cut -f6 -d"/")
 
     if [[ "$bitbucket_act" == "get" ]] ; then
-      bitbucket_tag=$(echo $bitbucket | cut -f7 -d"/" | sed 's/.zip\|.tar.gz\|.tar.bz2//g')
+      bitbucket_tag=$(echo "$bitbucket" | cut -f7 -d"/" | sed 's/.zip\|.tar.gz\|.tar.bz2//g')
 
       if [[ $branch ]] ; then
         is_branch=true
@@ -544,8 +536,8 @@ processBitbucketSource() {
 
       [[ $is_tag ]] && tag="$bitbucket_tag"
       [[ $is_branch ]] && branch="$bitbucket_tag"
-    elif [[ "$bitbucket" =~ "?at=" ]] ; then
-      bitbucket_branch=$(echo $bitbucket | cut -f2 -d"=")
+    elif [[ "$bitbucket" =~ ?at= ]] ; then
+      bitbucket_branch=$(echo "$bitbucket" | cut -f2 -d"=")
 
       if [[ $tag ]] ; then
         is_tag=true
@@ -557,16 +549,16 @@ processBitbucketSource() {
       [[ $is_branch ]] && branch="$bitbucket_branch"
     fi
   else
-    if [[ "$bitbucket" =~ ":" ]] ; then
+    if [[ "$bitbucket" =~ : ]] ; then
       delim=":"
-    elif [[ "$bitbucket" =~ "/" ]] ; then
+    elif [[ "$bitbucket" =~ / ]] ; then
       delim="/"
     else
       return 1
     fi
 
-    bitbucket_user=$(echo $bitbucket | cut -f1 -d"$delim")
-    bitbucket_repo=$(echo $bitbucket | cut -f2 -d"$delim")
+    bitbucket_user=$(echo "$bitbucket" | cut -f1 -d"$delim")
+    bitbucket_repo=$(echo "$bitbucket" | cut -f2 -d"$delim")
 
     [[ -z "$bitbucket_user" || -z "$bitbucket_repo" ]] && return
   fi
