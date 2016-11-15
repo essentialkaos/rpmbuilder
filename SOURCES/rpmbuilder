@@ -1179,7 +1179,7 @@ localBuildProcess() {
 
       packages=$(cat "$tmp_file" | egrep "rpmbuild/(S|)RPMS" | cut -f2 -d" ")
 
-      rm -f $tmp_file
+      rm -f "$tmp_file"
 
       for package in $packages ; do
         package_name=$(basename "$package")
@@ -1489,13 +1489,15 @@ packSources() {
 
   popd &> /dev/null
 
-  rm -rf "$tmp_dir/$arch_name"
+  rm -rf "${tmp_dir:?}/$arch_name"
 
   show "All files packed to ${arch_name}.${arch_ext}." $GREEN
 }
 
 packSourcesFromGit() {
-  local spec=$(getAbsPath $1)
+  local spec
+  
+  spec=$(getAbsPath "$1")
 
   show "Fetching sources from git repo ${CL_CYAN}$git${CL_NORM}..."
 
@@ -1512,7 +1514,7 @@ packSourcesFromGit() {
   pushd "$tmp_dir" &> /dev/null
     git=$(renderMacros "$spec" "$git")
 
-    [[ $verbose ]] && git clone "$git" "$dir_name" | tee -a "$git_log" || git clone "$git" "$dir_name" &> $git_log
+    [[ $verbose ]] && git clone "$git" "$dir_name" | tee -a "$git_log" || git clone "$git" "$dir_name" &> "$git_log"
 
     if [[ $? -ne 0 ]] ; then
       show "Can't clone repo - error while cloning." $RED
@@ -1605,7 +1607,9 @@ packSourcesFromGit() {
 }
 
 packSourcesFromHg() {
-  local spec=$(getAbsPath $1)
+  local spec
+  
+  spec=$(getAbsPath "$1")
 
   show "Fetching sources from hg repo ${CL_CYAN}$hg${CL_NORM}..."
 
@@ -1715,7 +1719,9 @@ packSourcesFromHg() {
 }
 
 packSourcesFromBzr() {
-  local spec=$(getAbsPath "$1")
+  local spec
+  
+  spec=$(getAbsPath "$1")
 
   show "Fetching sources from bzr repo ${CL_CYAN}${bzr}${CL_NORM}..."
 
@@ -1793,19 +1799,22 @@ packSourcesFromBzr() {
 }
 
 packSourcesFromSvn() {
-  local spec=$(getAbsPath $1)
+  local spec
+  
+  spec=$(getAbsPath $1)
 
   show "Fetching sources from svn repo ${CL_CYAN}$svn${CL_NORM}..."
 
-  local sources=($(getSpecValue "$MACRO_SOURCE" "$spec"))
-  local source_name=$(getArchName ${sources[0]})
-  local source_ext=$(getArchExt ${sources[0]})
+  local sources source_name source_ext svn_opts svn_log abs_dir_path
+
+  sources=($(getSpecValue "$MACRO_SOURCE" "$spec"))
+  source_name=$(getArchName ${sources[0]})
+  source_ext=$(getArchExt ${sources[0]})
 
   svn=$(renderMacros "$spec" "$svn")
 
-  local svn_log="$tmp_dir/svn.log"
-
-  local svn_opts="--non-interactive --no-auth-cache"
+  svn_log="$tmp_dir/svn.log"
+  svn_opts="--non-interactive --no-auth-cache"
 
   [[ $svn_user ]] && svn_opts="$svn_opts --username $svn_user"
   [[ $svn_pass ]] && svn_opts="$svn_opts --password $svn_pass"
@@ -1827,18 +1836,18 @@ packSourcesFromSvn() {
     fi
   fi
 
-  pushd $tmp_dir &> /dev/null
+  pushd "$tmp_dir" &> /dev/null
     if [[ $path ]] ; then
       if [[ $verbose ]] ; then
-        svn checkout $svn_url ${source_name}_tmp $svn_opts | tee -a $svn_log
+        svn checkout "$svn_url" "${source_name}_tmp" $svn_opts | tee -a "$svn_log"
       else
-        svn checkout $svn_url ${source_name}_tmp $svn_opts &> $svn_log
+        svn checkout "$svn_url" "${source_name}_tmp" "$svn_opts" &> "$svn_log"
       fi
     else
       if [[ $verbose ]] ; then
-        svn checkout $svn_url ${source_name} $svn_opts | tee -a $svn_log
+        svn checkout "$svn_url" "${source_name}" $svn_opts | tee -a "$svn_log"
       else
-        svn checkout $svn_url ${source_name} $svn_opts &> $svn_log
+        svn checkout "$svn_url" "${source_name}" $svn_opts &> "$svn_log"
       fi
     fi
 
@@ -1847,27 +1856,27 @@ packSourcesFromSvn() {
 
       if [[ ! $verbose ]] ; then
         show "\nLast ${REPO_LOG_QUOTE_SIZE} lines from log ($svn_log):"
-        tail -${REPO_LOG_QUOTE_SIZE} $svn_log
+        tail -${REPO_LOG_QUOTE_SIZE} "$svn_log"
         show ""
       fi
 
       doExit $ERROR_SOURCE
     else
-      rm -f $svn_log &> /dev/null
+      rm -f "$svn_log" &> /dev/null
 
       if [[ $path ]] ; then
-        if [[ ! -d ${source_name}_tmp/$path ]] ; then
+        if [[ ! -d "${source_name}_tmp/$path" ]] ; then
           show "Can't find path [$path] in svn repository." $RED
           doExit $ERROR_SOURCE
         else
-          mv ${source_name}_tmp/$path $source_name
-          rm -rf ${source_name}_tmp
+          mv "${source_name}_tmp/$path" "$source_name"
+          rm -rf "${source_name}_tmp"
         fi
       fi
 
-      find $source_name -type d -name ".svn" -exec rm -rf {} \; &> /dev/null
+      find "$source_name" -type d -name ".svn" -exec rm -rf {} \; &> /dev/null
 
-      local abs_dir_path=$(getAbsPath $tmp_dir/$source_name)
+      abs_dir_path=$(getAbsPath "$tmp_dir/$source_name")
 
       packDir "$abs_dir_path" "$source_ext"
 
@@ -1882,13 +1891,14 @@ packSourcesFromSvn() {
 processSpec() {
   local spec="$1"
 
-  local source_list=$(getSpecValue "$MACRO_SOURCE" "$spec")
-  local patch_list=$(getSpecValue "$MACRO_PATCH" "$spec")
+  local source_list patch_list files source_file source_num file_name found_source
 
-  local files="$source_list $patch_list"
+  source_list=$(getSpecValue "$MACRO_SOURCE" "$spec")
+  patch_list=$(getSpecValue "$MACRO_PATCH" "$spec")
 
-  local source_file
-  local source_num=0
+  files="$source_list $patch_list"
+
+  source_num=0
 
   for source_file in $files ; do
     if [[ $svn || $git || $hg || $bzr ]] ; then
@@ -1896,21 +1906,20 @@ processSpec() {
     fi
 
     if [[ "$source_file" =~ (http|https|ftp) ]] ; then
-      local file_name=$(basename $source_file)
-
-      local found_source=$(findSource "$file_name")
+      file_name=$(basename "$source_file")
+      found_source=$(findSource "$file_name")
 
       if [[ $found_source ]] ; then
         show "File ${CL_CYAN}$file_name${CL_NORM} listed in spec and will be used for build."
-        cp $found_source $tmp_dir
-      elif [[ -f $tmp_dir/$file_name ]] ; then
+        cp "$found_source" "$tmp_dir"
+      elif [[ -f "$tmp_dir/$file_name" ]] ; then
         show "File ${CL_CYAN}$file_name${CL_NORM} listed in spec and will be used for build."
       elif [[ $dlcache ]] ; then
-        if [[ -f $dlcache/$file_name ]] ; then
+        if [[ -f "$dlcache/$file_name" ]] ; then
           show "File ${CL_CYAN}$file_name${CL_NORM} listed in spec and will be used for build."
-          cp $dlcache/$file_name $tmp_dir
+          cp "$dlcache/$file_name" "$tmp_dir"
         else
-          show "Downloading source file ${CL_CYAN}$source_file${CL_NORM}..."
+          show "Downloading source file ${CL_CYAN}${source_file}${CL_NORM}..."
 
           downloadSource "$source_file" "$dlcache"
 
@@ -1919,10 +1928,10 @@ processSpec() {
             doExit $ERROR_SOURCE
           fi
 
-          cp $dlcache/$file_name $tmp_dir
+          cp "$dlcache/$file_name" "$tmp_dir"
         fi
       else
-        show "Downloading source file ${CL_CYAN}$source_file${CL_NORM}..."
+        show "Downloading source file ${CL_CYAN}${source_file}${CL_NORM}..."
 
         downloadSource "$source_file" "$tmp_dir"
 
@@ -1932,36 +1941,38 @@ processSpec() {
         fi
       fi
     else
-      if [[ -f $tmp_dir/$source_file ]] ; then
-        show "File ${CL_CYAN}$source_file${CL_NORM} listed in spec and will be used for build."
-        source_num=$(($source_num + 1)) && continue
+      if [[ -f "$tmp_dir/$source_file" ]] ; then
+        show "File ${CL_CYAN}${source_file}${CL_NORM} listed in spec and will be used for build."
+        source_num=$(( source_num + 1 )) && continue
       fi
 
-      local source_ext=$(getArchExt $source_file)
-      local source_name=$(getArchName $source_file)
-      local found_dir=$(findSource "$source_name" true)
-      local found_source=$(findSource "$source_file")
+      local source_ext source_name found_dir found_source
+
+      source_ext=$(getArchExt "$source_file")
+      source_name=$(getArchName "$source_file")
+      found_dir=$(findSource "$source_name" true)
+      found_source=$(findSource "$source_file")
 
       if [[ $source_ext && $found_dir ]] ; then
-        show "File ${CL_CYAN}$source_file${CL_NORM} listed in spec and will be created from sources directory."
+        show "File ${CL_CYAN}${source_file}${CL_NORM} listed in spec and will be created from sources directory."
 
         packDir "$found_dir/$source_name" "$source_ext"
-        mv $found_dir/$source_file $tmp_dir
+        mv "$found_dir/$source_file" "$tmp_dir"
 
-        source_num=$(($source_num + 1)) && continue
+        source_num=$(( source_num + 1 )) && continue
       elif [[ $found_source ]] ; then
-        show "File ${CL_CYAN}$source_file${CL_NORM} listed in spec and will be used for build."
+        show "File ${CL_CYAN}${source_file}${CL_NORM} listed in spec and will be used for build."
 
-        cp $found_source $tmp_dir
+        cp "$found_source" "$tmp_dir"
 
-        source_num=$(($source_num + 1)) && continue
+        source_num=$(( source_num + 1 )) && continue
       else
         show "Can't use file $source_file for build - file not found in sources directory." $RED
         doExit $ERROR_SOURCE
       fi
     fi
 
-    source_num=$(($source_num + 1))
+    source_num=$(( source_num + 1 ))
   done
 }
 
