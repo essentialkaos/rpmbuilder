@@ -1728,8 +1728,8 @@ packSourcesFromBzr() {
   local sources source_name source_ext dir_name bzr_log bzr_opts abs_dir_path
 
   sources=($(getSpecValue "$MACRO_SOURCE" "$spec"))
-  source_name=$(getArchName ${sources[0]})
-  source_ext=$(getArchExt ${sources[0]})
+  source_name=$(getArchName "${sources[0]}")
+  source_ext=$(getArchExt "${sources[0]}")
 
   bzr=$(renderMacros "$spec" "$bzr")
 
@@ -1801,7 +1801,7 @@ packSourcesFromBzr() {
 packSourcesFromSvn() {
   local spec
   
-  spec=$(getAbsPath $1)
+  spec=$(getAbsPath "$1")
 
   show "Fetching sources from svn repo ${CL_CYAN}$svn${CL_NORM}..."
 
@@ -1880,7 +1880,7 @@ packSourcesFromSvn() {
 
       packDir "$abs_dir_path" "$source_ext"
 
-      rm -rf $source_name
+      rm -rf "$source_name"
     fi
 
   popd &> /dev/null
@@ -1980,10 +1980,10 @@ findSource() {
   local name="$1"
   local get_dir="$2"
 
-  local dir
+  local dir abs_dir
 
   if [[ $source_dir ]] ; then
-    if [[ -r $source_dir/$name ]] ; then
+    if [[ -r "$source_dir/$name" ]] ; then
       if [[ $get_dir ]] ; then
         echo "$source_dir" && return 0
       else
@@ -1992,9 +1992,9 @@ findSource() {
     fi
   else
     for dir in $SOURCE_PATHS ; do
-      local abs_dir=$(getAbsPath "$dir")
+      abs_dir=$(getAbsPath "$dir")
 
-      if [[ -r $abs_dir/$name ]] ; then
+      if [[ -r "$abs_dir/$name" ]] ; then
         if [[ $get_dir ]] ; then
           echo "$abs_dir" && return 0
         else
@@ -2010,21 +2010,21 @@ findSource() {
 copySourcesToBuildDir() {
   local spec="$1"
 
-  local has_errors=""
-  local rpmbuild_dir=$(getRPMBuildDir)
-  local src_dir="$rpmbuild_dir/SOURCES"
-  local specs_dir="$rpmbuild_dir/SPECS"
+  local rpmbuild_dir src_dir specs_dir source_file source_files source_file_name has_errors
 
-  if [[ -d $src_dir ]] ; then
-    local source_files=$(find $tmp_dir -maxdepth 1 -type f)
+  rpmbuild_dir=$(getRPMBuildDir)
+  src_dir="$rpmbuild_dir/SOURCES"
+  specs_dir="$rpmbuild_dir/SPECS"
+
+  if [[ -d "$src_dir" ]] ; then
+    source_files=$(find "$tmp_dir" -maxdepth 1 -type f)
 
     for source_file in $source_files ; do
-      cp $source_file $src_dir &> /dev/null
+      cp "$source_file" "$src_dir" &> /dev/null
 
       if [[ $? -ne 0 ]] ; then
-        local source_file_name=$(basename $source_file)
-        show "Can't copy source file $source_file_name to directory $src_dir - error while
-        copy process." $RED
+        source_file_name=$(basename "$source_file")
+        show "Can't copy source file $source_file_name to directory $src_dir - error while copy process." $RED
         doExit $ERROR_SOURCE
       fi
     done
@@ -2034,7 +2034,7 @@ copySourcesToBuildDir() {
   fi
 
   if [[ -d $specs_dir ]] ; then
-    cp $spec $specs_dir
+    cp "$spec" "$specs_dir"
 
     if [[ $? -ne 0 ]] ; then
       show "Can't copy spec file - error while copy process."
@@ -2050,21 +2050,23 @@ copySourcesToBuildDir() {
 
 uploadSourcesToRemoteHost() {
   local spec="$1"
-  local rmpbuild_dir=$(getRPMBuildDir)
 
-  local source_files=$(find $tmp_dir -maxdepth 1 -type f)
+  local source_file source_files rmpbuild_dir
+
+  rmpbuild_dir=$(getRPMBuildDir)
+  source_files=$(find "$tmp_dir" -maxdepth 1 -type f)
 
   for source_file in $source_files ; do
-    local source_file_name=$(basename $source_file)
+    source_file_name=$(basename "$source_file")
 
-    showt "${CL_CYAN}$source_file_name${CL_NORM}" 4
+    showt "${CL_CYAN}${source_file_name}${CL_NORM}" 4
 
     scpCommand "$source_file" "$user@$host:$rmpbuild_dir/SOURCES/" &> $verb_output
 
     show "DONE" $GREEN
   done
 
-  showt "${CL_CYAN}$spec${CL_NORM}" 4
+  showt "${CL_CYAN}${spec}${CL_NORM}" 4
 
   if [[ $bump ]] ; then
     cp $spec $tmp
@@ -2072,7 +2074,7 @@ uploadSourcesToRemoteHost() {
     releaseBump "$tmp/$spec"
     scpCommand "$tmp/$spec" "$user@$host:$rmpbuild_dir/SPECS/" &> $verb_output
 
-    rm -f $tmp/$spec
+    rm -f "$tmp/$spec"
   else
     scpCommand "$spec" "$user@$host:$rmpbuild_dir/SPECS/" &> $verb_output
   fi
@@ -2086,10 +2088,12 @@ downloadFromRemoteHost() {
 
   [[ ! $dir ]] && dir="$CWD"
 
-  local file_name=$(basename $file)
+  local file_name mod_ts
+
+  file_name=$(basename "$file")
 
   if [[ -f $dir/$file_name ]] ; then
-    local mod_ts=$(stat -c "%Y" $dir/$file_name)
+    mod_ts=$(stat -c "%Y" "$dir/$file_name")
 
     if [[ $mod_ts -ge $build_start && $mod_ts -le $build_end ]] ; then
       return 1
@@ -2104,39 +2108,42 @@ downloadFromRemoteHost() {
 cleanPackDir() {
   local dir="$1"
 
-  find $dir -type d -name ".git" -exec rm -rf {} \; 2> /dev/null
-  find $dir -type d -name ".hg" -exec rm -rf {} \; 2> /dev/null
-  find $dir -type d -name ".svn" -exec rm -rf {} \; 2> /dev/null
-  find $dir -type d -name ".bzr" -exec rm -rf {} \; 2> /dev/null
+  find "$dir" -type d -name ".git" -exec rm -rf {} \; 2> /dev/null
+  find "$dir" -type d -name ".hg" -exec rm -rf {} \; 2> /dev/null
+  find "$dir" -type d -name ".svn" -exec rm -rf {} \; 2> /dev/null
+  find "$dir" -type d -name ".bzr" -exec rm -rf {} \; 2> /dev/null
 
-  find $dir -type f -name ".gitignore" -exec rm -f {} \; 2> /dev/null
-  find $dir -type f -name ".hgignore" -exec rm -f {} \; 2> /dev/null
-  find $dir -type f -name ".bzrignore" -exec rm -f {} \; 2> /dev/null
-  find $dir -type f -name ".gitignore" -exec rm -f {} \; 2> /dev/null
+  find "$dir" -type f -name ".gitignore" -exec rm -f {} \; 2> /dev/null
+  find "$dir" -type f -name ".hgignore" -exec rm -f {} \; 2> /dev/null
+  find "$dir" -type f -name ".bzrignore" -exec rm -f {} \; 2> /dev/null
+  find "$dir" -type f -name ".gitignore" -exec rm -f {} \; 2> /dev/null
 }
 
 packDir() {
   local dir="$1"
   local ext="$2"
-  local dir_name=$(basename $dir)
-  local parent_dir=$(dirname $dir)
+  
+  local dir_name parent_dir arch_name
+
+  dir_name=$(basename "$dir")
+  parent_dir=$(dirname "$dir")
 
   if [[ $3 ]] ; then
-    local arch_name="$3"
+    arch_name="$3"
   else
-    local arch_name="$dir_name"
+    arch_name="$dir_name"
   fi
 
-  pushd $parent_dir &> /dev/null
+  pushd "$parent_dir" &> /dev/null
 
     if [[ "$ext" == "tar.gz" || "$ext" == "tgz" ]] ; then
-      tar czfv $arch_name.$ext $dir_name &> $verb_output
+      tar czfv "$arch_name.$ext" "$dir_name" &> $verb_output
     elif [[ "$ext" == "tar.bz2" || "$ext" == "tbz2" ]]; then
-      tar cjfv $arch_name.$ext $dir_name &> $verb_output
+      tar cjfv "$arch_name.$ext" "$dir_name" &> $verb_output
     elif [[ "$ext" == "tar.bz" || "$ext" == "tbz" ]]; then
-      tar cjfv $arch_name.$ext $dir_name &> $verb_output
+      tar cjfv "$arch_name.$ext" "$dir_name" &> $verb_output
     elif [[ "$ext" == "tar.xz" || "$ext" == "txz" ]] ; then
-      tar cf - $dir_name | xz -9 -c - > $arch_name.$ext
+      tar cf - "$dir_name" | xz -9 -c - > "$arch_name.$ext"
     else
       show "Error! Unknown archive type." $RED
       doExit $ERROR_SOURCE
@@ -2149,18 +2156,20 @@ downloadSource() {
   local url="$1"
   local dir="$2"
 
-  local file_name=$(basename $url)
+  local file_name start end time_diff
+
+  file_name=$(basename "$url")
 
   if ! isAccessibleUrl "$url" ; then
     show "Can't download file $file_name - server return error code." $RED
     doExit $ERROR_SOURCE
   else
-    local start=$(now)
+    start=$(now)
 
-    curl -L --max-redirs 10 --progress-bar $url -o $dir/$file_name
+    curl -L --max-redirs 10 --progress-bar "$url" -o "$dir/$file_name"
 
-    local end=$(now)
-    local time_diff=$(($end - $start))
+    end=$(now)
+    time_diff=$(( end - start ))
 
     if [[ ! $tmuxl && ! $dlcache && $time_diff -gt $LONG_DOWNLOADING ]] ; then
       show ""
@@ -2175,8 +2184,10 @@ getSpecValue() {
   local value="$1"
   local spec="$2"
 
-  local spec_header=$(grep -v "^#" $spec | grep -n "%prep" | head -1 | cut -f1 -d":")
-  local result=$(grep -v "^#" $spec | head -$spec_header | egrep "$value*.*:" | sed 's/[\t]/ /g' | tr -s " " | cut -f2-99 -d" " | sed 's/,/ /g')
+  local spec_header result
+
+  spec_header=$(grep -v "^#" "$spec" | grep -n "%prep" | head -1 | cut -f1 -d":")
+  result=$(grep -v "^#" "$spec" | head "-$spec_header" | egrep "$value*.*:" | sed 's/[\t]/ /g' | tr -s " " | cut -f2-99 -d" " | sed 's/,/ /g')
 
   result=$(renderMacros "$spec" "$result")
   result=$(echo "$result" | sed 's/ = /=/g' | sed 's/ >= />=/g' | sed 's/ > />/g')
