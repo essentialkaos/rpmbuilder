@@ -19,6 +19,6 @@ engines:
 
 ratings:
    paths:
-     - "SOURCES/rpmbuilder"
-     - "SOURCES/rpmunbuilder"
-     - "SOURCES/buildmon"
+     - SOURCES/rpmbuilder
+     - SOURCES/rpmunbuilder
+     - SOURCES/buildmon
