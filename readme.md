@@ -1,16 +1,16 @@
-### RPMBuilder
+## RPMBuilder [![Code Climate](https://codeclimate.com/github/essentialkaos/rpmbuilder/badges/gpa.svg)](https://codeclimate.com/github/essentialkaos/rpmbuilder)
 
 `rpmbuilder` is RPM package build helper
 
-#### Usage demo
+### Usage demo
 
 Building redis rpm on three remote build nodes:
 
 [![asciicast](https://essentialkaos.com/github/rpmbuilder-115.gif)](https://asciinema.org/a/90959)
 
-#### Installation
+### Installation
 
-###### From ESSENTIAL KAOS Public repo for RHEL6/CentOS6
+##### From ESSENTIAL KAOS Public repo for RHEL6/CentOS6
 
 ```
 sudo yum install -y http://release.yum.kaos.io/i386/kaos-repo-6.8-0.el6.noarch.rpm
@@ -26,7 +26,7 @@ sudo passwd builder
 sudo service buildmon start
 ```
 
-#### Usage
+### Usage
 
 ```
 Usage: rpmbuilder <spec-file> <options>
@@ -148,10 +148,10 @@ Other:
 
 ```
 
-#### Contributing
+### Contributing
 
 Before contributing to this project please read our [Contributing Guidelines](https://github.com/essentialkaos/contributing-guidelines#contributing-guidelines).
 
-#### License
+### License
 
 [EKOL](https://essentialkaos.com/ekol)
