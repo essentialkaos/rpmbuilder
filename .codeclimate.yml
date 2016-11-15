@@ -14,6 +14,8 @@ engines:
         enabled: false
       SC2143:
         enabled: false
+      SC2002:
+        enabled: false
 
 ratings:
    paths:

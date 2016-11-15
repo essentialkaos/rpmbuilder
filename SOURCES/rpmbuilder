@@ -411,7 +411,7 @@ checkArgs() {
     doExit $ERROR_DEPS
   fi
 
-  if ! checkDeps "rpmbuild rpmlint" && [[ ! $remote ]] ; then
+  if ! checkDeps "rpmbuild" "rpmlint" && [[ ! $remote ]] ; then
     show "Can't start local build process -  you must install rpmbuild and rpmlint first." $RED
     doExit $ERROR_DEPS
   fi
@@ -432,7 +432,7 @@ checkArgs() {
   fi
 
   if [[ $bump ]] ; then
-    if ! checkDeps "rpmdev-packager rpmdev-bumpspec" ; then
+    if ! checkDeps "rpmdev-packager" "rpmdev-bumpspec" ; then
       show "Can't start build process - for automatic release bumping you must install
       rpmdev-bumpspec and rpmdev-packager (from rpmdevtools package) first." $RED
       doExit $ERROR_DEPS
@@ -606,10 +606,10 @@ parseSourceURL() {
 }
 
 makeTemp() {
-  tmp_file=$(mktemp $tmp/$tmp_file)
-  tmp_dir=$(mktemp -d $tmp/$tmp_dir)
+  tmp_file=$(mktemp "${tmp:?}/$tmp_file")
+  tmp_dir=$(mktemp -d "${tmp:?}/$tmp_dir")
 
-  if [[ ! -f $tmp_file || ! -d $tmp_dir ]] ; then
+  if [[ ! -f "$tmp_file" || ! -d "$tmp_dir" ]] ; then
     show "Can't start build process - temp file can't be created." $RED
     doExit $ERROR_UNKNOWN
   fi
@@ -630,12 +630,12 @@ downloadRemoteSources() {
 
   showSeparator "DOWNLOADING"
 
-  local source_file source_list source_file_name patch_list files
+  local source_file sources_list source_file_name patches_list files
 
-  source_list=$(getSpecValue "$MACRO_SOURCE" "$spec")
-  patch_list=$(getSpecValue "$MACRO_PATCH" "$spec")
+  sources_list=$(getSpecValue "$MACRO_SOURCE" "$spec")
+  patches_list=$(getSpecValue "$MACRO_PATCH" "$spec")
 
-  files="$source_list $patch_list"
+  files="$sources_list $patches_list"
 
   for source_file in $files ; do
     if [[ "$source_file" =~ ^(http|https|ftp) ]] ; then
@@ -1476,9 +1476,14 @@ packSources() {
   mkdir -p "$tmp_dir/$arch_name"
 
   if [[ ! $relative_pack ]] ; then
-    cp -r "$pack" "$tmp_dir/$arch_name" &> /dev/null
+    cp -r $pack "$tmp_dir/$arch_name" &> /dev/null
   else
-    cp -r --parents "$pack" "$tmp_dir/$arch_name" &> /dev/null
+    cp -r --parents $pack "$tmp_dir/$arch_name" &> /dev/null
+  fi
+
+  if [[ $? -ne 0 ]] ; then
+    show "Can't copy source files to temporary ditrectory" $RED
+    doExit 1
   fi
 
   cleanPackDir "$tmp_dir/$arch_name"
@@ -2563,7 +2568,7 @@ statusObserver() {
   local prev_status status
 
   while : ; do
-    status=$(grep "Executing" $"tmp_file" | tail -1 | perl -ne '/Executing\(%(\w*)\)/ && print "$1\n"')
+    status=$(grep "Executing" "$tmp_file" | tail -1 | perl -ne '/Executing\(%(\w*)\)/ && print "$1\n"')
 
     if [[ "$status" == "doc" ]] ; then
       [[ $(grep "Checking for unpackaged" "$tmp_file") ]] && status="packaging"
