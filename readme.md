@@ -131,16 +131,16 @@ Build options:
 
 Arguments passing:
 
-  --with, -w params         Pass conditional parameters into a rpmbuild (mergeable)
-  --without, -W params      Pass conditional parameters into a rpmbuild (mergeable)
-  --define, -D "<macro>"    Define MACRO with value (exist macro will be not redefined) (mergeable)
+  --with, -w params             Pass conditional parameters into a rpmbuild (mergeable)
+  --without, -W params          Pass conditional parameters into a rpmbuild (mergeable)
+  --define, -D "macro=value"    Define MACRO with value (exist macro will be not redefined) (mergeable)
 
   Examples:
 
     rpmbuilder package.spec --with ssl --with ldap
     rpmbuilder package.spec -w ssl -W ldap
     rpmbuilder package.spec --with "ssl ldap"
-    rpmbuilder package.spec --define="_tmp_dir /some/dir"
+    rpmbuilder package.spec --define "install_dir=/some/dir" --define "service_user=someone"
 
   More info: http://rpm5.org/docs/api/conditionalbuilds.html
 

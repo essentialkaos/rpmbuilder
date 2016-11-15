@@ -2319,11 +2319,11 @@ getBuildArgs() {
   [[ $without ]] && args=$(getBuildArgsWithout "$args")
   [[ $verbose ]] && args="$args --verbose"
 
-  local def
+  local macro_def
 
   if [[ $define ]] ; then
-    for def in $define ; do
-      args="$args --define=\"$def\""
+    for macro_def in $define ; do
+      args="$args --define=\"${macro_def/=/ }\""
     done
   fi
 
@@ -2735,16 +2735,16 @@ usage() {
   show ""
   show "Arguments passing:" $BOLD
   show ""
-  show "  ${CL_GREEN}--with, -w${CL_NORM} ${CL_GREY}params${CL_NORM}         Pass conditional parameters into a rpmbuild ${CL_DARK}(mergeable)${CL_NORM}"
-  show "  ${CL_GREEN}--without, -W${CL_NORM} ${CL_GREY}params${CL_NORM}      Pass conditional parameters into a rpmbuild ${CL_DARK}(mergeable)${CL_NORM}"
-  show "  ${CL_GREEN}--define, -D${CL_NORM} ${CL_GREY}\"<macro>\"${CL_NORM}    Define MACRO with value (exist macro will be not redefined) ${CL_DARK}(mergeable)${CL_NORM}"
+  show "  ${CL_GREEN}--with, -w${CL_NORM} ${CL_GREY}params${CL_NORM}             Pass conditional parameters into a rpmbuild ${CL_DARK}(mergeable)${CL_NORM}"
+  show "  ${CL_GREEN}--without, -W${CL_NORM} ${CL_GREY}params${CL_NORM}          Pass conditional parameters into a rpmbuild ${CL_DARK}(mergeable)${CL_NORM}"
+  show "  ${CL_GREEN}--define, -D${CL_NORM} ${CL_GREY}\"macro=value\"${CL_NORM}    Define MACRO with value (exist macro will be not redefined) ${CL_DARK}(mergeable)${CL_NORM}"
   show ""
   show "  Examples:" $BOLD
   show ""
   show "    rpmbuilder package.spec --with ssl --with ldap"
   show "    rpmbuilder package.spec -w ssl -W ldap"
   show "    rpmbuilder package.spec --with \"ssl ldap\""
-  show "    rpmbuilder package.spec --define=\"_tmp_dir /some/dir\""
+  show "    rpmbuilder package.spec --define \"install_dir=/some/dir\" --define \"service_user=someone\""
   show ""
   show "  ${CL_BOLD}More info:${CL_NORM} http://rpm5.org/docs/api/conditionalbuilds.html"
   show ""
