@@ -45,7 +45,7 @@ sudo service buildmon start
 ### Usage
 
 ```
-Usage: rpmbuilder <spec-file> <options>
+Usage: rpmbuilder {spec-file} {options}
 
 Spec file:
 
@@ -55,33 +55,33 @@ Spec file:
 
 Source packaging:
 
-  --pack, -p files                    Pack specified files to tgz archive with default source name (mergeable)
-  --relative-pack, -R                 Use relative path in source archive instead of absolute
-  --source-dir, -sd path              Path to directory which contains source files specified in spec file
-  --source-list, -sl file             Path to file which contains list of source files specified in spec file,
-                                      and will be packed to tgz archive with default source name
-  --dlcache, -dc path                 Path to directory for downloads caching
-  --download, -dl path                Download all remote sources to specified directory
+  --pack, -p files           Pack specified files to tgz archive with default source name (mergeable)
+  --relative-pack, -R        Use relative path in source archive instead of absolute
+  --source-dir, -sd path     Path to directory which contains source files specified in spec file
+  --source-list, -sl file    Path to file which contains list of source files specified in spec file,
+                             and will be packed to tgz archive with default source name
+  --dlcache, -dc path        Path to directory for downloads caching
+  --download, -dl path       Download all remote sources to specified directory
 
-  --git url                           Fetch sources from Git repository (macro supported)
-  --svn url                           Fetch sources from SVN repository (macro supported)
-  --hg url                            Fetch sources from Mercurial repository (macro supported)
-  --bzr url                           Fetch sources from Bazar repository (macro supported)
-  --path, -rp path                    Path to directory with sources in repo
-  --branch, -rb name                  Use specified repository branch (macro supported)
-  --revision, -rr name                Use specified revision
-  --tag, -rt name                     Use specified tag (macro supported)
-  --svn-user, -su username            Username for access to svn repository
-  --svn-pass, -sp password            Password for access to svn repository
+  --git url                   Fetch sources from Git repository (macro supported)
+  --svn url                   Fetch sources from SVN repository (macro supported)
+  --hg url                    Fetch sources from Mercurial repository (macro supported)
+  --bzr url                   Fetch sources from Bazar repository (macro supported)
+  --path, -rp path            Path to directory with sources in repo
+  --branch, -rb name          Use specified repository branch (macro supported)
+  --revision, -rr name        Use specified revision
+  --tag, -rt name             Use specified tag (macro supported)
+  --svn-user, -su username    Username for access to svn repository
+  --svn-pass, -sp password    Password for access to svn repository
 
-  --github, -gh url                   Fetch sources from github.com repository by url (macro supported)
-  --github, -gh user>:<project        Fetch sources from github.com repository by user and project
-  --github, -gh user>/<project        Fetch sources from github.com repository by user and project
-  --bitbucket, -bb url                Fetch sources from bitbucket.org repository by url (macro supported)
-  --bitbucket, -bb user>:<project     Fetch sources from bitbucket.org repository by user and project
-  --bitbucket, -bb user>/<project     Fetch sources from bitbucket.org repository by user and project
-  --launchpad, -lp url                Fetch sources from launchpad.net repository by url (macro supported)
-  --launchpad, -lp project-name       Fetch sources from launchpad.net repository by project name
+  --github, -gh url                  Fetch sources from github.com repository by url (macro supported)
+  --github, -gh user:project         Fetch sources from github.com repository by user and project
+  --github, -gh user/project         Fetch sources from github.com repository by user and project
+  --bitbucket, -bb url               Fetch sources from bitbucket.org repository by url (macro supported)
+  --bitbucket, -bb user>:<project    Fetch sources from bitbucket.org repository by user and project
+  --bitbucket, -bb user/project      Fetch sources from bitbucket.org repository by user and project
+  --launchpad, -lp url               Fetch sources from launchpad.net repository by url (macro supported)
+  --launchpad, -lp project-name      Fetch sources from launchpad.net repository by project name
 
   Examples:
 
@@ -104,14 +104,14 @@ Dependencies install:
 
 Remote build:
 
-  --parallel, -P                       Parallel build on all build servers in same time
-  --remote, -r                         Build rpm package on remote server
-  --remote, -r user:pass@host          Build rpm package on the remote server with specified host, user and pass
-  --remote, -r file                    Build rpm package on the remote servers listed in specified file
-  --host, -hh host                     Remote host ip or domain name
-  --user, -uu user                     Remote host user
-  --pass, -pp password                 Password for specified user
-  --key, -kk file                      Path to private key for specified user
+  --parallel, -P                 Parallel build on all build servers in same time
+  --remote, -r                   Build rpm package on remote server
+  --remote, -r user:pass@host    Build rpm package on the remote server with specified host, user and pass
+  --remote, -r file              Build rpm package on the remote servers listed in specified file
+  --host, -hh host               Remote host ip or domain name
+  --user, -uu user               Remote host user
+  --pass, -pp password           Password for specified user
+  --key, -kk file                Path to private key for specified user
 
   Examples:
 
@@ -131,9 +131,9 @@ Build options:
 
 Arguments passing:
 
-  --with, -w params                    Pass conditional parameters into a rpmbuild (mergeable)
-  --without, -W params                 Pass conditional parameters into a rpmbuild (mergeable)
-  --define, -D "<macro>"               Define MACRO with value (exist macro will be not redefined)
+  --with, -w params         Pass conditional parameters into a rpmbuild (mergeable)
+  --without, -W params      Pass conditional parameters into a rpmbuild (mergeable)
+  --define, -D "<macro>"    Define MACRO with value (exist macro will be not redefined) (mergeable)
 
   Examples:
 
@@ -146,21 +146,21 @@ Arguments passing:
 
 Spec validation:
 
-  --no-lint, -0                        Don't check spec file before package build
-  --strict, -1                         Don't build package if linter found errors in spec file
-  --pedantic, -2                       Don't build package if linter found errors or warnings in spec file
+  --no-lint, -0     Don't check spec file before package build
+  --strict, -1      Don't build package if linter found errors in spec file
+  --pedantic, -2    Don't build package if linter found errors or warnings in spec file
 
 Other:
 
-  --sign, -s                           Sign package after build
-  --dest, --dest-dir, -d path          Save builded packages to specified directory
-  --keep-log, -kl                      Save build log after unsuccessful build
-  --bump, -b                           Bump release in spec file after successful package build
-  --bump-comment, -bc comment          Comment which will be added while release bump
-  --tmp path                           Path to temporary directory
-  --verbose, -V                        Verbose output
-  --help, --usage, -h                  Show this help message
-  --ver, --version, -v                 Show information about version
+  --sign, -s                     Sign package after build
+  --dest, --dest-dir, -d path    Save builded packages to specified directory
+  --keep-log, -kl                Save build log after unsuccessful build
+  --bump, -b                     Bump release in spec file after successful package build
+  --bump-comment, -bc comment    Comment which will be added while release bump
+  --tmp path                     Path to temporary directory
+  --verbose, -V                  Verbose output
+  --help, --usage, -h            Show this help message
+  --ver, --version, -v           Show information about version
 
 ```
 
