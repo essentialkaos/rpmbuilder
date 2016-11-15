@@ -163,7 +163,7 @@ checkPerms() {
 ####################################################################
 
 checkDeps() {
-  for app in $@ ; do
+  for app in "$@" ; do
     type -P "$app" &> /dev/null
 
     if [[ $? -eq 1 ]] ; then

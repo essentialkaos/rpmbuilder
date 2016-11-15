@@ -188,7 +188,7 @@ main() {
   checkArgs
 
   if [[ $parallel && $(wc -l "$remote" | cut -f1 -d" ") -gt 1 ]] ; then
-    parallelBuild $@
+    parallelBuild "$@"
   else
     local start_ts
     start_ts=$(now)
@@ -261,7 +261,7 @@ parallelBuild() {
   local args=""
   local arg
 
-  for arg in $@ ; do
+  for arg in "$@" ; do
     [[ "$arg" == "-r" ]] && continue
     [[ "$arg" == "--remote" ]] && continue
     [[ "$arg" == "-P" ]] && continue
@@ -2478,7 +2478,7 @@ getURLVars() {
 checkDeps() {
   local app
 
-  for app in $@ ; do
+  for app in "$@" ; do
     type -P "$app" &> /dev/null
     [[ $? -eq 1 ]] && return 1
   done
@@ -2601,7 +2601,7 @@ show() {
 
 showm() {
   if [[ -n "$2" ]] ; then
-    echo -e -n "\e[${2}m${1}${CL_NORM}"
+    echo -e -n "\e[${2}m${1}\e[0m"
   else
     echo -e -n "$*"
   fi
