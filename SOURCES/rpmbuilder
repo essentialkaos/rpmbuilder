@@ -512,7 +512,7 @@ processBitbucketSource() {
   local bitbucket_user bitbucket_repo bitbucket_tag bitbucket_branch bitbucket_act
 
   local delim
- 
+
   local is_branch is_tag is_git is_hg
 
   if [[ $hg ]] ; then
@@ -590,7 +590,7 @@ processLaunchpadSource() {
 
 parseSourceURL() {
   local spec="$1"
-  
+
   local url
   url=$(getSpecValue "$MACRO_URL" "$spec")
 
@@ -876,7 +876,7 @@ remoteBuildProcess() {
   show ""
 
   local has_errors bld_time grc_time packages package_name
- 
+
   has_errors=$(tail -1 "$tmp_file" | grep -v "exit 0")
 
   if [[ ! $has_errors ]] ; then
@@ -964,7 +964,7 @@ remoteBuildProcess() {
 
 checkRemoteAvailability() {
   local remote_available
-  
+
   remote_available=$(sshCommand "$user@$host" "stat $BUILD_LOCK &> /dev/null || echo 1")
 
   if [[ ! $remote_available ]] ; then
@@ -1038,10 +1038,10 @@ localDepsInstall() {
 
   if [[ "$user" == "root" ]] ; then
     yum $yum_opts clean expire-cache
-    yum-builddep $yum_opts -y $spec
+    yum-builddep $yum_opts -y "$spec"
   else
     sudo yum $yum_opts clean expire-cache
-    sudo yum-builddep $yum_opts -y $spec
+    sudo yum-builddep $yum_opts -y "$spec"
   fi
 
   show ""
@@ -1061,7 +1061,7 @@ localSpecValidate() {
   fi
 
   local spec="$1"
-  
+
   local result
   result=$(rpmlint "$spec")
 
@@ -1089,7 +1089,7 @@ localBuildProcess() {
   local spec="$1"
 
   local spec_name build_args build_prfx rpmbuild_dir specs_dir
-  
+
   spec_name=$(basename "$spec")
   build_args=$(getBuildArgs)
   build_prfx=$(getBuildPrfx)
@@ -1098,7 +1098,7 @@ localBuildProcess() {
 
   local has_errors
 
-  pushd $specs_dir &> /dev/null
+  pushd "$specs_dir" &> /dev/null
     if [[ ! $no_lint ]] ; then
       showSeparator "VALIDATION"
       localSpecValidate "$spec_name"
@@ -1167,20 +1167,22 @@ localBuildProcess() {
       stopStatusObserver
       show ""
 
+      local bld_time grc_time package packages package_name
+
       build_end=$(now)
-      local bld_time=$(($build_end - $build_start))
-      local grc_time=$(getGraceTime "$bld_time")
+      bld_time=$(($build_end - $build_start))
+      grc_time=$(getGraceTime "$bld_time")
 
       show "Build complete! Build took $grc_time." $GREEN
 
       showSeparator "PACKAGE PROCESSING"
 
-      local packages=$(cat $tmp_file | egrep "rpmbuild/(S|)RPMS" | cut -f2 -d" ")
+      packages=$(cat $tmp_file | egrep "rpmbuild/(S|)RPMS" | cut -f2 -d" ")
 
       rm -f $tmp_file
 
       for package in $packages ; do
-        local package_name=$(basename $package)
+        package_name=$(basename "$package")
 
         if [[ $sign ]] ; then
           localSign "$package"
@@ -1189,9 +1191,9 @@ localBuildProcess() {
         fi
 
         if [[ $dest_dir ]] ; then
-          mv $package $dest_dir
+          mv "$package" "$dest_dir"
         else
-          mv $package $CWD
+          mv "$package" "$CWD"
         fi
       done
 
@@ -1233,9 +1235,11 @@ checkLocalBuildAvailability() {
     return
   fi
 
-  local cdt=$(stat $BUILD_LOCK_LOCAL -c "%Y")
-  local ct=$(now)
-  local cdf=$(( $ct - $cdt ))
+  local cdt ct cdf
+
+  cdt=$(stat "$BUILD_LOCK_LOCAL" -c "%Y")
+  ct=$(now)
+  cdf=$(( ct - cdt ))
 
   if [[ $cdf -gt $LOCK_TIME_MAX_DIFF ]] ; then
     show "We found lock file created more than 3 hours ago. It's too much time for usual build process."
@@ -1257,27 +1261,30 @@ checkLocalBuildAvailability() {
 }
 
 hasLocalLock() {
-  [[ ! -f $BUILD_LOCK_LOCAL ]] && return 1
+  [[ ! -f "$BUILD_LOCK_LOCAL" ]] && return 1
 
-  local pid=$(cat $BUILD_LOCK_LOCAL)
+  local pid
+  pid=$(cat "$BUILD_LOCK_LOCAL")
 
-  [[ ! -d /proc/$pid ]] && removeLocalLock && return 1
+  [[ ! -d "/proc/$pid" ]] && removeLocalLock && return 1
 
   return 0
 }
 
 createLocalLock() {
-  echo $$ > $BUILD_LOCK_LOCAL
-  chmod 666 $BUILD_LOCK_LOCAL
+  echo "$$" > $BUILD_LOCK_LOCAL
+  chmod 666 "$BUILD_LOCK_LOCAL"
 }
 
 removeLocalLock() {
+  local cur_user lock_owner
+
   if [[ -f $BUILD_LOCK_LOCAL ]] ; then
-    local cur_user=$(whoami)
-    local lock_owner=$(stat $BUILD_LOCK_LOCAL -c "%U")
+    cur_user=$(whoami)
+    lock_owner=$(stat "$BUILD_LOCK_LOCAL" -c "%U")
 
     if [[ "$cur_user" == "$lock_owner" ]] ; then
-      rm -f $BUILD_LOCK_LOCAL &> /dev/null
+      rm -f "$BUILD_LOCK_LOCAL" &> /dev/null
     fi
   fi
 }
@@ -1285,12 +1292,12 @@ removeLocalLock() {
 localSign() {
   local package="$1"
 
-  show "Signing package ${CL_CYAN}$package_name${CL_NORM}..."
+  show "Signing package ${CL_CYAN}${package_name}${CL_NORM}..."
 
   if [[ $verbose ]] ; then
-    rpm --addsign $package | tee $tmp_file &> $verb_output
+    rpm --addsign "$package" | tee "$tmp_file" &> $verb_output
   else
-    rpm --addsign $package &> $tmp_file
+    rpm --addsign "$package" &> $tmp_file
   fi
 
   if [[ $? -ne 0 ]] ; then
@@ -1302,9 +1309,9 @@ releaseBump() {
   local spec="$1"
 
   if [[ $bump_comment ]] ; then
-    rpmdev-bumpspec -c "$bump_comment" $spec
+    rpmdev-bumpspec -c "$bump_comment" "$spec"
   else
-    rpmdev-bumpspec $spec
+    rpmdev-bumpspec "$spec"
   fi
 
   if [[ $? -ne 0 ]] ; then
@@ -1314,6 +1321,7 @@ releaseBump() {
 
 prepareDeps() {
   local deps=$(echo "$@" | sed 's/ \(>\|>=\|=\) /\1/g')
+
   local dep fdep result
 
   for dep in $deps ; do
