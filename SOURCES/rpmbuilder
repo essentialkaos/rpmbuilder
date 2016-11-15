@@ -187,7 +187,7 @@ main() {
 
   checkArgs
 
-  if [[ $parallel && $(cat "$remote" | wc -l) -gt 1 ]] ; then
+  if [[ $parallel && $(wc -l "$remote" | cut -f1 -d" ") -gt 1 ]] ; then
     parallelBuild $@
   else
     local start_ts
@@ -730,7 +730,7 @@ remoteRunBuild() {
   if [[ "$remote" =~ :[0-9]{1,}$ ]] ; then
     r_file=$(echo "$remote" | cut -f1 -d":")
     r_line=$(echo "$remote" | cut -f2 -d":")
-    tlines=$(cat "$r_file" | wc -l)
+    tlines=$(wc -l "$r_file" | cut -f1 -d" ")
 
     if [[ $r_line -gt $tlines ]] ; then
       show "\nError - file $r_file don't contain line with number $r_line." $RED
@@ -1170,14 +1170,14 @@ localBuildProcess() {
       local bld_time grc_time package packages package_name
 
       build_end=$(now)
-      bld_time=$(($build_end - $build_start))
+      bld_time=$(( build_end - build_start ))
       grc_time=$(getGraceTime "$bld_time")
 
       show "Build complete! Build took $grc_time." $GREEN
 
       showSeparator "PACKAGE PROCESSING"
 
-      packages=$(cat "$tmp_file" | egrep "rpmbuild/(S|)RPMS" | cut -f2 -d" ")
+      packages=$(egrep "rpmbuild/(S|)RPMS" "$tmp_file" | cut -f2 -d" ")
 
       rm -f "$tmp_file"
 
@@ -2192,7 +2192,7 @@ getSpecValue() {
   result=$(renderMacros "$spec" "$result")
   result=$(echo "$result" | sed 's/ = /=/g' | sed 's/ >= />=/g' | sed 's/ > />/g')
 
-  [[ "$value" == "$MACRO_SOURCE" || "$value" == "$MACRO_PATCH" ]] && echo "$result" | sed 's/ /%20/g' || echo "$result"
+  [[ "$value" == "$MACRO_SOURCE" || "$value" == "$MACRO_PATCH" ]] && echo "${result// /%20}" || echo "$result"
 }
 
 renderMacros() {
