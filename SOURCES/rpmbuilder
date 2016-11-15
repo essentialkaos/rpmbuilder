@@ -1341,11 +1341,11 @@ prepareDeps() {
 uploadPackages() {
   local packages_dir="$1"
   local packages="$2"
-  
+
   local package_name package_list target has_errors
 
   for package in $packages ; do
-    package_name=$(basename $package)
+    package_name=$(basename "$package")
     package_list="$package_list $packages_dir/$package_name"
   done
 
@@ -1354,9 +1354,9 @@ uploadPackages() {
   if [[ -f $upload ]] ; then
     if [[ -r $upload ]] ; then
       has_errors=""
-      
+
       while read line ; do
-        local target=$(echo "$line" | cut -f1 -d":")
+        target=$(echo "$line" | cut -f1 -d":")
         uploadPackagesToServer "$line" "$package_list"
 
         [[ $? -ne 0 ]] && has_errors=true
@@ -1456,9 +1456,11 @@ packSources() {
       doExit $ERROR_SOURCE
     fi
 
-    pack=$(cat $source_list)
+    pack=$(cat "$source_list")
     pack=$(renderMacros "$spec" "$pack")
   fi
+
+  local src_target sources arch_name arch_ext
 
   for src_target in $pack ; do
     if [[ ! -a $src_target ]] ; then
@@ -1467,27 +1469,27 @@ packSources() {
     fi
   done
 
-  local sources=($(getSpecValue "$MACRO_SOURCE" "$spec"))
-  local arch_name=$(getArchName "${sources[0]}")
-  local arch_ext=$(getArchExt "${sources[0]}")
+  sources=($(getSpecValue "$MACRO_SOURCE" "$spec"))
+  arch_name=$(getArchName "${sources[0]}")
+  arch_ext=$(getArchExt "${sources[0]}")
 
-  mkdir -p $tmp_dir/$arch_name
+  mkdir -p "$tmp_dir/$arch_name"
 
   if [[ ! $relative_pack ]] ; then
-    cp -r $pack $tmp_dir/$arch_name &> /dev/null
+    cp -r "$pack" "$tmp_dir/$arch_name" &> /dev/null
   else
-    cp -r --parents $pack $tmp_dir/$arch_name &> /dev/null
+    cp -r --parents "$pack" "$tmp_dir/$arch_name" &> /dev/null
   fi
 
   cleanPackDir "$tmp_dir/$arch_name"
 
-  pushd $tmp_dir &> /dev/null
+  pushd "$tmp_dir" &> /dev/null
 
-    packDir $tmp_dir/$arch_name $arch_ext
+    packDir "$tmp_dir/$arch_name" "$arch_ext"
 
   popd &> /dev/null
 
-  rm -rf $tmp_dir/$arch_name
+  rm -rf "$tmp_dir/$arch_name"
 
   show "All files packed to ${arch_name}.${arch_ext}." $GREEN
 }
@@ -1497,44 +1499,46 @@ packSourcesFromGit() {
 
   show "Fetching sources from git repo ${CL_CYAN}$git${CL_NORM}..."
 
-  local sources=($(getSpecValue "$MACRO_SOURCE" "$spec"))
-  local source_name=$(getArchName "${sources[0]}")
-  local source_ext=$(getArchExt "${sources[0]}")
+  local sources source_name source_ext dir_name git_log abs_dir_path
 
-  local dir_name=$(mktemp -u $source_name-XXXX)
+  sources=($(getSpecValue "$MACRO_SOURCE" "$spec"))
+  source_name=$(getArchName "${sources[0]}")
+  source_ext=$(getArchExt "${sources[0]}")
 
-  local git_log="$tmp_dir/git.log"
+  dir_name=$(mktemp -u "$source_name-XXXX")
 
-  pushd $tmp_dir &> /dev/null
+  git_log="$tmp_dir/git.log"
+
+  pushd "$tmp_dir" &> /dev/null
     git=$(renderMacros "$spec" "$git")
 
-    [[ $verbose ]] && git clone $git $dir_name | tee -a $git_log || git clone $git $dir_name &> $git_log
+    [[ $verbose ]] && git clone "$git" "$dir_name" | tee -a "$git_log" || git clone "$git" "$dir_name" &> $git_log
 
     if [[ $? -ne 0 ]] ; then
       show "Can't clone repo - error while cloning." $RED
 
       if [[ ! $verbose ]] ; then
         show "\nLast ${REPO_LOG_QUOTE_SIZE} lines from log ($git_log):"
-        tail -${REPO_LOG_QUOTE_SIZE} $git_log
+        tail -${REPO_LOG_QUOTE_SIZE} "$git_log"
         show ""
       fi
 
       doExit $ERROR_SOURCE
     fi
 
-    pushd $tmp_dir/$dir_name &> /dev/null
+    pushd "$tmp_dir/$dir_name" &> /dev/null
 
       if [[ $branch ]] ; then
         branch=$(renderMacros "$spec" "$branch")
 
-        [[ $verbose ]] && git checkout $branch | tee -a $git_log || git checkout $branch &> $git_log
+        [[ $verbose ]] && git checkout "$branch" | tee -a "$git_log" || git checkout "$branch" &> "$git_log"
 
         if [[ $? -ne 0 ]] ; then
           show "Can't switch branch to $branch:" $RED
 
           if [[ ! $verbose ]] ; then
             show "\nLast ${REPO_LOG_QUOTE_SIZE} lines from log ($git_log):"
-            tail -${REPO_LOG_QUOTE_SIZE} $git_log
+            tail -${REPO_LOG_QUOTE_SIZE} "$git_log"
             show ""
           fi
 
@@ -1543,14 +1547,14 @@ packSourcesFromGit() {
       fi
 
       if [[ $revision ]] ; then
-        [[ $verbose ]] && git checkout $revision | tee -a $git_log || git checkout $revision &> $git_log
+        [[ $verbose ]] && git checkout "$revision" | tee -a "$git_log" || git checkout "$revision" &> "$git_log"
 
         if [[ $? -ne 0 ]] ; then
           show "Can't checkout revision $revision:" $RED
 
           if [[ ! $verbose ]] ; then
             show "\nLast ${REPO_LOG_QUOTE_SIZE} lines from log ($git_log):"
-            tail -${REPO_LOG_QUOTE_SIZE} $git_log
+            tail -${REPO_LOG_QUOTE_SIZE} "$git_log"
             show ""
           fi
 
@@ -1559,14 +1563,14 @@ packSourcesFromGit() {
       elif [[ $tag ]] ; then
         tag=$(renderMacros "$spec" "$tag")
 
-        [[ $verbose ]] && git checkout $tag | tee -a $git_log || git checkout $tag &> $git_log
+        [[ $verbose ]] && git checkout "$tag" | tee -a "$git_log" || git checkout "$tag" &> "$git_log"
 
         if [[ $? -ne 0 ]] ; then
           show "Can't checkout tag $tag:" $RED
 
           if [[ ! $verbose ]] ; then
             show "\nLast ${REPO_LOG_QUOTE_SIZE} lines from log ($git_log):"
-            tail -${REPO_LOG_QUOTE_SIZE} $git_log
+            tail -${REPO_LOG_QUOTE_SIZE} "$git_log"
             show ""
           fi
 
@@ -1574,26 +1578,26 @@ packSourcesFromGit() {
         fi
       fi
 
-      rm -rf .git .gitignore $git_log &> /dev/null
+      rm -rf .git .gitignore "$git_log" &> /dev/null
     popd &> /dev/null
 
     if [[ $path ]] ; then
-      if [[ ! -d $dir_name/$path ]] ; then
+      if [[ ! -d "$dir_name/$path" ]] ; then
         show "Can't find path [$path] in git repository." $RED
         doExit $ERROR_SOURCE
       else
-        mv $dir_name/$path $source_name
-        rm -rf $dir_name
+        mv "$dir_name/$path" "$source_name"
+        rm -rf "$dir_name"
       fi
     else
-      mv $dir_name $source_name
+      mv "$dir_name" "$source_name"
     fi
 
-    local abs_dir_path=$(getAbsPath $tmp_dir/$source_name)
+    abs_dir_path=$(getAbsPath "$tmp_dir/$source_name")
 
     packDir "$abs_dir_path" "$source_ext"
 
-    rm -rf $source_name
+    rm -rf "$source_name"
 
   popd &> /dev/null
 
@@ -1605,44 +1609,46 @@ packSourcesFromHg() {
 
   show "Fetching sources from hg repo ${CL_CYAN}$hg${CL_NORM}..."
 
-  local sources=($(getSpecValue "$MACRO_SOURCE" "$spec"))
-  local source_name=$(getArchName "${sources[0]}")
-  local source_ext=$(getArchExt "${sources[0]}")
+  local sources source_name source_ext dir_name hg_log abs_dir_path
 
-  local dir_name=$(mktemp -u $source_name-XXXX)
+  sources=($(getSpecValue "$MACRO_SOURCE" "$spec"))
+  source_name=$(getArchName "${sources[0]}")
+  source_ext=$(getArchExt "${sources[0]}")
 
-  local hg_log="$tmp_dir/hg.log"
+  dir_name=$(mktemp -u "$source_name-XXXX")
 
-  pushd $tmp_dir &> /dev/null
+  hg_log="$tmp_dir/hg.log"
+
+  pushd "$tmp_dir" &> /dev/null
     hg=$(renderMacros "$spec" "$hg")
 
-    [[ $verbose ]] && hg clone $hg $dir_name | tee -a $hg_log || hg clone $hg $dir_name &> $hg_log
+    [[ $verbose ]] && hg clone "$hg" "$dir_name" | tee -a "$hg_log" || hg clone "$hg" "$dir_name" &> "$hg_log"
 
     if [[ $? -ne 0 ]] ; then
       show "Can't clone repo - error while cloning." $RED
 
       if [[ ! $verbose ]] ; then
         show "\nLast ${REPO_LOG_QUOTE_SIZE} lines from log ($hg_log):"
-        tail -${REPO_LOG_QUOTE_SIZE} $hg_log
+        tail -${REPO_LOG_QUOTE_SIZE} "$hg_log"
         show ""
       fi
 
       doExit $ERROR_SOURCE
     fi
 
-    pushd $tmp_dir/$dir_name &> /dev/null
+    pushd "$tmp_dir/$dir_name" &> /dev/null
 
       if [[ $branch ]] ; then
         branch=$(renderMacros "$spec" "$branch")
 
-        [[ $verbose ]] && hg checkout $branch | tee -a $hg_log || hg checkout $branch &> $hg_log
+        [[ $verbose ]] && hg checkout "$branch" | tee -a "$hg_log" || hg checkout "$branch" &> "$hg_log"
 
         if [[ $? -ne 0 ]] ; then
           show "Can't switch branch to $branch:" $RED
 
           if [[ ! $verbose ]] ; then
             show "\nLast ${REPO_LOG_QUOTE_SIZE} lines from log ($hg_log):"
-            tail -${REPO_LOG_QUOTE_SIZE} $hg_log
+            tail -${REPO_LOG_QUOTE_SIZE} "$hg_log"
             show ""
           fi
 
@@ -1651,14 +1657,14 @@ packSourcesFromHg() {
       fi
 
       if [[ $revision ]] ; then
-        [[ $verbose ]] && hg checkout $revision | tee -a $hg_log || hg checkout $revision &> $hg_log
+        [[ $verbose ]] && hg checkout "$revision" | tee -a "$hg_log" || hg checkout "$revision" &> "$hg_log"
 
         if [[ $? -ne 0 ]] ; then
           show "Can't checkout revision $revision:" $RED
 
           if [[ ! $verbose ]] ; then
             show "\nLast ${REPO_LOG_QUOTE_SIZE} lines from log ($hg_log):"
-            tail -${REPO_LOG_QUOTE_SIZE} $hg_log
+            tail -${REPO_LOG_QUOTE_SIZE} "$hg_log"
             show ""
           fi
 
@@ -1667,14 +1673,14 @@ packSourcesFromHg() {
       elif [[ $tag ]] ; then
         tag=$(renderMacros "$spec" "$tag")
 
-        [[ $verbose ]] && hg checkout $tag | tee -a $hg_log || hg checkout $tag &> $hg_log
+        [[ $verbose ]] && hg checkout "$tag" | tee -a "$hg_log" || hg checkout "$tag" &> "$hg_log"
 
         if [[ $? -ne 0 ]] ; then
           show "Can't checkout tag $tag:" $RED
 
           if [[ ! $verbose ]] ; then
             show "\nLast ${REPO_LOG_QUOTE_SIZE} lines from log ($hg_log):"
-            tail -${REPO_LOG_QUOTE_SIZE} $hg_log
+            tail -${REPO_LOG_QUOTE_SIZE} "$hg_log"
             show ""
           fi
 
@@ -1682,26 +1688,26 @@ packSourcesFromHg() {
         fi
       fi
 
-      rm -rf .hg .hgignore $hg_log &> /dev/null
+      rm -rf .hg .hgignore "$hg_log" &> /dev/null
     popd &> /dev/null
 
     if [[ $path ]] ; then
-      if [[ ! -d $dir_name/$path ]] ; then
+      if [[ ! -d "$dir_name/$path" ]] ; then
         show "Can't find path [$path] in git repository." $RED
         doExit $ERROR_SOURCE
       else
-        mv $dir_name/$path $source_name
-        rm -rf $dir_name
+        mv "$dir_name/$path" "$source_name"
+        rm -rf "$dir_name"
       fi
     else
-      mv $dir_name $source_name
+      mv "$dir_name" "$source_name"
     fi
 
-    local abs_dir_path=$(getAbsPath $tmp_dir/$source_name)
+    abs_dir_path=$(getAbsPath "$tmp_dir/$source_name")
 
     packDir "$abs_dir_path" "$source_ext"
 
-    rm -rf $source_name
+    rm -rf "$source_name"
 
   popd &> /dev/null
 
@@ -1709,49 +1715,50 @@ packSourcesFromHg() {
 }
 
 packSourcesFromBzr() {
-  local spec=$(getAbsPath $1)
+  local spec=$(getAbsPath "$1")
 
-  show "Fetching sources from bzr repo ${CL_CYAN}$bzr${CL_NORM}..."
+  show "Fetching sources from bzr repo ${CL_CYAN}${bzr}${CL_NORM}..."
 
-  local sources=($(getSpecValue "$MACRO_SOURCE" "$spec"))
-  local source_name=$(getArchName ${sources[0]})
-  local source_ext=$(getArchExt ${sources[0]})
+  local sources source_name source_ext dir_name bzr_log bzr_opts abs_dir_path
+
+  sources=($(getSpecValue "$MACRO_SOURCE" "$spec"))
+  source_name=$(getArchName ${sources[0]})
+  source_ext=$(getArchExt ${sources[0]})
 
   bzr=$(renderMacros "$spec" "$bzr")
 
-  local dir_name=$(mktemp -u $source_name-XXXX)
-  local bzr_log="$tmp_dir/bzr.log"
-  local bzr_opts
+  dir_name=$(mktemp -u "$source_name-XXXX")
+  bzr_log="$tmp_dir/bzr.log"
 
-  pushd $tmp_dir &> /dev/null
+  pushd "$tmp_dir" &> /dev/null
 
     [[ $tag ]] && bzr_opts="-r tag:$tag"
 
-    [[ $verbose ]] && bzr $bzr_opts branch $bzr $dir_name | tee -a $bzr_log || bzr $bzr_opts branch $bzr $dir_name &> $bzr_log
+    [[ $verbose ]] && bzr $bzr_opts branch "$bzr" "$dir_name" | tee -a "$bzr_log" || bzr $bzr_opts branch "$bzr" "$dir_name" &> "$bzr_log"
 
     if [[ $? -ne 0 ]] ; then
       show "Can't make a copy of branch." $RED
 
       if [[ ! $verbose ]] ; then
         show "\nLast ${REPO_LOG_QUOTE_SIZE} lines from log ($bzr_log):"
-        tail -${REPO_LOG_QUOTE_SIZE} $bzr_log
+        tail -${REPO_LOG_QUOTE_SIZE} "$bzr_log"
         show ""
       fi
 
       doExit $ERROR_SOURCE
     fi
 
-    pushd $tmp_dir/$dir_name &> /dev/null
+    pushd "$tmp_dir/$dir_name" &> /dev/null
 
       if [[ $revision ]] ; then
-        [[ $verbose ]] && bzr revert -r${revision} | tee -a $bzr_log || bzr revert -r${revision} &> $bzr_log
+        [[ $verbose ]] && bzr revert -r${revision} | tee -a "$bzr_log" || bzr revert -r${revision} &> "$bzr_log"
 
         if [[ $? -ne 0 ]] ; then
           show "Can't revert to revision [$revision]." $RED
 
           if [[ ! $verbose ]] ; then
             show "\nLast ${REPO_LOG_QUOTE_SIZE} lines from log ($bzr_log):"
-            tail -${REPO_LOG_QUOTE_SIZE} $bzr_log
+            tail -${REPO_LOG_QUOTE_SIZE} "$bzr_log"
             show ""
           fi
 
@@ -1759,26 +1766,26 @@ packSourcesFromBzr() {
         fi
       fi
 
-      rm -rf .bzr .bzrignore $bzr_log &> /dev/null
+      rm -rf .bzr .bzrignore "$bzr_log" &> /dev/null
     popd &> /dev/null
 
     if [[ $path ]] ; then
-      if [[ ! -d $dir_name/$path ]] ; then
+      if [[ ! -d "$dir_name/$path" ]] ; then
         show "Can't find path [$path] in bzr repository." $RED
         doExit $ERROR_SOURCE
       else
-        mv $dir_name/$path $source_name
-        rm -rf $dir_name
+        mv "$dir_name/$path" "$source_name"
+        rm -rf "$dir_name"
       fi
     else
-      mv $dir_name $source_name
+      mv "$dir_name" "$source_name"
     fi
 
-    local abs_dir_path=$(getAbsPath $tmp_dir/$source_name)
+    abs_dir_path=$(getAbsPath "$tmp_dir/$source_name")
 
     packDir "$abs_dir_path" "$source_ext"
 
-    rm -rf $source_name
+    rm -rf "$source_name"
 
   popd &> /dev/null
 
