@@ -888,7 +888,7 @@ remoteBuildProcess() {
 
     showSeparator "PACKAGE PROCESSING"
 
-    packages=$(cat "$tmp_file" | egrep "rpmbuild/(S|)RPMS" | cut -f2 -d" ")
+    packages=$(egrep "rpmbuild/(S|)RPMS" "$tmp_file" | cut -f2 -d" ")
 
     for package in $packages ; do
       package=$(echo "$package" | tr -dc '[:print:]')
@@ -2774,13 +2774,13 @@ about() {
 
 unset arg argn argp
 
-PREFS_FILE=${PREFS_FILE//\~/$HOME}
+PREFS_FILE="${PREFS_FILE//\~/$HOME}"
 
-if [[ -n "$PREFS_FILE" && -r $PREFS_FILE ]] ; then
+if [[ -n "$PREFS_FILE" && -r "$PREFS_FILE" ]] ; then
   while read arg ; do
     arg="${arg/: /:}" ; argn="${arg%:*}" ; argp="${arg#*:}"
-    [[ "$SUPPORTED_ARGS " =~ "$argn " ]] && declare $argn="$argp"
-  done < <(awk 1 $PREFS_FILE)
+    [[ "$SUPPORTED_ARGS " =~ $argn\  ]] && declare "$argn=$argp"
+  done < <(awk 1 "$PREFS_FILE")
 
   unset arg argn argp
 fi
@@ -2791,7 +2791,7 @@ fi
 
 unset arg argn argm argv argt argk
 
-argv="$@" ; argt=""
+argv="$*" ; argt=""
 
 while [[ -n "$1" ]] ; do
   if [[ "$1" =~ \  && -n "$argn" ]] ; then
@@ -2840,7 +2840,7 @@ while [[ -n "$1" ]] ; do
         shift && continue
       fi
 
-      [[ -n "${!argm}" && $MERGEABLE_ARGS\  =~ $argm\  ]] && declare $argm="${!argm} ${arg[@]:1:99}" || declare "$argm=${arg[@]:1:99}"
+      [[ -n "${!argm}" && $MERGEABLE_ARGS\  =~ $argm\  ]] && declare "$argm=${!argm} ${arg[@]:1:99}" || declare "$argm=${arg[@]:1:99}"
 
       unset argm && shift && continue
     else
@@ -2859,7 +2859,7 @@ while [[ -n "$1" ]] ; do
       fi
 
       if [[ ${BASH_REMATCH[0]:0:1} == "!" ]] ; then
-        declare $argn=true ; unset argn ; argk=true
+        declare "$argn=true" ; unset argn ; argk=true
       else
         unset argk
       fi
