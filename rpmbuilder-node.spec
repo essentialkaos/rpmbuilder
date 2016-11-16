@@ -49,8 +49,8 @@
 
 Summary:         Configuration package for rpmbuilder node
 Name:            rpmbuilder-node
-Version:         1.0.1
-Release:         2%{?dist}
+Version:         1.1.0
+Release:         0%{?dist}
 License:         EKOL
 Group:           Development/Tools
 URL:             https://github.com/essentialkaos/rpmbuilder
@@ -136,6 +136,9 @@ fi
 ###############################################################################
 
 %changelog
+* Wed Nov 16 2016 Anton Novojilov <andy@essentialkaos.com> - 1.1.0-0
+- Improvements
+
 * Wed May 11 2016 Anton Novojilov <andy@essentialkaos.com> - 1.0.1-2
 - Improved spec file
 
