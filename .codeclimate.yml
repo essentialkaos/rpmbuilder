@@ -1,0 +1,24 @@
+engines:
+  shellcheck:
+    enabled: true
+    checks:
+      SC2015:
+        enabled: false
+      SC2034:
+        enabled: false
+      SC2154:
+        enabled: false
+      SC2162:
+        enabled: false
+      SC2163:
+        enabled: false
+      SC2143:
+        enabled: false
+      SC2002:
+        enabled: false
+
+ratings:
+   paths:
+     - SOURCES/rpmbuilder
+     - SOURCES/rpmunbuilder
+     - SOURCES/buildmon

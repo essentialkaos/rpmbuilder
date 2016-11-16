@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 
-APP="BuildMonitor"
-VER="1.0"
+APP="RPMBuilder Node Monitor"
+VER="1.1.0"
 
 ###############################################################################
 
@@ -13,7 +13,7 @@ CLEAN_DELAY=600
 KEEP_DAYS=7 # 1 Week
 DIR_LIST="BUILD BUILDROOT RPMS SOURCES SPECS SRPMS"
 
-CWD=`pwd`
+CWD=$(pwd)
 
 ###############################################################################
 
@@ -25,12 +25,14 @@ main() {
 
 check() {
   local has_lock
-  local dl=0
+  local dl
+
+  dl=0
 
   while : ; do
     sleep 1
 
-    if [[ `ps -U $BUILDER_USER | grep -v grep | grep rpmbuild` ]] ; then
+    if [[ $(pgrep -U $BUILDER_USER rpmbuild) ]] ; then
       touch $BUILD_LOCK
       has_lock=true
     else
@@ -49,31 +51,15 @@ check() {
 }
 
 clean() {
-  local keep_sec=$(( $KEEP_DAYS * 86400 ))
-  local now=`date +%s`
-
-  local dirname dir target mdate datediff
-
-  for dirname in $DIR_LIST ; do
-    local dir=$BUILDER_DIR/rpmbuild/$dirname
-
-    for target in `ls -1 $dir` ; do
-      mdate=`stat -c %Y $BUILDER_DIR/rpmbuild/$dirname/$target`
-
-      datediff=$(( $now - $mdate ))
-
-      if [[ $datediff -gt $keep_sec ]] ; then
-        rm -rf $BUILDER_DIR/rpmbuild/$dirname/$target
-      fi
-    done
-  done
+  local rbdir="$BUILDER_DIR/rpmbuild"
+  find $rbdir -maxdepth 1 -type d -mtime +$KEEP_DAYS -delete
 }
 
 doExit() {
-  rm -f $BUILD_LOCK
+  rm -f "$BUILD_LOCK"
   exit 0
 }
 
 ###############################################################################
 
-main $0
+main "$0"

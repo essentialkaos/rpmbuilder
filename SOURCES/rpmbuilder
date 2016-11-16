@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 
 APP="RPMBuilder"
-VER="1.1.5"
+VER="1.2.0"
 
 ####################################################################
 
@@ -88,7 +88,7 @@ SEPARATOR="---------------------------------------------------------------------
 
 ###############################################################################
 
-PREFS_FILE="~/.rpmbuilder"
+PREFS_FILE="$HOME/.rpmbuilder"
 
 SUPPORTED_ARGS="remote !parallel host user pass key source_dir source_list 
  !sign !no_build !no_clean !no_deps !no_lint !no_source pack !pedantic !strict 
@@ -110,7 +110,7 @@ SHORT_ARGS="r:remote P:!parallel hh:host uu:user pp:pass kk:key sd:source_dir
 INSPEC_ARGS="git svn hg bzr branch revision tag svn_user svn_pass github 
  bitbucket launchpad qa_rpaths pedantic strict no_lint relative_pack"
 
-MERGEABLE_ARGS="pack with without enable_repo disable_repo"
+MERGEABLE_ARGS="pack with without enable_repo disable_repo define"
 
 KEEP_ARGS=true
 
@@ -129,7 +129,7 @@ LONG_BUILD=300
 BUILD_LOCK=".buildlock"
 
 BUILD_LOCK_LOCAL="/tmp/rpmbuilder-local-lock"
-BUILD_LOCK_PARALELL="/tmp/rpmbuilder-paralell-lock"
+BUILD_LOCK_PARALLEL="/tmp/rpmbuilder-parallel-lock"
 LOCK_TIME_MAX_DIFF=10800 # 3 Hours
 
 SSH_BASE_OPTS="-o UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no -o LogLevel=quiet"
@@ -187,15 +187,16 @@ main() {
 
   checkArgs
 
-  if [[ $parallel && $(cat $remote | wc -l) -gt 1 ]] ; then
-    parallelBuild $@
+  if [[ $parallel && $(wc -l "$remote" | cut -f1 -d" ") -gt 1 ]] ; then
+    parallelBuild "$@"
   else
-    local start_ts=$(now)
+    local start_ts
+    start_ts=$(now)
 
     [[ $dest ]] && dest_dir="$dest"
-    [[ $dest_dir ]] && dest_dir=$(getAbsPath $dest_dir)
-    [[ $dlcache ]] && dlcache=$(getAbsPath $dlcache)
-    [[ $download ]] && dlcache=$(getAbsPath $download)
+    [[ $dest_dir ]] && dest_dir=$(getAbsPath "$dest_dir")
+    [[ $dlcache ]] && dlcache=$(getAbsPath "$dlcache")
+    [[ $download ]] && dlcache=$(getAbsPath "$download")
 
     makeTemp
 
@@ -237,9 +238,11 @@ main() {
 notify() {
   [[ $notify ]] && bell && return
 
-  local start_ts=$1
-  local end_ts=$(now)
-  local time_diff=$(( $end_ts - $start_ts ))
+  local start_ts end_ts time_diff
+
+  start_ts=$1
+  end_ts=$(now)
+  time_diff=$(( end_ts - start_ts ))
 
   [[ $time_diff -ge $LONG_BUILD ]] && bell
 }
@@ -258,7 +261,7 @@ parallelBuild() {
   local args=""
   local arg
 
-  for arg in $@ ; do
+  for arg in "$@" ; do
     [[ "$arg" == "-r" ]] && continue
     [[ "$arg" == "--remote" ]] && continue
     [[ "$arg" == "-P" ]] && continue
@@ -272,20 +275,20 @@ parallelBuild() {
 
   createParalellLock
 
-  local serv sess
+  local serv serv_name sess
 
   while read serv ; do
-    local serv_name=$(echo $serv | cut -f2 -d"@")
+    serv_name=$(echo "$serv" | cut -f2 -d"@")
 
     if [[ ! $sess ]] ; then
-      tmux new-session -s "rpmbuilder" -d "$0 $args -r $serv --tmuxl" 2>&1 1>/dev/null
+      tmux new-session -s "rpmbuilder" -d "$0 $args -r $serv --tmuxl" >/dev/null 2>&1
       sess=true
     else
-      tmux split-window "$0 $args -r $serv --tmuxl" 2>&1 1>/dev/null
+      tmux split-window "$0 $args -r $serv --tmuxl" >/dev/null 2>&1
     fi
-  done < $remote
+  done < "$remote"
 
-  tmux attach-session -t "rpmbuilder" 2>&1 1>/dev/null
+  tmux attach-session -t "rpmbuilder" >/dev/null 2>&1
 
   removeParalellLock
 
@@ -297,13 +300,15 @@ checkParalellBuildAvailability() {
     return
   fi
 
-  local cdt=$(stat $BUILD_LOCK_PARALELL -c "%Y")
-  local ct=$(now)
-  local cdf=$(( $ct - $cdt ))
+  local cdt ct cdf
+
+  cdt=$(stat $BUILD_LOCK_PARALLEL -c "%Y")
+  ct=$(now)
+  cdf=$(( ct - cdt ))
 
   if [[ $cdf -gt $LOCK_TIME_MAX_DIFF ]] ; then
     show "We found lock file created more than 3 hours ago. It's too much time for usual build process."
-    show "If another build process does not occur, you must remove file $BUILD_LOCK_PARALELL manually."
+    show "If another build process does not occur, you must remove file $BUILD_LOCK_PARALLEL manually."
     show "We will continue build when this file will be removed." $BROWN
   else
     show "Another parallel build process in progress." $BROWN
@@ -320,27 +325,30 @@ checkParalellBuildAvailability() {
 }
 
 hasParalellLock() {
-  [[ ! -f $BUILD_LOCK_PARALELL ]] && return 1
+  [[ ! -f $BUILD_LOCK_PARALLEL ]] && return 1
 
-  local pid=$(cat $BUILD_LOCK_PARALELL)
+  local pid
+  pid=$(cat "$BUILD_LOCK_PARALLEL")
 
-  [[ ! -d /proc/$pid ]] && removeParalellLock && return 1
+  [[ ! -d "/proc/$pid" ]] && removeParalellLock && return 1
 
   return 0
 }
 
 createParalellLock() {
-  echo $$ > $BUILD_LOCK_PARALELL
-  chmod 666 $BUILD_LOCK_PARALELL
+  echo "$$" > $BUILD_LOCK_PARALLEL
+  chmod 666 "$BUILD_LOCK_PARALLEL"
 }
 
 removeParalellLock() {
-  if [[ -f $BUILD_LOCK_PARALELL ]] ; then
-    local cur_user=$(whoami)
-    local lock_owner=$(stat $BUILD_LOCK_PARALELL -c "%U")
+  local cur_user lock_owner
+
+  if [[ -f $BUILD_LOCK_PARALLEL ]] ; then
+    cur_user=$(whoami)
+    lock_owner=$(stat "$BUILD_LOCK_PARALLEL" -c "%U")
 
     if [[ "$cur_user" == "$lock_owner" ]] ; then
-      rm -f $BUILD_LOCK_PARALELL &> /dev/null
+      rm -f "$BUILD_LOCK_PARALLEL" &> /dev/null
     fi
   fi
 }
@@ -403,7 +411,7 @@ checkArgs() {
     doExit $ERROR_DEPS
   fi
 
-  if ! checkDeps "rpmbuild rpmlint" && [[ ! $remote ]] ; then
+  if ! checkDeps "rpmbuild" "rpmlint" && [[ ! $remote ]] ; then
     show "Can't start local build process -  you must install rpmbuild and rpmlint first." $RED
     doExit $ERROR_DEPS
   fi
@@ -424,7 +432,7 @@ checkArgs() {
   fi
 
   if [[ $bump ]] ; then
-    if ! checkDeps "rpmdev-packager rpmdev-bumpspec" ; then
+    if ! checkDeps "rpmdev-packager" "rpmdev-bumpspec" ; then
       show "Can't start build process - for automatic release bumping you must install
       rpmdev-bumpspec and rpmdev-packager (from rpmdevtools package) first." $RED
       doExit $ERROR_DEPS
@@ -450,22 +458,17 @@ readInspecArgs() {
     argn="${arg[0]//-/_}"
 
     if [[ -z "${!argn}" && $INSPEC_ARGS\  =~ $argn\  ]] ; then
-      eval $argn='${arg[@]:1:99}'
+      eval "$argn=${arg[@]:1:99}"
     fi
-  done < <(grep "$INSPEC_ARG_PREFIX" $spec | sed "s/# \?$INSPEC_ARG_PREFIX//g" | tr -s " ")
+  done < <(grep "$INSPEC_ARG_PREFIX" "$spec" | sed "s/# \?$INSPEC_ARG_PREFIX//g" | tr -s " ")
 }
 
 processGithubSource() {
-  local github_user
-  local github_repo
-  local github_tag
-  local github_branch
-  local github_act
+  local github_user github_repo github_tag github_branch github_act
 
   local delim
 
-  local is_branch
-  local is_tag
+  local is_branch is_tag
 
   if [[ $branch ]] ; then
     is_branch=true
@@ -474,30 +477,30 @@ processGithubSource() {
   fi
 
   if [[ "$github" =~ (http|https) ]] ; then
-    github_user=$(echo $github | cut -f4 -d"/")
-    github_repo=$(echo $github | cut -f5 -d"/")
-    github_act=$(echo $github | cut -f6 -d"/")
+    github_user=$(echo "$github" | cut -f4 -d"/")
+    github_repo=$(echo "$github" | cut -f5 -d"/")
+    github_act=$(echo "$github" | cut -f6 -d"/")
 
     if [[ "$github_act" =~ (zip|tar)ball ]] ; then
-      github_tag=$(echo $github | cut -f7 -d"/")
+      github_tag=$(echo "$github" | cut -f7 -d"/")
 
       [[ $is_tag ]] && tag="$github_tag"
       [[ $is_branch ]] && branch="$github_tag"
     elif [[ "$github_act" == "tree" ]] ; then
-      github_branch=$(echo $github | cut -f7 -d"/")
+      github_branch=$(echo "$github" | cut -f7 -d"/")
       branch="$github_branch"
     fi
   else
-    if [[ "$github" =~ ":" ]] ; then
+    if [[ "$github" =~ : ]] ; then
       delim=":"
-    elif [[ "$github" =~ "/" ]] ; then
+    elif [[ "$github" =~ / ]] ; then
       delim="/"
     else
       return 1
     fi
 
-    github_user=$(echo $github | cut -f1 -d"$delim")
-    github_repo=$(echo $github | cut -f2 -d"$delim")
+    github_user=$(echo "$github" | cut -f1 -d"$delim")
+    github_repo=$(echo "$github" | cut -f2 -d"$delim")
 
     [[ -z "$github_user" || -z "$github_repo" ]] && return
   fi
@@ -506,18 +509,11 @@ processGithubSource() {
 }
 
 processBitbucketSource() {
-  local bitbucket_user
-  local bitbucket_repo
-  local bitbucket_tag
-  local bitbucket_branch
-  local bitbucket_act
+  local bitbucket_user bitbucket_repo bitbucket_tag bitbucket_branch bitbucket_act
 
   local delim
 
-  local is_branch
-  local is_tag
-  local is_git
-  local is_hg
+  local is_branch is_tag is_git is_hg
 
   if [[ $hg ]] ; then
     is_hg=true
@@ -526,12 +522,12 @@ processBitbucketSource() {
   fi
 
   if [[ "$bitbucket" =~ (http|https) ]] ; then
-    bitbucket_user=$(echo $bitbucket | cut -f4 -d"/")
-    bitbucket_repo=$(echo $bitbucket | cut -f5 -d"/")
-    bitbucket_act=$(echo $bitbucket | cut -f6 -d"/")
+    bitbucket_user=$(echo "$bitbucket" | cut -f4 -d"/")
+    bitbucket_repo=$(echo "$bitbucket" | cut -f5 -d"/")
+    bitbucket_act=$(echo "$bitbucket" | cut -f6 -d"/")
 
     if [[ "$bitbucket_act" == "get" ]] ; then
-      bitbucket_tag=$(echo $bitbucket | cut -f7 -d"/" | sed 's/.zip\|.tar.gz\|.tar.bz2//g')
+      bitbucket_tag=$(echo "$bitbucket" | cut -f7 -d"/" | sed 's/.zip\|.tar.gz\|.tar.bz2//g')
 
       if [[ $branch ]] ; then
         is_branch=true
@@ -541,8 +537,8 @@ processBitbucketSource() {
 
       [[ $is_tag ]] && tag="$bitbucket_tag"
       [[ $is_branch ]] && branch="$bitbucket_tag"
-    elif [[ "$bitbucket" =~ "?at=" ]] ; then
-      bitbucket_branch=$(echo $bitbucket | cut -f2 -d"=")
+    elif [[ "$bitbucket" =~ ?at= ]] ; then
+      bitbucket_branch=$(echo "$bitbucket" | cut -f2 -d"=")
 
       if [[ $tag ]] ; then
         is_tag=true
@@ -554,16 +550,16 @@ processBitbucketSource() {
       [[ $is_branch ]] && branch="$bitbucket_branch"
     fi
   else
-    if [[ "$bitbucket" =~ ":" ]] ; then
+    if [[ "$bitbucket" =~ : ]] ; then
       delim=":"
-    elif [[ "$bitbucket" =~ "/" ]] ; then
+    elif [[ "$bitbucket" =~ / ]] ; then
       delim="/"
     else
       return 1
     fi
 
-    bitbucket_user=$(echo $bitbucket | cut -f1 -d"$delim")
-    bitbucket_repo=$(echo $bitbucket | cut -f2 -d"$delim")
+    bitbucket_user=$(echo "$bitbucket" | cut -f1 -d"$delim")
+    bitbucket_repo=$(echo "$bitbucket" | cut -f2 -d"$delim")
 
     [[ -z "$bitbucket_user" || -z "$bitbucket_repo" ]] && return
   fi
@@ -576,10 +572,12 @@ processBitbucketSource() {
 }
 
 processLaunchpadSource() {
-  if [[ "$launchpad" =~ (http|https) ]] ; then
-    local launchpad_repo=$(echo "$launchpad" | cut -d"/" -f4-99)
+  local launchpad_repo
 
-    if [[ "$launchpad_repo" =~ "revision/" ]] ; then
+  if [[ "$launchpad" =~ (http|https) ]] ; then
+    launchpad_repo=$(echo "$launchpad" | cut -d"/" -f4-99)
+
+    if [[ "$launchpad_repo" =~ revision/ ]] ; then
       bzr=$(echo "$launchpad_repo" | cut -f1-3 -d"/")
       revision=$(echo "$launchpad_repo" | cut -f5 -d"/")
     else
@@ -592,13 +590,15 @@ processLaunchpadSource() {
 
 parseSourceURL() {
   local spec="$1"
-  local url=$(getSpecValue "$MACRO_URL" "$spec")
 
-  if [[ "$url" =~ "github" ]] ; then
+  local url
+  url=$(getSpecValue "$MACRO_URL" "$spec")
+
+  if [[ "$url" =~ github ]] ; then
     github="$url"
-  elif [[ "$url" =~ "bitbucket" ]] ; then
+  elif [[ "$url" =~ bitbucket ]] ; then
     bitbucket="$url"
-  elif [[ "$url" =~ "launchpad" ]] ; then
+  elif [[ "$url" =~ launchpad ]] ; then
     launchpad="$url"
   else
     return 1
@@ -606,10 +606,10 @@ parseSourceURL() {
 }
 
 makeTemp() {
-  tmp_file=$(mktemp $tmp/$tmp_file)
-  tmp_dir=$(mktemp -d $tmp/$tmp_dir)
+  tmp_file=$(mktemp "${tmp:?}/$tmp_file")
+  tmp_dir=$(mktemp -d "${tmp:?}/$tmp_dir")
 
-  if [[ ! -f $tmp_file || ! -d $tmp_dir ]] ; then
+  if [[ ! -f "$tmp_file" || ! -d "$tmp_dir" ]] ; then
     show "Can't start build process - temp file can't be created." $RED
     doExit $ERROR_UNKNOWN
   fi
@@ -630,16 +630,18 @@ downloadRemoteSources() {
 
   showSeparator "DOWNLOADING"
 
-  local source_list=$(getSpecValue "$MACRO_SOURCE" "$spec")
-  local patch_list=$(getSpecValue "$MACRO_PATCH" "$spec")
+  local source_file sources_list source_file_name patches_list files
 
-  local files="$source_list $patch_list"
+  sources_list=$(getSpecValue "$MACRO_SOURCE" "$spec")
+  patches_list=$(getSpecValue "$MACRO_PATCH" "$spec")
+
+  files="$sources_list $patches_list"
 
   for source_file in $files ; do
     if [[ "$source_file" =~ ^(http|https|ftp) ]] ; then
-      local source_file_name=$(basename "$source_file")
+      source_file_name=$(basename "$source_file")
 
-      if [[ -f $download/$source_file_name ]] ; then
+      if [[ -f "$download/$source_file_name" ]] ; then
         show "File ${CL_CYAN}${source_file_name}${CL_NORM} already downloaded."
         continue
       fi
@@ -697,18 +699,20 @@ remoteBuild() {
 
 remoteRunMultibuild() {
   local spec="$1"
-  local build_hosts=$(cat $remote)
 
-  local protect_user protect_pass protect_arch
+  local build_hosts protect_user protect_pass protect_arch
+  local host_info r_user r_pass r_arch
+
+  build_hosts=$(cat "$remote")
 
   for build_host in $build_hosts ; do
-    local host_info=($(getURLVars "$build_host"))
+    host_info=($(getURLVars "$build_host"))
 
     host="${host_info[0]/-/}"
 
-    local r_user="${host_info[1]/-/}"
-    local r_pass="${host_info[2]/-/}"
-    local r_arch="${host_info[3]/-/}"
+    r_user="${host_info[1]/-/}"
+    r_pass="${host_info[2]/-/}"
+    r_arch="${host_info[3]/-/}"
 
     [[ ! $protect_user ]] && user="$r_user"
     [[ ! $protect_pass ]] && pass="$r_pass"
@@ -721,27 +725,29 @@ remoteRunMultibuild() {
 remoteRunBuild() {
   local spec="$1"
 
+  local host_info r_file r_line r_arch tlines
+
   if [[ "$remote" =~ :[0-9]{1,}$ ]] ; then
-    local r_file=$(echo "$remote" | cut -f1 -d":")
-    local r_line=$(echo "$remote" | cut -f2 -d":")
-    local tlines=$(cat $r_file | wc -l)
+    r_file=$(echo "$remote" | cut -f1 -d":")
+    r_line=$(echo "$remote" | cut -f2 -d":")
+    tlines=$(wc -l "$r_file" | cut -f1 -d" ")
 
     if [[ $r_line -gt $tlines ]] ; then
       show "\nError - file $r_file don't contain line with number $r_line." $RED
       return 1
     fi
 
-    remote=$(sed -n ${r_line}p $r_file)
+    remote=$(sed -n "${r_line}p" "$r_file")
   fi
 
   if [[ "$remote" =~ @|~i ]] ; then
-    local host_info=($(getURLVars "$remote"))
+    host_info=($(getURLVars "$remote"))
 
     host="${host_info[0]/-/}"
 
-    local r_user="${host_info[1]/-/}"
-    local r_pass="${host_info[2]/-/}"
-    local r_arch="${host_info[3]/-/}"
+    r_user="${host_info[1]/-/}"
+    r_pass="${host_info[2]/-/}"
+    r_arch="${host_info[3]/-/}"
 
     user="${r_user:-$user}"
     pass="${r_pass:-$pass}"
@@ -790,12 +796,14 @@ remoteCheckEnv() {
 remoteDepsInstall() {
   local spec="$1"
 
-  local rpmbuild_dir=$(getRPMBuildDir)
-  local specs_dir="$rpmbuild_dir/SPECS"
+  local rpmbuild_dir specs_dir yum_opts
+
+  rpmbuild_dir=$(getRPMBuildDir)
+  specs_dir="$rpmbuild_dir/SPECS"
 
   show "Installing required packages for build...\n"
 
-  local yum_opts=$(getYumOpts "$verbose")
+  yum_opts=$(getYumOpts "$verbose")
 
   sshCommand "$user@$host" "sudo yum $yum_opts clean expire-cache && cd $specs_dir && sudo yum-builddep $yum_opts -y $spec"
 
@@ -807,10 +815,12 @@ remoteDepsInstall() {
 remoteSpecValidate() {
   local spec="$1"
 
-  local rpmbuild_dir=$(getRPMBuildDir)
-  local specs_dir="$rpmbuild_dir/SPECS"
+  local rpmbuild_dir specs_dir result
 
-  local result=$(sshCommand "$user@$host" "cd $specs_dir && rpmlint $spec" 2> /dev/null)
+  rpmbuild_dir=$(getRPMBuildDir)
+  specs_dir="$rpmbuild_dir/SPECS"
+
+  result=$(sshCommand "$user@$host" "cd $specs_dir && rpmlint $spec" 2> /dev/null)
 
   show "Spec file check result:" $CYAN
   show "$result"
@@ -834,12 +844,14 @@ remoteSpecValidate() {
 
 remoteBuildProcess() {
   local spec="$1"
-  local spec_name=$(basename $spec)
 
-  local build_args=$(getBuildArgs)
-  local build_prfx=$(getBuildPrfx)
-  local rpmbuild_dir=$(getRPMBuildDir)
-  local specs_dir="$rpmbuild_dir/SPECS"
+  local spec_name build_args build_prfx rpmbuild_dir specs_dir
+
+  spec_name=$(basename "$spec")
+  build_args=$(getBuildArgs)
+  build_prfx=$(getBuildPrfx)
+  rpmbuild_dir=$(getRPMBuildDir)
+  specs_dir="$rpmbuild_dir/SPECS"
 
   if [[ ! $no_lint ]] ; then
     showSeparator "VALIDATION"
@@ -855,31 +867,33 @@ remoteBuildProcess() {
   startStatusObserver
 
   if [[ $verbose ]] ; then
-    sshCommand "$user@$host" "cd $specs_dir && $build_prfx rpmbuild $spec_name $build_args" | tee $tmp_file &> $verb_output
+    sshCommand "$user@$host" "cd $specs_dir && $build_prfx rpmbuild $spec_name $build_args" | tee "$tmp_file" &> $verb_output
   else
-    sshCommand "$user@$host" "cd $specs_dir && $build_prfx rpmbuild $spec_name $build_args" 1> $tmp_file 2> /dev/null
+    sshCommand "$user@$host" "cd $specs_dir && $build_prfx rpmbuild $spec_name $build_args" 1> "$tmp_file" 2> /dev/null
   fi
 
   stopStatusObserver
   show ""
 
-  local has_errors=$(tail -1 $tmp_file | grep -v "exit 0")
+  local has_errors bld_time grc_time packages package_name
+
+  has_errors=$(tail -1 "$tmp_file" | grep -v "exit 0")
 
   if [[ ! $has_errors ]] ; then
     build_end=$(now)
-    local bld_time=$(($build_end - $build_start))
-    local grc_time=$(getGraceTime "$bld_time")
+    bld_time=$(( build_end - build_start ))
+    grc_time=$(getGraceTime "$bld_time")
 
     show "Build complete! Build took $grc_time." $GREEN
 
     showSeparator "PACKAGE PROCESSING"
 
-    local packages=$(cat $tmp_file | egrep "rpmbuild/(S|)RPMS" | cut -f2 -d" ")
+    packages=$(egrep "rpmbuild/(S|)RPMS" "$tmp_file" | cut -f2 -d" ")
 
     for package in $packages ; do
-      package=$(echo $package | tr -dc '[:print:]')
+      package=$(echo "$package" | tr -dc '[:print:]')
 
-      local package_name=$(basename $package)
+      package_name=$(basename "$package")
 
        if [[ $sign ]] ; then
         show "Signing package ${CL_CYAN}$package_name${CL_NORM}..."
@@ -929,15 +943,17 @@ remoteBuildProcess() {
       show "Last $LOG_QUOTE_SIZE lines from build log:" $RED
 
       showSeparator
-      tail -${LOG_QUOTE_SIZE} $tmp_file
+      tail -${LOG_QUOTE_SIZE} "$tmp_file"
       showSeparator
     fi
 
     if [[ $keep_log ]] ; then
-      local ldate=$(getLogDate)
-      local lname="${spec_name/.spec/}+$host+$ldate.log"
+      local ldate lname
 
-      cp $tmp_file $CWD/$lname
+      ldate=$(getLogDate)
+      lname="${spec_name/.spec/}+$host+$ldate.log"
+
+      cp "$tmp_file" "$CWD/$lname"
 
       show "Build log saved to current dir as $lname" $BROWN
     fi
@@ -947,7 +963,9 @@ remoteBuildProcess() {
 }
 
 checkRemoteAvailability() {
-  local remote_available=$(sshCommand "$user@$host" "stat $BUILD_LOCK &> /dev/null || echo 1")
+  local remote_available
+
+  remote_available=$(sshCommand "$user@$host" "stat $BUILD_LOCK &> /dev/null || echo 1")
 
   if [[ ! $remote_available ]] ; then
     showt "\r${CL_GREEN}Executing:${CL_NORM} ${CL_BROWN}waiting in queue${CL_NORM}"
@@ -994,7 +1012,7 @@ localBuild() {
 
   [[ $pack || $source_list ]] && packSources "$spec"
 
-  processSpec $spec
+  processSpec "$spec"
 
   show "All source files are ready for build." $GREEN
 
@@ -1015,14 +1033,15 @@ localDepsInstall() {
 
   show "Installing required packages for build...\n"
 
-  local yum_opts=$(getYumOpts "$verbose")
+  local yum_opts
+  yum_opts=$(getYumOpts "$verbose")
 
   if [[ "$user" == "root" ]] ; then
     yum $yum_opts clean expire-cache
-    yum-builddep $yum_opts -y $spec
+    yum-builddep $yum_opts -y "$spec"
   else
     sudo yum $yum_opts clean expire-cache
-    sudo yum-builddep $yum_opts -y $spec
+    sudo yum-builddep $yum_opts -y "$spec"
   fi
 
   show ""
@@ -1042,7 +1061,9 @@ localSpecValidate() {
   fi
 
   local spec="$1"
-  local result=$(rpmlint $spec)
+
+  local result
+  result=$(rpmlint "$spec")
 
   show "Spec file check result:" $CYAN
   show "$result"
@@ -1066,16 +1087,18 @@ localSpecValidate() {
 
 localBuildProcess() {
   local spec="$1"
-  local spec_name=$(basename $spec)
 
-  local build_args=$(getBuildArgs)
-  local build_prfx=$(getBuildPrfx)
-  local rpmbuild_dir=$(getRPMBuildDir)
-  local specs_dir="$rpmbuild_dir/SPECS"
+  local spec_name build_args build_prfx rpmbuild_dir specs_dir
 
-  local has_errors=""
+  spec_name=$(basename "$spec")
+  build_args=$(getBuildArgs)
+  build_prfx=$(getBuildPrfx)
+  rpmbuild_dir=$(getRPMBuildDir)
+  specs_dir="$rpmbuild_dir/SPECS"
 
-  pushd $specs_dir &> /dev/null
+  local has_errors
+
+  pushd "$specs_dir" &> /dev/null
     if [[ ! $no_lint ]] ; then
       showSeparator "VALIDATION"
       localSpecValidate "$spec_name"
@@ -1094,14 +1117,16 @@ localBuildProcess() {
     # We use eval in this case because using --define, contains quotes
     # and if we simply run command, we will get error
 
+    local exit_status pipe_status
+
     if [[ $verbose ]] ; then
       export $build_prfx
-      eval "rpmbuild $build_args $spec_name" | tee $tmp_file &> $verb_output
-      local pipe_status=${PIPESTATUS[0]}
+      eval "rpmbuild $build_args $spec_name" | tee "$tmp_file" &> $verb_output
+      pipe_status=${PIPESTATUS[0]}
     else
       export $build_prfx
-      eval "rpmbuild $build_args $spec_name" &> $tmp_file
-      local exit_status=$?
+      eval "rpmbuild $build_args $spec_name" &> "$tmp_file"
+      exit_status=$?
     fi
 
     if [[ $verbose ]] ; then
@@ -1122,15 +1147,17 @@ localBuildProcess() {
         show "Last $LOG_QUOTE_SIZE lines from build log:" $RED
 
         showSeparator
-        tail -${LOG_QUOTE_SIZE} $tmp_file
+        tail -${LOG_QUOTE_SIZE} "$tmp_file"
         showSeparator
       fi
 
       if [[ $keep_log ]] ; then
-        local ldate=$(getLogDate)
-        local lname="${spec_name/.spec/}+$ldate.log"
+        local ldate lname
 
-        cp $tmp_file $CWD/$lname
+        ldate=$(getLogDate)
+        lname="${spec_name/.spec/}+$ldate.log"
+
+        cp "$tmp_file" "$CWD/$lname"
 
         show "Build log saved to current dir as $lname" $BROWN
       fi
@@ -1140,20 +1167,22 @@ localBuildProcess() {
       stopStatusObserver
       show ""
 
+      local bld_time grc_time package packages package_name
+
       build_end=$(now)
-      local bld_time=$(($build_end - $build_start))
-      local grc_time=$(getGraceTime "$bld_time")
+      bld_time=$(( build_end - build_start ))
+      grc_time=$(getGraceTime "$bld_time")
 
       show "Build complete! Build took $grc_time." $GREEN
 
       showSeparator "PACKAGE PROCESSING"
 
-      local packages=$(cat $tmp_file | egrep "rpmbuild/(S|)RPMS" | cut -f2 -d" ")
+      packages=$(egrep "rpmbuild/(S|)RPMS" "$tmp_file" | cut -f2 -d" ")
 
-      rm -f $tmp_file
+      rm -f "$tmp_file"
 
       for package in $packages ; do
-        local package_name=$(basename $package)
+        package_name=$(basename "$package")
 
         if [[ $sign ]] ; then
           localSign "$package"
@@ -1162,13 +1191,13 @@ localBuildProcess() {
         fi
 
         if [[ $dest_dir ]] ; then
-          mv $package $dest_dir
+          mv "$package" "$dest_dir"
         else
-          mv $package $CWD
+          mv "$package" "$CWD"
         fi
       done
 
-      pushd $CWD &> /dev/null
+      pushd "$CWD" &> /dev/null
 
       if [[ $post ]] ; then
         show "Executing post-build script..."
@@ -1206,9 +1235,11 @@ checkLocalBuildAvailability() {
     return
   fi
 
-  local cdt=$(stat $BUILD_LOCK_LOCAL -c "%Y")
-  local ct=$(now)
-  local cdf=$(( $ct - $cdt ))
+  local cdt ct cdf
+
+  cdt=$(stat "$BUILD_LOCK_LOCAL" -c "%Y")
+  ct=$(now)
+  cdf=$(( ct - cdt ))
 
   if [[ $cdf -gt $LOCK_TIME_MAX_DIFF ]] ; then
     show "We found lock file created more than 3 hours ago. It's too much time for usual build process."
@@ -1230,27 +1261,30 @@ checkLocalBuildAvailability() {
 }
 
 hasLocalLock() {
-  [[ ! -f $BUILD_LOCK_LOCAL ]] && return 1
+  [[ ! -f "$BUILD_LOCK_LOCAL" ]] && return 1
 
-  local pid=$(cat $BUILD_LOCK_LOCAL)
+  local pid
+  pid=$(cat "$BUILD_LOCK_LOCAL")
 
-  [[ ! -d /proc/$pid ]] && removeLocalLock && return 1
+  [[ ! -d "/proc/$pid" ]] && removeLocalLock && return 1
 
   return 0
 }
 
 createLocalLock() {
-  echo $$ > $BUILD_LOCK_LOCAL
-  chmod 666 $BUILD_LOCK_LOCAL
+  echo "$$" > $BUILD_LOCK_LOCAL
+  chmod 666 "$BUILD_LOCK_LOCAL"
 }
 
 removeLocalLock() {
+  local cur_user lock_owner
+
   if [[ -f $BUILD_LOCK_LOCAL ]] ; then
-    local cur_user=$(whoami)
-    local lock_owner=$(stat $BUILD_LOCK_LOCAL -c "%U")
+    cur_user=$(whoami)
+    lock_owner=$(stat "$BUILD_LOCK_LOCAL" -c "%U")
 
     if [[ "$cur_user" == "$lock_owner" ]] ; then
-      rm -f $BUILD_LOCK_LOCAL &> /dev/null
+      rm -f "$BUILD_LOCK_LOCAL" &> /dev/null
     fi
   fi
 }
@@ -1258,12 +1292,12 @@ removeLocalLock() {
 localSign() {
   local package="$1"
 
-  show "Signing package ${CL_CYAN}$package_name${CL_NORM}..."
+  show "Signing package ${CL_CYAN}${package_name}${CL_NORM}..."
 
   if [[ $verbose ]] ; then
-    rpm --addsign $package | tee $tmp_file &> $verb_output
+    rpm --addsign "$package" | tee "$tmp_file" &> $verb_output
   else
-    rpm --addsign $package &> $tmp_file
+    rpm --addsign "$package" &> "$tmp_file"
   fi
 
   if [[ $? -ne 0 ]] ; then
@@ -1275,9 +1309,9 @@ releaseBump() {
   local spec="$1"
 
   if [[ $bump_comment ]] ; then
-    rpmdev-bumpspec -c "$bump_comment" $spec
+    rpmdev-bumpspec -c "$bump_comment" "$spec"
   else
-    rpmdev-bumpspec $spec
+    rpmdev-bumpspec "$spec"
   fi
 
   if [[ $? -ne 0 ]] ; then
@@ -1286,8 +1320,9 @@ releaseBump() {
 }
 
 prepareDeps() {
-  local deps=$(echo "$@" | sed 's/ \(>\|>=\|=\) /\1/g')
-  local dep fdep result
+  local dep deps fdep result
+
+  deps=$(echo "$*" | sed 's/ \(>\|>=\|=\) /\1/g')
 
   for dep in $deps ; do
     if [[ $dep =~ :: ]] ; then
@@ -1306,11 +1341,11 @@ prepareDeps() {
 uploadPackages() {
   local packages_dir="$1"
   local packages="$2"
-  local package_name
-  local package_list
+
+  local package_name package_list target has_errors
 
   for package in $packages ; do
-    package_name=$(basename $package)
+    package_name=$(basename "$package")
     package_list="$package_list $packages_dir/$package_name"
   done
 
@@ -1318,20 +1353,21 @@ uploadPackages() {
 
   if [[ -f $upload ]] ; then
     if [[ -r $upload ]] ; then
-      local has_errors=""
+      has_errors=""
+
       while read line ; do
-        local target=$(echo $line | cut -f1 -d":")
+        target=$(echo "$line" | cut -f1 -d":")
         uploadPackagesToServer "$line" "$package_list"
 
         [[ $? -ne 0 ]] && has_errors=true
-      done < $upload
+      done < "$upload"
 
       show ""
 
       if [[ $has_errors ]] ; then
         show "All rpm packages saved to directory ${CL_CYAN}$packages_dir${CL_NORM}."
       else
-        rm -f $package_list
+        rm -f "$package_list"
         show "All rpm packages uploaded to all remote servers!" $GREEN
       fi
     else
@@ -1340,14 +1376,14 @@ uploadPackages() {
       show "All rpm packages saved to directory ${CL_CYAN}$packages_dir${CL_NORM}."
     fi
   else
-    local target=$(echo $upload | cut -f1 -d":")
+    target=$(echo "$upload" | cut -f1 -d":")
 
     uploadPackagesToServer "$upload" "$package_list"
 
     show ""
 
     if [[ $? -eq 0 ]] ; then
-      rm -f $package_list
+      rm -f "$package_list"
       show "All rpm packages uploaded to remote server!" $GREEN
     else
       show "All rpm packages saved to directory ${CL_CYAN}$packages_dir${CL_NORM}."
@@ -1358,29 +1394,28 @@ uploadPackages() {
 uploadPackagesToServer() {
   local url="$1"
 
-  if [[ $(echo $url | tr -dc ":" | wc -c) == "2" ]] ; then
-    local url_user_host=$(echo $url | cut -f1-2 -d":")
-    local url_user=$(echo $url_user_host | cut -f1 -d"@" | cut -f1 -d":")
-    local url_host=$(echo $url_user_host | cut -f2 -d"@")
-    local url_path=$(echo $url | cut -f2 -d":")
+  local url_user_host url_user url_host url_path package package_list package_name has_errors
+
+  if [[ $(echo "$url" | tr -dc ":" | wc -c) == "2" ]] ; then
+    url_user_host=$(echo "$url" | cut -f1-2 -d":")
+    url_user=$(echo "$url_user_host" | cut -f1 -d"@" | cut -f1 -d":")
+    url_host=$(echo "$url_user_host" | cut -f2 -d"@")
+    url_path=$(echo "$url" | cut -f2 -d":")
   else
-    local url_user_host=$(echo $url | cut -f1 -d":")
-    local url_user=$(echo $url_user_host | cut -f1 -d"@")
-    local url_host=$(echo $url_user_host | cut -f2 -d"@")
-    local url_path=$(echo $url | cut -f2 -d":")
+    url_user_host=$(echo "$url" | cut -f1 -d":")
+    url_user=$(echo "$url_user_host" | cut -f1 -d"@")
+    url_host=$(echo "$url_user_host" | cut -f2 -d"@")
+    url_path=$(echo "$url" | cut -f2 -d":")
   fi
 
-  local package_list="$2"
-  local package_name
-
-  show "Connecting to remote server ${CL_CYAN}$url_host${CL_NORM}..."
+  show "Connecting to remote server ${CL_CYAN}${url_host}${CL_NORM}..."
 
   if isRemoteServerReachable "$url_host" ; then
     if isSSHConnectionWorks "$url_user" "$url_host" ; then
-      local has_errors=""
+      has_errors=""
 
       for package in $package_list ; do
-        local package_name=$(basename $package)
+        package_name=$(basename "$package")
 
         scpCommand "$package" "$url" &> $verb_output
 
@@ -1421,9 +1456,11 @@ packSources() {
       doExit $ERROR_SOURCE
     fi
 
-    pack=$(cat $source_list)
+    pack=$(cat "$source_list")
     pack=$(renderMacros "$spec" "$pack")
   fi
+
+  local src_target sources arch_name arch_ext
 
   for src_target in $pack ; do
     if [[ ! -a $src_target ]] ; then
@@ -1432,74 +1469,83 @@ packSources() {
     fi
   done
 
-  local sources=($(getSpecValue "$MACRO_SOURCE" "$spec"))
-  local arch_name=$(getArchName "${sources[0]}")
-  local arch_ext=$(getArchExt "${sources[0]}")
+  sources=($(getSpecValue "$MACRO_SOURCE" "$spec"))
+  arch_name=$(getArchName "${sources[0]}")
+  arch_ext=$(getArchExt "${sources[0]}")
 
-  mkdir -p $tmp_dir/$arch_name
+  mkdir -p "$tmp_dir/$arch_name"
 
   if [[ ! $relative_pack ]] ; then
-    cp -r $pack $tmp_dir/$arch_name &> /dev/null
+    cp -r $pack "$tmp_dir/$arch_name" &> /dev/null
   else
-    cp -r --parents $pack $tmp_dir/$arch_name &> /dev/null
+    cp -r --parents $pack "$tmp_dir/$arch_name" &> /dev/null
+  fi
+
+  if [[ $? -ne 0 ]] ; then
+    show "Can't copy source files to temporary ditrectory" $RED
+    doExit 1
   fi
 
   cleanPackDir "$tmp_dir/$arch_name"
 
-  pushd $tmp_dir &> /dev/null
+  pushd "$tmp_dir" &> /dev/null
 
-    packDir $tmp_dir/$arch_name $arch_ext
+    packDir "$tmp_dir/$arch_name" "$arch_ext"
 
   popd &> /dev/null
 
-  rm -rf $tmp_dir/$arch_name
+  rm -rf "${tmp_dir:?}/$arch_name"
 
   show "All files packed to ${arch_name}.${arch_ext}." $GREEN
 }
 
 packSourcesFromGit() {
-  local spec=$(getAbsPath $1)
+  local spec
+  
+  spec=$(getAbsPath "$1")
 
   show "Fetching sources from git repo ${CL_CYAN}$git${CL_NORM}..."
 
-  local sources=($(getSpecValue "$MACRO_SOURCE" "$spec"))
-  local source_name=$(getArchName "${sources[0]}")
-  local source_ext=$(getArchExt "${sources[0]}")
+  local sources source_name source_ext dir_name git_log abs_dir_path
 
-  local dir_name=$(mktemp -u $source_name-XXXX)
+  sources=($(getSpecValue "$MACRO_SOURCE" "$spec"))
+  source_name=$(getArchName "${sources[0]}")
+  source_ext=$(getArchExt "${sources[0]}")
 
-  local git_log="$tmp_dir/git.log"
+  dir_name=$(mktemp -u "$source_name-XXXX")
 
-  pushd $tmp_dir &> /dev/null
+  git_log="$tmp_dir/git.log"
+
+  pushd "$tmp_dir" &> /dev/null
     git=$(renderMacros "$spec" "$git")
 
-    [[ $verbose ]] && git clone $git $dir_name | tee -a $git_log || git clone $git $dir_name &> $git_log
+    [[ $verbose ]] && git clone "$git" "$dir_name" | tee -a "$git_log" || git clone "$git" "$dir_name" &> "$git_log"
 
     if [[ $? -ne 0 ]] ; then
       show "Can't clone repo - error while cloning." $RED
 
       if [[ ! $verbose ]] ; then
         show "\nLast ${REPO_LOG_QUOTE_SIZE} lines from log ($git_log):"
-        tail -${REPO_LOG_QUOTE_SIZE} $git_log
+        tail -${REPO_LOG_QUOTE_SIZE} "$git_log"
         show ""
       fi
 
       doExit $ERROR_SOURCE
     fi
 
-    pushd $tmp_dir/$dir_name &> /dev/null
+    pushd "$tmp_dir/$dir_name" &> /dev/null
 
       if [[ $branch ]] ; then
         branch=$(renderMacros "$spec" "$branch")
 
-        [[ $verbose ]] && git checkout $branch | tee -a $git_log || git checkout $branch &> $git_log
+        [[ $verbose ]] && git checkout "$branch" | tee -a "$git_log" || git checkout "$branch" &> "$git_log"
 
         if [[ $? -ne 0 ]] ; then
           show "Can't switch branch to $branch:" $RED
 
           if [[ ! $verbose ]] ; then
             show "\nLast ${REPO_LOG_QUOTE_SIZE} lines from log ($git_log):"
-            tail -${REPO_LOG_QUOTE_SIZE} $git_log
+            tail -${REPO_LOG_QUOTE_SIZE} "$git_log"
             show ""
           fi
 
@@ -1508,14 +1554,14 @@ packSourcesFromGit() {
       fi
 
       if [[ $revision ]] ; then
-        [[ $verbose ]] && git checkout $revision | tee -a $git_log || git checkout $revision &> $git_log
+        [[ $verbose ]] && git checkout "$revision" | tee -a "$git_log" || git checkout "$revision" &> "$git_log"
 
         if [[ $? -ne 0 ]] ; then
           show "Can't checkout revision $revision:" $RED
 
           if [[ ! $verbose ]] ; then
             show "\nLast ${REPO_LOG_QUOTE_SIZE} lines from log ($git_log):"
-            tail -${REPO_LOG_QUOTE_SIZE} $git_log
+            tail -${REPO_LOG_QUOTE_SIZE} "$git_log"
             show ""
           fi
 
@@ -1524,14 +1570,14 @@ packSourcesFromGit() {
       elif [[ $tag ]] ; then
         tag=$(renderMacros "$spec" "$tag")
 
-        [[ $verbose ]] && git checkout $tag | tee -a $git_log || git checkout $tag &> $git_log
+        [[ $verbose ]] && git checkout "$tag" | tee -a "$git_log" || git checkout "$tag" &> "$git_log"
 
         if [[ $? -ne 0 ]] ; then
           show "Can't checkout tag $tag:" $RED
 
           if [[ ! $verbose ]] ; then
             show "\nLast ${REPO_LOG_QUOTE_SIZE} lines from log ($git_log):"
-            tail -${REPO_LOG_QUOTE_SIZE} $git_log
+            tail -${REPO_LOG_QUOTE_SIZE} "$git_log"
             show ""
           fi
 
@@ -1539,26 +1585,26 @@ packSourcesFromGit() {
         fi
       fi
 
-      rm -rf .git .gitignore $git_log &> /dev/null
+      rm -rf .git .gitignore "$git_log" &> /dev/null
     popd &> /dev/null
 
     if [[ $path ]] ; then
-      if [[ ! -d $dir_name/$path ]] ; then
+      if [[ ! -d "$dir_name/$path" ]] ; then
         show "Can't find path [$path] in git repository." $RED
         doExit $ERROR_SOURCE
       else
-        mv $dir_name/$path $source_name
-        rm -rf $dir_name
+        mv "$dir_name/$path" "$source_name"
+        rm -rf "$dir_name"
       fi
     else
-      mv $dir_name $source_name
+      mv "$dir_name" "$source_name"
     fi
 
-    local abs_dir_path=$(getAbsPath $tmp_dir/$source_name)
+    abs_dir_path=$(getAbsPath "$tmp_dir/$source_name")
 
     packDir "$abs_dir_path" "$source_ext"
 
-    rm -rf $source_name
+    rm -rf "$source_name"
 
   popd &> /dev/null
 
@@ -1566,48 +1612,52 @@ packSourcesFromGit() {
 }
 
 packSourcesFromHg() {
-  local spec=$(getAbsPath $1)
+  local spec
+  
+  spec=$(getAbsPath "$1")
 
   show "Fetching sources from hg repo ${CL_CYAN}$hg${CL_NORM}..."
 
-  local sources=($(getSpecValue "$MACRO_SOURCE" "$spec"))
-  local source_name=$(getArchName "${sources[0]}")
-  local source_ext=$(getArchExt "${sources[0]}")
+  local sources source_name source_ext dir_name hg_log abs_dir_path
 
-  local dir_name=$(mktemp -u $source_name-XXXX)
+  sources=($(getSpecValue "$MACRO_SOURCE" "$spec"))
+  source_name=$(getArchName "${sources[0]}")
+  source_ext=$(getArchExt "${sources[0]}")
 
-  local hg_log="$tmp_dir/hg.log"
+  dir_name=$(mktemp -u "$source_name-XXXX")
 
-  pushd $tmp_dir &> /dev/null
+  hg_log="$tmp_dir/hg.log"
+
+  pushd "$tmp_dir" &> /dev/null
     hg=$(renderMacros "$spec" "$hg")
 
-    [[ $verbose ]] && hg clone $hg $dir_name | tee -a $hg_log || hg clone $hg $dir_name &> $hg_log
+    [[ $verbose ]] && hg clone "$hg" "$dir_name" | tee -a "$hg_log" || hg clone "$hg" "$dir_name" &> "$hg_log"
 
     if [[ $? -ne 0 ]] ; then
       show "Can't clone repo - error while cloning." $RED
 
       if [[ ! $verbose ]] ; then
         show "\nLast ${REPO_LOG_QUOTE_SIZE} lines from log ($hg_log):"
-        tail -${REPO_LOG_QUOTE_SIZE} $hg_log
+        tail -${REPO_LOG_QUOTE_SIZE} "$hg_log"
         show ""
       fi
 
       doExit $ERROR_SOURCE
     fi
 
-    pushd $tmp_dir/$dir_name &> /dev/null
+    pushd "$tmp_dir/$dir_name" &> /dev/null
 
       if [[ $branch ]] ; then
         branch=$(renderMacros "$spec" "$branch")
 
-        [[ $verbose ]] && hg checkout $branch | tee -a $hg_log || hg checkout $branch &> $hg_log
+        [[ $verbose ]] && hg checkout "$branch" | tee -a "$hg_log" || hg checkout "$branch" &> "$hg_log"
 
         if [[ $? -ne 0 ]] ; then
           show "Can't switch branch to $branch:" $RED
 
           if [[ ! $verbose ]] ; then
             show "\nLast ${REPO_LOG_QUOTE_SIZE} lines from log ($hg_log):"
-            tail -${REPO_LOG_QUOTE_SIZE} $hg_log
+            tail -${REPO_LOG_QUOTE_SIZE} "$hg_log"
             show ""
           fi
 
@@ -1616,14 +1666,14 @@ packSourcesFromHg() {
       fi
 
       if [[ $revision ]] ; then
-        [[ $verbose ]] && hg checkout $revision | tee -a $hg_log || hg checkout $revision &> $hg_log
+        [[ $verbose ]] && hg checkout "$revision" | tee -a "$hg_log" || hg checkout "$revision" &> "$hg_log"
 
         if [[ $? -ne 0 ]] ; then
           show "Can't checkout revision $revision:" $RED
 
           if [[ ! $verbose ]] ; then
             show "\nLast ${REPO_LOG_QUOTE_SIZE} lines from log ($hg_log):"
-            tail -${REPO_LOG_QUOTE_SIZE} $hg_log
+            tail -${REPO_LOG_QUOTE_SIZE} "$hg_log"
             show ""
           fi
 
@@ -1632,14 +1682,14 @@ packSourcesFromHg() {
       elif [[ $tag ]] ; then
         tag=$(renderMacros "$spec" "$tag")
 
-        [[ $verbose ]] && hg checkout $tag | tee -a $hg_log || hg checkout $tag &> $hg_log
+        [[ $verbose ]] && hg checkout "$tag" | tee -a "$hg_log" || hg checkout "$tag" &> "$hg_log"
 
         if [[ $? -ne 0 ]] ; then
           show "Can't checkout tag $tag:" $RED
 
           if [[ ! $verbose ]] ; then
             show "\nLast ${REPO_LOG_QUOTE_SIZE} lines from log ($hg_log):"
-            tail -${REPO_LOG_QUOTE_SIZE} $hg_log
+            tail -${REPO_LOG_QUOTE_SIZE} "$hg_log"
             show ""
           fi
 
@@ -1647,26 +1697,26 @@ packSourcesFromHg() {
         fi
       fi
 
-      rm -rf .hg .hgignore $hg_log &> /dev/null
+      rm -rf .hg .hgignore "$hg_log" &> /dev/null
     popd &> /dev/null
 
     if [[ $path ]] ; then
-      if [[ ! -d $dir_name/$path ]] ; then
+      if [[ ! -d "$dir_name/$path" ]] ; then
         show "Can't find path [$path] in git repository." $RED
         doExit $ERROR_SOURCE
       else
-        mv $dir_name/$path $source_name
-        rm -rf $dir_name
+        mv "$dir_name/$path" "$source_name"
+        rm -rf "$dir_name"
       fi
     else
-      mv $dir_name $source_name
+      mv "$dir_name" "$source_name"
     fi
 
-    local abs_dir_path=$(getAbsPath $tmp_dir/$source_name)
+    abs_dir_path=$(getAbsPath "$tmp_dir/$source_name")
 
     packDir "$abs_dir_path" "$source_ext"
 
-    rm -rf $source_name
+    rm -rf "$source_name"
 
   popd &> /dev/null
 
@@ -1674,49 +1724,52 @@ packSourcesFromHg() {
 }
 
 packSourcesFromBzr() {
-  local spec=$(getAbsPath $1)
+  local spec
+  
+  spec=$(getAbsPath "$1")
 
-  show "Fetching sources from bzr repo ${CL_CYAN}$bzr${CL_NORM}..."
+  show "Fetching sources from bzr repo ${CL_CYAN}${bzr}${CL_NORM}..."
 
-  local sources=($(getSpecValue "$MACRO_SOURCE" "$spec"))
-  local source_name=$(getArchName ${sources[0]})
-  local source_ext=$(getArchExt ${sources[0]})
+  local sources source_name source_ext dir_name bzr_log bzr_opts abs_dir_path
+
+  sources=($(getSpecValue "$MACRO_SOURCE" "$spec"))
+  source_name=$(getArchName "${sources[0]}")
+  source_ext=$(getArchExt "${sources[0]}")
 
   bzr=$(renderMacros "$spec" "$bzr")
 
-  local dir_name=$(mktemp -u $source_name-XXXX)
-  local bzr_log="$tmp_dir/bzr.log"
-  local bzr_opts
+  dir_name=$(mktemp -u "$source_name-XXXX")
+  bzr_log="$tmp_dir/bzr.log"
 
-  pushd $tmp_dir &> /dev/null
+  pushd "$tmp_dir" &> /dev/null
 
     [[ $tag ]] && bzr_opts="-r tag:$tag"
 
-    [[ $verbose ]] && bzr $bzr_opts branch $bzr $dir_name | tee -a $bzr_log || bzr $bzr_opts branch $bzr $dir_name &> $bzr_log
+    [[ $verbose ]] && bzr $bzr_opts branch "$bzr" "$dir_name" | tee -a "$bzr_log" || bzr $bzr_opts branch "$bzr" "$dir_name" &> "$bzr_log"
 
     if [[ $? -ne 0 ]] ; then
       show "Can't make a copy of branch." $RED
 
       if [[ ! $verbose ]] ; then
         show "\nLast ${REPO_LOG_QUOTE_SIZE} lines from log ($bzr_log):"
-        tail -${REPO_LOG_QUOTE_SIZE} $bzr_log
+        tail -${REPO_LOG_QUOTE_SIZE} "$bzr_log"
         show ""
       fi
 
       doExit $ERROR_SOURCE
     fi
 
-    pushd $tmp_dir/$dir_name &> /dev/null
+    pushd "$tmp_dir/$dir_name" &> /dev/null
 
       if [[ $revision ]] ; then
-        [[ $verbose ]] && bzr revert -r${revision} | tee -a $bzr_log || bzr revert -r${revision} &> $bzr_log
+        [[ $verbose ]] && bzr revert -r${revision} | tee -a "$bzr_log" || bzr revert -r${revision} &> "$bzr_log"
 
         if [[ $? -ne 0 ]] ; then
           show "Can't revert to revision [$revision]." $RED
 
           if [[ ! $verbose ]] ; then
             show "\nLast ${REPO_LOG_QUOTE_SIZE} lines from log ($bzr_log):"
-            tail -${REPO_LOG_QUOTE_SIZE} $bzr_log
+            tail -${REPO_LOG_QUOTE_SIZE} "$bzr_log"
             show ""
           fi
 
@@ -1724,26 +1777,26 @@ packSourcesFromBzr() {
         fi
       fi
 
-      rm -rf .bzr .bzrignore $bzr_log &> /dev/null
+      rm -rf .bzr .bzrignore "$bzr_log" &> /dev/null
     popd &> /dev/null
 
     if [[ $path ]] ; then
-      if [[ ! -d $dir_name/$path ]] ; then
+      if [[ ! -d "$dir_name/$path" ]] ; then
         show "Can't find path [$path] in bzr repository." $RED
         doExit $ERROR_SOURCE
       else
-        mv $dir_name/$path $source_name
-        rm -rf $dir_name
+        mv "$dir_name/$path" "$source_name"
+        rm -rf "$dir_name"
       fi
     else
-      mv $dir_name $source_name
+      mv "$dir_name" "$source_name"
     fi
 
-    local abs_dir_path=$(getAbsPath $tmp_dir/$source_name)
+    abs_dir_path=$(getAbsPath "$tmp_dir/$source_name")
 
     packDir "$abs_dir_path" "$source_ext"
 
-    rm -rf $source_name
+    rm -rf "$source_name"
 
   popd &> /dev/null
 
@@ -1751,19 +1804,22 @@ packSourcesFromBzr() {
 }
 
 packSourcesFromSvn() {
-  local spec=$(getAbsPath $1)
+  local spec
+  
+  spec=$(getAbsPath "$1")
 
   show "Fetching sources from svn repo ${CL_CYAN}$svn${CL_NORM}..."
 
-  local sources=($(getSpecValue "$MACRO_SOURCE" "$spec"))
-  local source_name=$(getArchName ${sources[0]})
-  local source_ext=$(getArchExt ${sources[0]})
+  local sources source_name source_ext svn_opts svn_log abs_dir_path
+
+  sources=($(getSpecValue "$MACRO_SOURCE" "$spec"))
+  source_name=$(getArchName "${sources[0]}")
+  source_ext=$(getArchExt" ${sources[0]}")
 
   svn=$(renderMacros "$spec" "$svn")
 
-  local svn_log="$tmp_dir/svn.log"
-
-  local svn_opts="--non-interactive --no-auth-cache"
+  svn_log="$tmp_dir/svn.log"
+  svn_opts="--non-interactive --no-auth-cache"
 
   [[ $svn_user ]] && svn_opts="$svn_opts --username $svn_user"
   [[ $svn_pass ]] && svn_opts="$svn_opts --password $svn_pass"
@@ -1785,18 +1841,18 @@ packSourcesFromSvn() {
     fi
   fi
 
-  pushd $tmp_dir &> /dev/null
+  pushd "$tmp_dir" &> /dev/null
     if [[ $path ]] ; then
       if [[ $verbose ]] ; then
-        svn checkout $svn_url ${source_name}_tmp $svn_opts | tee -a $svn_log
+        svn checkout "$svn_url" "${source_name}_tmp" $svn_opts | tee -a "$svn_log"
       else
-        svn checkout $svn_url ${source_name}_tmp $svn_opts &> $svn_log
+        svn checkout "$svn_url" "${source_name}_tmp" "$svn_opts" &> "$svn_log"
       fi
     else
       if [[ $verbose ]] ; then
-        svn checkout $svn_url ${source_name} $svn_opts | tee -a $svn_log
+        svn checkout "$svn_url" "${source_name}" $svn_opts | tee -a "$svn_log"
       else
-        svn checkout $svn_url ${source_name} $svn_opts &> $svn_log
+        svn checkout "$svn_url" "${source_name}" $svn_opts &> "$svn_log"
       fi
     fi
 
@@ -1805,31 +1861,31 @@ packSourcesFromSvn() {
 
       if [[ ! $verbose ]] ; then
         show "\nLast ${REPO_LOG_QUOTE_SIZE} lines from log ($svn_log):"
-        tail -${REPO_LOG_QUOTE_SIZE} $svn_log
+        tail -${REPO_LOG_QUOTE_SIZE} "$svn_log"
         show ""
       fi
 
       doExit $ERROR_SOURCE
     else
-      rm -f $svn_log &> /dev/null
+      rm -f "$svn_log" &> /dev/null
 
       if [[ $path ]] ; then
-        if [[ ! -d ${source_name}_tmp/$path ]] ; then
+        if [[ ! -d "${source_name}_tmp/$path" ]] ; then
           show "Can't find path [$path] in svn repository." $RED
           doExit $ERROR_SOURCE
         else
-          mv ${source_name}_tmp/$path $source_name
-          rm -rf ${source_name}_tmp
+          mv "${source_name}_tmp/$path" "$source_name"
+          rm -rf "${source_name}_tmp"
         fi
       fi
 
-      find $source_name -type d -name ".svn" -exec rm -rf {} \; &> /dev/null
+      find "$source_name" -type d -name ".svn" -exec rm -rf {} \; &> /dev/null
 
-      local abs_dir_path=$(getAbsPath $tmp_dir/$source_name)
+      abs_dir_path=$(getAbsPath "$tmp_dir/$source_name")
 
       packDir "$abs_dir_path" "$source_ext"
 
-      rm -rf $source_name
+      rm -rf "$source_name"
     fi
 
   popd &> /dev/null
@@ -1840,13 +1896,14 @@ packSourcesFromSvn() {
 processSpec() {
   local spec="$1"
 
-  local source_list=$(getSpecValue "$MACRO_SOURCE" "$spec")
-  local patch_list=$(getSpecValue "$MACRO_PATCH" "$spec")
+  local source_list patch_list files source_file source_num file_name found_source
 
-  local files="$source_list $patch_list"
+  source_list=$(getSpecValue "$MACRO_SOURCE" "$spec")
+  patch_list=$(getSpecValue "$MACRO_PATCH" "$spec")
 
-  local source_file
-  local source_num=0
+  files="$source_list $patch_list"
+
+  source_num=0
 
   for source_file in $files ; do
     if [[ $svn || $git || $hg || $bzr ]] ; then
@@ -1854,21 +1911,20 @@ processSpec() {
     fi
 
     if [[ "$source_file" =~ (http|https|ftp) ]] ; then
-      local file_name=$(basename $source_file)
-
-      local found_source=$(findSource "$file_name")
+      file_name=$(basename "$source_file")
+      found_source=$(findSource "$file_name")
 
       if [[ $found_source ]] ; then
         show "File ${CL_CYAN}$file_name${CL_NORM} listed in spec and will be used for build."
-        cp $found_source $tmp_dir
-      elif [[ -f $tmp_dir/$file_name ]] ; then
+        cp "$found_source" "$tmp_dir"
+      elif [[ -f "$tmp_dir/$file_name" ]] ; then
         show "File ${CL_CYAN}$file_name${CL_NORM} listed in spec and will be used for build."
       elif [[ $dlcache ]] ; then
-        if [[ -f $dlcache/$file_name ]] ; then
+        if [[ -f "$dlcache/$file_name" ]] ; then
           show "File ${CL_CYAN}$file_name${CL_NORM} listed in spec and will be used for build."
-          cp $dlcache/$file_name $tmp_dir
+          cp "$dlcache/$file_name" "$tmp_dir"
         else
-          show "Downloading source file ${CL_CYAN}$source_file${CL_NORM}..."
+          show "Downloading source file ${CL_CYAN}${source_file}${CL_NORM}..."
 
           downloadSource "$source_file" "$dlcache"
 
@@ -1877,10 +1933,10 @@ processSpec() {
             doExit $ERROR_SOURCE
           fi
 
-          cp $dlcache/$file_name $tmp_dir
+          cp "$dlcache/$file_name" "$tmp_dir"
         fi
       else
-        show "Downloading source file ${CL_CYAN}$source_file${CL_NORM}..."
+        show "Downloading source file ${CL_CYAN}${source_file}${CL_NORM}..."
 
         downloadSource "$source_file" "$tmp_dir"
 
@@ -1890,36 +1946,38 @@ processSpec() {
         fi
       fi
     else
-      if [[ -f $tmp_dir/$source_file ]] ; then
-        show "File ${CL_CYAN}$source_file${CL_NORM} listed in spec and will be used for build."
-        source_num=$(($source_num + 1)) && continue
+      if [[ -f "$tmp_dir/$source_file" ]] ; then
+        show "File ${CL_CYAN}${source_file}${CL_NORM} listed in spec and will be used for build."
+        source_num=$(( source_num + 1 )) && continue
       fi
 
-      local source_ext=$(getArchExt $source_file)
-      local source_name=$(getArchName $source_file)
-      local found_dir=$(findSource "$source_name" true)
-      local found_source=$(findSource "$source_file")
+      local source_ext source_name found_dir found_source
+
+      source_ext=$(getArchExt "$source_file")
+      source_name=$(getArchName "$source_file")
+      found_dir=$(findSource "$source_name" true)
+      found_source=$(findSource "$source_file")
 
       if [[ $source_ext && $found_dir ]] ; then
-        show "File ${CL_CYAN}$source_file${CL_NORM} listed in spec and will be created from sources directory."
+        show "File ${CL_CYAN}${source_file}${CL_NORM} listed in spec and will be created from sources directory."
 
         packDir "$found_dir/$source_name" "$source_ext"
-        mv $found_dir/$source_file $tmp_dir
+        mv "$found_dir/$source_file" "$tmp_dir"
 
-        source_num=$(($source_num + 1)) && continue
+        source_num=$(( source_num + 1 )) && continue
       elif [[ $found_source ]] ; then
-        show "File ${CL_CYAN}$source_file${CL_NORM} listed in spec and will be used for build."
+        show "File ${CL_CYAN}${source_file}${CL_NORM} listed in spec and will be used for build."
 
-        cp $found_source $tmp_dir
+        cp "$found_source" "$tmp_dir"
 
-        source_num=$(($source_num + 1)) && continue
+        source_num=$(( source_num + 1 )) && continue
       else
         show "Can't use file $source_file for build - file not found in sources directory." $RED
         doExit $ERROR_SOURCE
       fi
     fi
 
-    source_num=$(($source_num + 1))
+    source_num=$(( source_num + 1 ))
   done
 }
 
@@ -1927,10 +1985,10 @@ findSource() {
   local name="$1"
   local get_dir="$2"
 
-  local dir
+  local dir abs_dir
 
   if [[ $source_dir ]] ; then
-    if [[ -r $source_dir/$name ]] ; then
+    if [[ -r "$source_dir/$name" ]] ; then
       if [[ $get_dir ]] ; then
         echo "$source_dir" && return 0
       else
@@ -1939,9 +1997,9 @@ findSource() {
     fi
   else
     for dir in $SOURCE_PATHS ; do
-      local abs_dir=$(getAbsPath "$dir")
+      abs_dir=$(getAbsPath "$dir")
 
-      if [[ -r $abs_dir/$name ]] ; then
+      if [[ -r "$abs_dir/$name" ]] ; then
         if [[ $get_dir ]] ; then
           echo "$abs_dir" && return 0
         else
@@ -1957,21 +2015,21 @@ findSource() {
 copySourcesToBuildDir() {
   local spec="$1"
 
-  local has_errors=""
-  local rpmbuild_dir=$(getRPMBuildDir)
-  local src_dir="$rpmbuild_dir/SOURCES"
-  local specs_dir="$rpmbuild_dir/SPECS"
+  local rpmbuild_dir src_dir specs_dir source_file source_files source_file_name has_errors
 
-  if [[ -d $src_dir ]] ; then
-    local source_files=$(find $tmp_dir -maxdepth 1 -type f)
+  rpmbuild_dir=$(getRPMBuildDir)
+  src_dir="$rpmbuild_dir/SOURCES"
+  specs_dir="$rpmbuild_dir/SPECS"
+
+  if [[ -d "$src_dir" ]] ; then
+    source_files=$(find "$tmp_dir" -maxdepth 1 -type f)
 
     for source_file in $source_files ; do
-      cp $source_file $src_dir &> /dev/null
+      cp "$source_file" "$src_dir" &> /dev/null
 
       if [[ $? -ne 0 ]] ; then
-        local source_file_name=$(basename $source_file)
-        show "Can't copy source file $source_file_name to directory $src_dir - error while
-        copy process." $RED
+        source_file_name=$(basename "$source_file")
+        show "Can't copy source file $source_file_name to directory $src_dir - error while copy process." $RED
         doExit $ERROR_SOURCE
       fi
     done
@@ -1981,7 +2039,7 @@ copySourcesToBuildDir() {
   fi
 
   if [[ -d $specs_dir ]] ; then
-    cp $spec $specs_dir
+    cp "$spec" "$specs_dir"
 
     if [[ $? -ne 0 ]] ; then
       show "Can't copy spec file - error while copy process."
@@ -1997,29 +2055,31 @@ copySourcesToBuildDir() {
 
 uploadSourcesToRemoteHost() {
   local spec="$1"
-  local rmpbuild_dir=$(getRPMBuildDir)
 
-  local source_files=$(find $tmp_dir -maxdepth 1 -type f)
+  local source_file source_files rmpbuild_dir
+
+  rmpbuild_dir=$(getRPMBuildDir)
+  source_files=$(find "$tmp_dir" -maxdepth 1 -type f)
 
   for source_file in $source_files ; do
-    local source_file_name=$(basename $source_file)
+    source_file_name=$(basename "$source_file")
 
-    showt "${CL_CYAN}$source_file_name${CL_NORM}" 4
+    showt "${CL_CYAN}${source_file_name}${CL_NORM}" 4
 
     scpCommand "$source_file" "$user@$host:$rmpbuild_dir/SOURCES/" &> $verb_output
 
     show "DONE" $GREEN
   done
 
-  showt "${CL_CYAN}$spec${CL_NORM}" 4
+  showt "${CL_CYAN}${spec}${CL_NORM}" 4
 
   if [[ $bump ]] ; then
-    cp $spec $tmp
+    cp "$spec" "$tmp"
 
     releaseBump "$tmp/$spec"
     scpCommand "$tmp/$spec" "$user@$host:$rmpbuild_dir/SPECS/" &> $verb_output
 
-    rm -f $tmp/$spec
+    rm -f "$tmp/$spec"
   else
     scpCommand "$spec" "$user@$host:$rmpbuild_dir/SPECS/" &> $verb_output
   fi
@@ -2033,10 +2093,12 @@ downloadFromRemoteHost() {
 
   [[ ! $dir ]] && dir="$CWD"
 
-  local file_name=$(basename $file)
+  local file_name mod_ts
+
+  file_name=$(basename "$file")
 
   if [[ -f $dir/$file_name ]] ; then
-    local mod_ts=$(stat -c "%Y" $dir/$file_name)
+    mod_ts=$(stat -c "%Y" "$dir/$file_name")
 
     if [[ $mod_ts -ge $build_start && $mod_ts -le $build_end ]] ; then
       return 1
@@ -2051,39 +2113,42 @@ downloadFromRemoteHost() {
 cleanPackDir() {
   local dir="$1"
 
-  find $dir -type d -name ".git" -exec rm -rf {} \; 2> /dev/null
-  find $dir -type d -name ".hg" -exec rm -rf {} \; 2> /dev/null
-  find $dir -type d -name ".svn" -exec rm -rf {} \; 2> /dev/null
-  find $dir -type d -name ".bzr" -exec rm -rf {} \; 2> /dev/null
+  find "$dir" -type d -name ".git" -exec rm -rf {} \; 2> /dev/null
+  find "$dir" -type d -name ".hg" -exec rm -rf {} \; 2> /dev/null
+  find "$dir" -type d -name ".svn" -exec rm -rf {} \; 2> /dev/null
+  find "$dir" -type d -name ".bzr" -exec rm -rf {} \; 2> /dev/null
 
-  find $dir -type f -name ".gitignore" -exec rm -f {} \; 2> /dev/null
-  find $dir -type f -name ".hgignore" -exec rm -f {} \; 2> /dev/null
-  find $dir -type f -name ".bzrignore" -exec rm -f {} \; 2> /dev/null
-  find $dir -type f -name ".gitignore" -exec rm -f {} \; 2> /dev/null
+  find "$dir" -type f -name ".gitignore" -exec rm -f {} \; 2> /dev/null
+  find "$dir" -type f -name ".hgignore" -exec rm -f {} \; 2> /dev/null
+  find "$dir" -type f -name ".bzrignore" -exec rm -f {} \; 2> /dev/null
+  find "$dir" -type f -name ".gitignore" -exec rm -f {} \; 2> /dev/null
 }
 
 packDir() {
   local dir="$1"
   local ext="$2"
-  local dir_name=$(basename $dir)
-  local parent_dir=$(dirname $dir)
+  
+  local dir_name parent_dir arch_name
+
+  dir_name=$(basename "$dir")
+  parent_dir=$(dirname "$dir")
 
   if [[ $3 ]] ; then
-    local arch_name="$3"
+    arch_name="$3"
   else
-    local arch_name="$dir_name"
+    arch_name="$dir_name"
   fi
 
-  pushd $parent_dir &> /dev/null
+  pushd "$parent_dir" &> /dev/null
 
     if [[ "$ext" == "tar.gz" || "$ext" == "tgz" ]] ; then
-      tar czfv $arch_name.$ext $dir_name &> $verb_output
+      tar czfv "$arch_name.$ext" "$dir_name" &> $verb_output
     elif [[ "$ext" == "tar.bz2" || "$ext" == "tbz2" ]]; then
-      tar cjfv $arch_name.$ext $dir_name &> $verb_output
+      tar cjfv "$arch_name.$ext" "$dir_name" &> $verb_output
     elif [[ "$ext" == "tar.bz" || "$ext" == "tbz" ]]; then
-      tar cjfv $arch_name.$ext $dir_name &> $verb_output
+      tar cjfv "$arch_name.$ext" "$dir_name" &> $verb_output
     elif [[ "$ext" == "tar.xz" || "$ext" == "txz" ]] ; then
-      tar cf - $dir_name | xz -9 -c - > $arch_name.$ext
+      tar cf - "$dir_name" | xz -9 -c - > "$arch_name.$ext"
     else
       show "Error! Unknown archive type." $RED
       doExit $ERROR_SOURCE
@@ -2096,18 +2161,20 @@ downloadSource() {
   local url="$1"
   local dir="$2"
 
-  local file_name=$(basename $url)
+  local file_name start end time_diff
+
+  file_name=$(basename "$url")
 
   if ! isAccessibleUrl "$url" ; then
     show "Can't download file $file_name - server return error code." $RED
     doExit $ERROR_SOURCE
   else
-    local start=$(now)
+    start=$(now)
 
-    curl -L --max-redirs 10 --progress-bar $url -o $dir/$file_name
+    curl -L --max-redirs 10 --progress-bar "$url" -o "$dir/$file_name"
 
-    local end=$(now)
-    local time_diff=$(($end - $start))
+    end=$(now)
+    time_diff=$(( end - start ))
 
     if [[ ! $tmuxl && ! $dlcache && $time_diff -gt $LONG_DOWNLOADING ]] ; then
       show ""
@@ -2122,13 +2189,15 @@ getSpecValue() {
   local value="$1"
   local spec="$2"
 
-  local spec_header=$(grep -v "^#" $spec | grep -n "%prep" | head -1 | cut -f1 -d":")
-  local result=$(grep -v "^#" $spec | head -$spec_header | egrep "$value*.*:" | sed 's/[\t]/ /g' | tr -s " " | cut -f2-99 -d" " | sed 's/,/ /g')
+  local spec_header result
+
+  spec_header=$(grep -v "^#" "$spec" | grep -n "%prep" | head -1 | cut -f1 -d":")
+  result=$(grep -v "^#" "$spec" | head "-$spec_header" | egrep "$value*.*:" | sed 's/[\t]/ /g' | tr -s " " | cut -f2-99 -d" " | sed 's/,/ /g')
 
   result=$(renderMacros "$spec" "$result")
   result=$(echo "$result" | sed 's/ = /=/g' | sed 's/ >= />=/g' | sed 's/ > />/g')
 
-  [[ "$value" == "$MACRO_SOURCE" || "$value" == "$MACRO_PATCH" ]] && echo "$result" | sed 's/ /%20/g' || echo "$result"
+  [[ "$value" == "$MACRO_SOURCE" || "$value" == "$MACRO_PATCH" ]] && echo "${result// /%20}" || echo "$result"
 }
 
 renderMacros() {
@@ -2161,7 +2230,7 @@ getMacroValue() {
   if [[ "$MACRO" =~ $macro:([A-Za-z]*) ]] ; then
     local inner_macro="${BASH_REMATCH[1]}"
 
-    result=$(grep -v "^#" $spec | egrep "$inner_macro*.:" | sed 's/[\t]/ /g' | tr -s " " | cut -f2-99 -d" " | sed 's/,/ /g' | sed 's/ $//g' | head -1)
+    result=$(grep -v "^#" "$spec" | egrep "$inner_macro*.:" | sed 's/[\t]/ /g' | tr -s " " | cut -f2-99 -d" " | sed 's/,/ /g' | sed 's/ $//g' | head -1)
   fi
 
   if [[ ! $result ]] ; then
@@ -2171,24 +2240,26 @@ getMacroValue() {
   fi
 
   if [[ ! $result ]] ; then
-    result=$(grep -v "^#" $spec | egrep "(^%define|^%global)" | sed 's/[\t]/ /g' | tr -s " " | egrep "(^%define|^%global) $macro " | cut -f3-99 -d" ")
+    result=$(grep -v "^#" "$spec" | egrep "(^%define|^%global)" | sed 's/[\t]/ /g' | tr -s " " | egrep "(^%define|^%global) $macro " | cut -f3-99 -d" ")
   fi
 
   echo "$result"
 }
 
 isAccessibleUrl() {
+  local status code nosniff size
+
   if [[ "$1" =~ http:|https: ]] ; then
-    local status=$(curl $1 -LIs --max-redirs 10)
-    local code=$(echo -e "$status" | grep HTTP | cut -f2 -d" " | tail -1)
-    local nosniff=$(echo -e "$status" | grep "X-Content-Type-Options: nosniff")
+    status=$(curl "$1" -LIs --max-redirs 10)
+    code=$(echo -e "$status" | grep "HTTP" | cut -f2 -d" " | tail -1)
+    nosniff=$(echo -e "$status" | grep "X-Content-Type-Options: nosniff")
 
     # Nosniff mode works on Google Code, if we simple try check status server return
     # code 404, but we can download this file
     [[ -n $nosniff || "$code" == "200" ]] && return 0 || return 1
   elif [[ "$1" =~ ftp: ]] ; then
-    local status=$(curl $1 -Is)
-    local size=$(echo $status | grep Content-Length | cut -f2 -d" ")
+    status=$(curl "$1" -Is)
+    size=$(echo "$status" | grep "Content-Length" | cut -f2 -d" ")
 
     [[ -n "$size" ]] && return 0 || return 1
   else
@@ -2201,12 +2272,13 @@ sshCommand() {
   local comm="$2"
   local no_pass="$3"
 
-  local ssh_opts=$(getSSHOpts)
+  local ssh_opts
+  ssh_opts=$(getSSHOpts)
 
   if [[ $pass && ! $no_pass ]] ; then
-    sshpass -p $pass ssh $SSH_BASE_OPTS -t -t -q $ssh_opts $host "$comm"
+    sshpass -p "$pass" ssh $SSH_BASE_OPTS -t -t -q $ssh_opts "$host" "$comm"
   else
-    ssh $SSH_BASE_OPTS -t -t -q $ssh_opts $host "$comm"
+    ssh $SSH_BASE_OPTS -t -t -q $ssh_opts "$host" "$comm"
   fi
 
   return $?
@@ -2216,10 +2288,11 @@ scpCommand() {
   local from="$1"
   local to="$2"
 
-  local ssh_opts=$(getSSHOpts)
+  local ssh_opts
+  ssh_opts=$(getSSHOpts)
 
   if [[ $pass ]] ; then
-    sshpass -p $pass scp $SSH_BASE_OPTS $ssh_opts "$from" "$to"
+    sshpass -p "$pass" scp $SSH_BASE_OPTS $ssh_opts "$from" "$to"
   else
     scp $SSH_BASE_OPTS $ssh_opts "$from" "$to"
   fi
@@ -2244,8 +2317,15 @@ getBuildArgs() {
   [[ $arch ]] && args="$args --target=$arch"
   [[ $with ]] && args=$(getBuildArgsWith "$args")
   [[ $without ]] && args=$(getBuildArgsWithout "$args")
-  [[ $define ]] && args="$args --define=\"$define\""
   [[ $verbose ]] && args="$args --verbose"
+
+  local macro_def
+
+  if [[ $define ]] ; then
+    for macro_def in $define ; do
+      args="$args --define=\"${macro_def/=/ }\""
+    done
+  fi
 
   echo "$args"
 }
@@ -2255,7 +2335,7 @@ getBuildPrfx() {
 
   [[ $qa_rpaths ]] && prfx="$prfx QA_RPATHS=$[ ${qa_rpaths//,/|} ]"
 
-  echo $prfx
+  echo "$prfx"
 }
 
 getBuildArgsWith() {
@@ -2289,13 +2369,13 @@ isSSHConnectionWorks() {
 isRemoteServerReachable() {
   local host="$1"
 
-  ping -c 1 -w 5 $host &> /dev/null
+  ping -c 1 -w 5 "$host" &> /dev/null
 
   [[ $? -eq 0 ]] && return 0 || return 1
 }
 
 getSSHOpts() {
-  local opts=""
+  local opts
 
   if [[ $key ]] ; then
     opts="$opts -i $key"
@@ -2309,11 +2389,9 @@ getSSHOpts() {
 getYumOpts() {
   local verb="$1"
 
-  local opts
+  local opts repo
 
   [[ -z "$verb" ]] && opts="-q"
-
-  local repo
 
   if [[ -n "$enable_repo" ]] ; then
     for repo in $enable_repo ; do
@@ -2339,19 +2417,21 @@ getRPMBuildDir() {
 }
 
 getArchName() {
-  local file_name=$(basename $1)
-  local arch_type
+  local file_name arch_type
+
+  file_name=$(basename "$1")
 
   for arch_type in $SUPPORTED_ARCH_TYPES ; do
-    file_name=${file_name/.${arch_type}/}
+    file_name="${file_name/.${arch_type}/}"
   done
 
-  echo $file_name
+  echo "$file_name"
 }
 
 getArchExt() {
-  local file_name=$(basename $1)
-  local arch_type
+  local file_name arch_type
+
+  file_name=$(basename "$1")
 
   for arch_type in $SUPPORTED_ARCH_TYPES ; do
     if [[ $file_name =~ $arch_type ]] ; then
@@ -2365,26 +2445,27 @@ getArchExt() {
 }
 
 isSpecFile() {
-  [[ ! -r $1 ]] && return 1
-  [[ ! $(grep "%prep" $1) ]] && return 1
+  [[ ! -r "$1" ]] && return 1
+  [[ ! $(grep "%prep" "$1") ]] && return 1
 
   return 0
 }
 
 getURLVars() {
   local url="$1"
+  
   local user pass user_pass host arch
 
-  if [[ "$url" =~ "~" ]] ; then
+  if [[ "$url" =~ ~ ]] ; then
     arch=$(echo "$url" | cut -f2 -d"~")
     url=$(echo "$url" | cut -f1 -d"~")
   fi
 
-  if [[ "$url" =~ "@" ]] ; then
+  if [[ "$url" =~ @ ]] ; then
     user_pass=$(echo "$url" | cut -f1 -d"@")
     host=$(echo "$url" | cut -f2 -d"@")
 
-    if [[ "$user_pass" =~ ":" ]] ; then
+    if [[ "$user_pass" =~ : ]] ; then
       user=$(echo "$user_pass" | cut -f1 -d":")
       pass=$(echo "$user_pass" | cut -f2 -d":")
     else
@@ -2400,8 +2481,10 @@ getURLVars() {
 ###############################################################################
 
 checkDeps() {
-  for app in $@ ; do
-    type -P $app &> /dev/null
+  local app
+
+  for app in "$@" ; do
+    type -P "$app" &> /dev/null
     [[ $? -eq 1 ]] && return 1
   done
 
@@ -2409,7 +2492,7 @@ checkDeps() {
 }
 
 getAbsPath() {
-  readlink -f $1
+  readlink -f "$1"
 }
 
 doExit() {
@@ -2424,12 +2507,12 @@ doExit() {
     fi
   fi
 
-  exit ${1-0}
+  exit "${1-0}"
 }
 
 clean() {
-  rm -rf $tmp_dir
-  rm -f $tmp_file
+  rm -rf "${tmp_dir:?}"
+  rm -f "$tmp_file"
 }
 
 now() {
@@ -2447,10 +2530,12 @@ getLogDate() {
 getGraceTime() {
   local tim="$1"
 
+  local sec min
+
   [[ -z "$tim" || "$tim" == "0" ]] && echo "< 1 sec" && return 0
 
-  local sec=$(($tim % 60))
-  local min=$((($tim - $sec)/60))
+  sec=$(( tim % 60 ))
+  min=$(( ( tim - sec ) / 60 ))
 
   if [[ $min -eq 0 ]] ; then
     echo "$sec sec"
@@ -2471,8 +2556,8 @@ startStatusObserver() {
 stopStatusObserver() {
   [[ $verbose || ! $observer_pid ]] && return 0
 
-  kill $observer_pid &> /dev/null
-  wait $observer_pid &> /dev/null
+  kill "$observer_pid" &> /dev/null
+  wait "$observer_pid" &> /dev/null
 
   showm "\r${CL_GREEN}Executing:${CL_NORM} ${CL_CYAN}clean${CL_NORM}                                                               "
 
@@ -2480,13 +2565,13 @@ stopStatusObserver() {
 }
 
 statusObserver() {
-  local prev_status=""
+  local prev_status status
 
   while : ; do
-    local status=$(grep "Executing" $tmp_file | tail -1 | perl -ne '/Executing\(%(\w*)\)/ && print "$1\n"')
+    status=$(grep "Executing" "$tmp_file" | tail -1 | perl -ne '/Executing\(%(\w*)\)/ && print "$1\n"')
 
     if [[ "$status" == "doc" ]] ; then
-      [[ $(grep "Checking for unpackaged" $tmp_file) ]] && status="packaging"
+      [[ $(grep "Checking for unpackaged" "$tmp_file") ]] && status="packaging"
     fi
 
     if [[ "$status" != "$prev_status" ]] ; then
@@ -2500,9 +2585,10 @@ statusObserver() {
 
 showSeparator() {
   local name="$1"
+  local adds
 
   if [[ $name ]] ; then
-    local adds=$((${#SEPARATOR} - ${#name} - 4))
+    adds=$(( ${#SEPARATOR} - ${#name} - 4 ))
 
     show "\n${CL_GREY}--${CL_NORM} ${CL_BOLD}${name}${CL_NORM} ${CL_GREY}${SEPARATOR:0:$adds}${CL_NORM}\n"
   else
@@ -2514,30 +2600,28 @@ show() {
   if [[ $2 ]] ; then
     echo -e "\e[${2}m${1}\e[0m"
   else
-    echo -e "$@"
+    echo -e "$*"
   fi
 }
 
 showm() {
-  local message
-
-  if [[ $2 ]] ; then
-    message=$(echo "\e[${2}m${1}\e[0m")
+  if [[ -n "$2" ]] ; then
+    echo -e -n "\e[${2}m${1}\e[0m"
   else
-    message="$@"
+    echo -e -n "$*"
   fi
-
-  printf "$message"
 }
 
 showt() {
-  local message=$(echo -e "$1" | sed -r "s/\x1B\[([0-9]{1,2}(;[0-9]{1,2})?)?[m|K]//g")
-  local offset="${2-0}"
-  local spaces="                                                                                      "
+  local message offset spaces adds
 
-  local adds=$((${#SEPARATOR} - ${#message} - $offset))
+  message=$(echo -e "$1" | sed -r "s/\x1B\[([0-9]{1,2}(;[0-9]{1,2})?)?[m|K]//g")
+  offset="${2-0}"
+  spaces="                                                                                      "
 
-  printf "${1}${spaces:0:$adds}"
+  adds=$((${#SEPARATOR} - ${#message} - $offset))
+
+  echo -e -n "${1}${spaces:0:$adds}"
 }
 
 termExit() {
@@ -2575,33 +2659,33 @@ usage() {
   show ""
   show "Source packaging:" $BOLD
   show ""
-  show "  ${CL_GREEN}--pack, -p${CL_NORM} ${CL_DARK}files${CL_NORM}           Pack specified files to tgz archive with default source name ${CL_CYAN}(mergeable)${CL_NORM}"
+  show "  ${CL_GREEN}--pack, -p${CL_NORM} ${CL_GREY}files${CL_NORM}           Pack specified files to tgz archive with default source name ${CL_DARK}(mergeable)${CL_NORM}"
   show "  ${CL_GREEN}--relative-pack, -R${CL_NORM}        Use relative path in source archive instead of absolute"
-  show "  ${CL_GREEN}--source-dir, -sd${CL_NORM} ${CL_DARK}path${CL_NORM}     Path to directory which contains source files specified in spec file"
-  show "  ${CL_GREEN}--source-list, -sl${CL_NORM} ${CL_DARK}file${CL_NORM}    Path to file which contains list of source files specified in spec file,"
+  show "  ${CL_GREEN}--source-dir, -sd${CL_NORM} ${CL_GREY}path${CL_NORM}     Path to directory which contains source files specified in spec file"
+  show "  ${CL_GREEN}--source-list, -sl${CL_NORM} ${CL_GREY}file${CL_NORM}    Path to file which contains list of source files specified in spec file,"
   show "                             and will be packed to tgz archive with default source name"
-  show "  ${CL_GREEN}--dlcache, -dc${CL_NORM} ${CL_DARK}path${CL_NORM}        Path to directory for downloads caching"
-  show "  ${CL_GREEN}--download, -dl${CL_NORM} ${CL_DARK}path${CL_NORM}       Download all remote sources to specified directory"
+  show "  ${CL_GREEN}--dlcache, -dc${CL_NORM} ${CL_GREY}path${CL_NORM}        Path to directory for downloads caching"
+  show "  ${CL_GREEN}--download, -dl${CL_NORM} ${CL_GREY}path${CL_NORM}       Download all remote sources to specified directory"
   show ""
-  show "  ${CL_GREEN}--git${CL_NORM} ${CL_DARK}url${CL_NORM}                   Fetch sources from Git repository ${CL_CYAN}(macro supported)${CL_NORM}"
-  show "  ${CL_GREEN}--svn${CL_NORM} ${CL_DARK}url${CL_NORM}                   Fetch sources from SVN repository ${CL_CYAN}(macro supported)${CL_NORM}"
-  show "  ${CL_GREEN}--hg${CL_NORM} ${CL_DARK}url${CL_NORM}                    Fetch sources from Mercurial repository ${CL_CYAN}(macro supported)${CL_NORM}"
-  show "  ${CL_GREEN}--bzr${CL_NORM} ${CL_DARK}url${CL_NORM}                   Fetch sources from Bazar repository ${CL_CYAN}(macro supported)${CL_NORM}"
-  show "  ${CL_GREEN}--path, -rp${CL_NORM} ${CL_DARK}path${CL_NORM}            Path to directory with sources in repo"
-  show "  ${CL_GREEN}--branch, -rb${CL_NORM} ${CL_DARK}name${CL_NORM}          Use specified repository branch ${CL_CYAN}(macro supported)${CL_NORM}"
-  show "  ${CL_GREEN}--revision, -rr${CL_NORM} ${CL_DARK}name${CL_NORM}        Use specified revision"
-  show "  ${CL_GREEN}--tag, -rt${CL_NORM} ${CL_DARK}name${CL_NORM}             Use specified tag ${CL_CYAN}(macro supported)${CL_NORM}"
-  show "  ${CL_GREEN}--svn-user, -su${CL_NORM} ${CL_DARK}username${CL_NORM}    Username for access to svn repository"
-  show "  ${CL_GREEN}--svn-pass, -sp${CL_NORM} ${CL_DARK}password${CL_NORM}    Password for access to svn repository"
+  show "  ${CL_GREEN}--git${CL_NORM} ${CL_GREY}url${CL_NORM}                   Fetch sources from Git repository ${CL_DARK}(macro supported)${CL_NORM}"
+  show "  ${CL_GREEN}--svn${CL_NORM} ${CL_GREY}url${CL_NORM}                   Fetch sources from SVN repository ${CL_DARK}(macro supported)${CL_NORM}"
+  show "  ${CL_GREEN}--hg${CL_NORM} ${CL_GREY}url${CL_NORM}                    Fetch sources from Mercurial repository ${CL_DARK}(macro supported)${CL_NORM}"
+  show "  ${CL_GREEN}--bzr${CL_NORM} ${CL_GREY}url${CL_NORM}                   Fetch sources from Bazar repository ${CL_DARK}(macro supported)${CL_NORM}"
+  show "  ${CL_GREEN}--path, -rp${CL_NORM} ${CL_GREY}path${CL_NORM}            Path to directory with sources in repo"
+  show "  ${CL_GREEN}--branch, -rb${CL_NORM} ${CL_GREY}name${CL_NORM}          Use specified repository branch ${CL_DARK}(macro supported)${CL_NORM}"
+  show "  ${CL_GREEN}--revision, -rr${CL_NORM} ${CL_GREY}name${CL_NORM}        Use specified revision"
+  show "  ${CL_GREEN}--tag, -rt${CL_NORM} ${CL_GREY}name${CL_NORM}             Use specified tag ${CL_DARK}(macro supported)${CL_NORM}"
+  show "  ${CL_GREEN}--svn-user, -su${CL_NORM} ${CL_GREY}username${CL_NORM}    Username for access to svn repository"
+  show "  ${CL_GREEN}--svn-pass, -sp${CL_NORM} ${CL_GREY}password${CL_NORM}    Password for access to svn repository"
   show ""
-  show "  ${CL_GREEN}--github, -gh${CL_NORM} ${CL_DARK}url${CL_NORM}                  Fetch sources from github.com repository by url ${CL_CYAN}(macro supported)${CL_NORM}"
-  show "  ${CL_GREEN}--github, -gh${CL_NORM} ${CL_DARK}user:project${CL_NORM}         Fetch sources from github.com repository by user and project"
-  show "  ${CL_GREEN}--github, -gh${CL_NORM} ${CL_DARK}user/project${CL_NORM}         Fetch sources from github.com repository by user and project"
-  show "  ${CL_GREEN}--bitbucket, -bb${CL_NORM} ${CL_DARK}url${CL_NORM}               Fetch sources from bitbucket.org repository by url ${CL_CYAN}(macro supported)${CL_NORM}"
-  show "  ${CL_GREEN}--bitbucket, -bb${CL_NORM} ${CL_DARK}user>:<project${CL_NORM}    Fetch sources from bitbucket.org repository by user and project"
-  show "  ${CL_GREEN}--bitbucket, -bb${CL_NORM} ${CL_DARK}user/project${CL_NORM}      Fetch sources from bitbucket.org repository by user and project"
-  show "  ${CL_GREEN}--launchpad, -lp${CL_NORM} ${CL_DARK}url${CL_NORM}               Fetch sources from launchpad.net repository by url ${CL_CYAN}(macro supported)${CL_NORM}"
-  show "  ${CL_GREEN}--launchpad, -lp${CL_NORM} ${CL_DARK}project-name${CL_NORM}      Fetch sources from launchpad.net repository by project name"
+  show "  ${CL_GREEN}--github, -gh${CL_NORM} ${CL_GREY}url${CL_NORM}                  Fetch sources from github.com repository by url ${CL_DARK}(macro supported)${CL_NORM}"
+  show "  ${CL_GREEN}--github, -gh${CL_NORM} ${CL_GREY}user:project${CL_NORM}         Fetch sources from github.com repository by user and project"
+  show "  ${CL_GREEN}--github, -gh${CL_NORM} ${CL_GREY}user/project${CL_NORM}         Fetch sources from github.com repository by user and project"
+  show "  ${CL_GREEN}--bitbucket, -bb${CL_NORM} ${CL_GREY}url${CL_NORM}               Fetch sources from bitbucket.org repository by url ${CL_DARK}(macro supported)${CL_NORM}"
+  show "  ${CL_GREEN}--bitbucket, -bb${CL_NORM} ${CL_GREY}user>:<project${CL_NORM}    Fetch sources from bitbucket.org repository by user and project"
+  show "  ${CL_GREEN}--bitbucket, -bb${CL_NORM} ${CL_GREY}user/project${CL_NORM}      Fetch sources from bitbucket.org repository by user and project"
+  show "  ${CL_GREEN}--launchpad, -lp${CL_NORM} ${CL_GREY}url${CL_NORM}               Fetch sources from launchpad.net repository by url ${CL_DARK}(macro supported)${CL_NORM}"
+  show "  ${CL_GREEN}--launchpad, -lp${CL_NORM} ${CL_GREY}project-name${CL_NORM}      Fetch sources from launchpad.net repository by project name"
   show ""
   show "  Examples:" $BOLD
   show ""
@@ -2619,19 +2703,19 @@ usage() {
   show "Dependencies install:" $BOLD
   show ""
   show "  ${CL_GREEN}--dep-install, --depinstall, -di${CL_NORM}     Automatically install build dependencies before build process"
-  show "  ${CL_GREEN}--enable-repo, -ER${CL_NORM} ${CL_DARK}repo-name${CL_NORM}         Enable repositories ${CL_CYAN}(mergeable)${CL_NORM}"
-  show "  ${CL_GREEN}--disable-repo, -DR${CL_NORM} ${CL_DARK}repo-name${CL_NORM}        Disable repositories ${CL_CYAN}(mergeable)${CL_NORM}"
+  show "  ${CL_GREEN}--enable-repo, -ER${CL_NORM} ${CL_GREY}repo-name${CL_NORM}         Enable repositories ${CL_DARK}(mergeable)${CL_NORM}"
+  show "  ${CL_GREEN}--disable-repo, -DR${CL_NORM} ${CL_GREY}repo-name${CL_NORM}        Disable repositories ${CL_DARK}(mergeable)${CL_NORM}"
   show ""
   show "Remote build:" $BOLD
   show ""
   show "  ${CL_GREEN}--parallel, -P${CL_NORM}                 Parallel build on all build servers in same time"
   show "  ${CL_GREEN}--remote, -r${CL_NORM}                   Build rpm package on remote server"
-  show "  ${CL_GREEN}--remote, -r${CL_NORM} ${CL_DARK}user:pass@host${CL_NORM}    Build rpm package on the remote server with specified host, user and pass"
-  show "  ${CL_GREEN}--remote, -r${CL_NORM} ${CL_DARK}file${CL_NORM}              Build rpm package on the remote servers listed in specified file"
-  show "  ${CL_GREEN}--host, -hh${CL_NORM} ${CL_DARK}host${CL_NORM}               Remote host ip or domain name"
-  show "  ${CL_GREEN}--user, -uu${CL_NORM} ${CL_DARK}user${CL_NORM}               Remote host user"
-  show "  ${CL_GREEN}--pass, -pp${CL_NORM} ${CL_DARK}password${CL_NORM}           Password for specified user"
-  show "  ${CL_GREEN}--key, -kk${CL_NORM} ${CL_DARK}file${CL_NORM}                Path to private key for specified user"
+  show "  ${CL_GREEN}--remote, -r${CL_NORM} ${CL_GREY}user:pass@host${CL_NORM}    Build rpm package on the remote server with specified host, user and pass"
+  show "  ${CL_GREEN}--remote, -r${CL_NORM} ${CL_GREY}file${CL_NORM}              Build rpm package on the remote servers listed in specified file"
+  show "  ${CL_GREEN}--host, -hh${CL_NORM} ${CL_GREY}host${CL_NORM}               Remote host ip or domain name"
+  show "  ${CL_GREEN}--user, -uu${CL_NORM} ${CL_GREY}user${CL_NORM}               Remote host user"
+  show "  ${CL_GREEN}--pass, -pp${CL_NORM} ${CL_GREY}password${CL_NORM}           Password for specified user"
+  show "  ${CL_GREEN}--key, -kk${CL_NORM} ${CL_GREY}file${CL_NORM}                Path to private key for specified user"
   show ""
   show "  Examples:" $BOLD
   show ""
@@ -2646,21 +2730,21 @@ usage() {
   show "  ${CL_GREEN}--no-deps, -nd${CL_NORM}                       Don't verify build dependencies"
   show "  ${CL_GREEN}--no-binary, -nr${CL_NORM}                     Don't build binary packages"
   show "  ${CL_GREEN}--no-source, -ns${CL_NORM}                     Don't build source package"
-  show "  ${CL_GREEN}--arch, -a${CL_NORM} ${CL_DARK}${CL_DARK}arch${CL_NORM}                      Override target arch for build"
-  show "  ${CL_GREEN}--qa-rpaths${CL_NORM}${CL_DARK}=\"<value>,<value>,...\"${CL_NORM}    Ignoring rpaths check"
+  show "  ${CL_GREEN}--arch, -a${CL_NORM} ${CL_GREY}arch${CL_NORM}                      Override target arch for build"
+  show "  ${CL_GREEN}--qa-rpaths${CL_NORM}${CL_GREY}=\"<value>,<value>,...\"${CL_NORM}    Ignoring rpaths check"
   show ""
   show "Arguments passing:" $BOLD
   show ""
-  show "  ${CL_GREEN}--with, -w${CL_NORM} ${CL_DARK}params${CL_NORM}         Pass conditional parameters into a rpmbuild ${CL_CYAN}(mergeable)${CL_NORM}"
-  show "  ${CL_GREEN}--without, -W${CL_NORM} ${CL_DARK}params${CL_NORM}      Pass conditional parameters into a rpmbuild ${CL_CYAN}(mergeable)${CL_NORM}"
-  show "  ${CL_GREEN}--define, -D${CL_NORM} ${CL_DARK}\"<macro>\"${CL_NORM}    Define MACRO with value (exist macro will be not redefined)"
+  show "  ${CL_GREEN}--with, -w${CL_NORM} ${CL_GREY}params${CL_NORM}             Pass conditional parameters into a rpmbuild ${CL_DARK}(mergeable)${CL_NORM}"
+  show "  ${CL_GREEN}--without, -W${CL_NORM} ${CL_GREY}params${CL_NORM}          Pass conditional parameters into a rpmbuild ${CL_DARK}(mergeable)${CL_NORM}"
+  show "  ${CL_GREEN}--define, -D${CL_NORM} ${CL_GREY}\"macro=value\"${CL_NORM}    Define MACRO with value (exist macro will be not redefined) ${CL_DARK}(mergeable)${CL_NORM}"
   show ""
   show "  Examples:" $BOLD
   show ""
   show "    rpmbuilder package.spec --with ssl --with ldap"
   show "    rpmbuilder package.spec -w ssl -W ldap"
   show "    rpmbuilder package.spec --with \"ssl ldap\""
-  show "    rpmbuilder package.spec --define=\"_tmp_dir /some/dir\""
+  show "    rpmbuilder package.spec --define \"install_dir=/some/dir\" --define \"service_user=someone\""
   show ""
   show "  ${CL_BOLD}More info:${CL_NORM} http://rpm5.org/docs/api/conditionalbuilds.html"
   show ""
@@ -2673,11 +2757,11 @@ usage() {
   show "Other:" $BOLD
   show ""
   show "  ${CL_GREEN}--sign, -s${CL_NORM}                     Sign package after build"
-  show "  ${CL_GREEN}--dest, --dest-dir, -d${CL_NORM} ${CL_DARK}path${CL_NORM}    Save builded packages to specified directory"
+  show "  ${CL_GREEN}--dest, --dest-dir, -d${CL_NORM} ${CL_GREY}path${CL_NORM}    Save builded packages to specified directory"
   show "  ${CL_GREEN}--keep-log, -kl${CL_NORM}                Save build log after unsuccessful build"
   show "  ${CL_GREEN}--bump, -b${CL_NORM}                     Bump release in spec file after successful package build"
-  show "  ${CL_GREEN}--bump-comment, -bc${CL_NORM} ${CL_DARK}comment${CL_NORM}    Comment which will be added while release bump"
-  show "  ${CL_GREEN}--tmp${CL_NORM} ${CL_DARK}path${CL_NORM}                     Path to temporary directory"
+  show "  ${CL_GREEN}--bump-comment, -bc${CL_NORM} ${CL_GREY}comment${CL_NORM}    Comment which will be added while release bump"
+  show "  ${CL_GREEN}--tmp${CL_NORM} ${CL_GREY}path${CL_NORM}                     Path to temporary directory"
   show "  ${CL_GREEN}--verbose, -V${CL_NORM}                  Verbose output"
   show "  ${CL_GREEN}--help, --usage, -h${CL_NORM}            Show this help message"
   show "  ${CL_GREEN}--ver, --version, -v${CL_NORM}           Show information about version"
@@ -2695,13 +2779,13 @@ about() {
 
 unset arg argn argp
 
-PREFS_FILE=${PREFS_FILE//\~/$HOME}
+PREFS_FILE="${PREFS_FILE//\~/$HOME}"
 
-if [[ -n "$PREFS_FILE" && -r $PREFS_FILE ]] ; then
+if [[ -n "$PREFS_FILE" && -r "$PREFS_FILE" ]] ; then
   while read arg ; do
     arg="${arg/: /:}" ; argn="${arg%:*}" ; argp="${arg#*:}"
-    [[ "$SUPPORTED_ARGS " =~ "$argn " ]] && declare $argn="$argp"
-  done < <(awk 1 $PREFS_FILE)
+    [[ "$SUPPORTED_ARGS " =~ $argn\  ]] && declare "$argn=$argp"
+  done < <(awk 1 "$PREFS_FILE")
 
   unset arg argn argp
 fi
@@ -2712,11 +2796,11 @@ fi
 
 unset arg argn argm argv argt argk
 
-argv="$@" ; argt=""
+argv="$*" ; argt=""
 
 while [[ -n "$1" ]] ; do
   if [[ "$1" =~ \  && -n "$argn" ]] ; then
-    declare $argn="$1"
+    declare "$argn=$1"
 
     unset argn && shift && continue
   elif [[ $1 =~ ^-{1}[a-zA-Z0-9]{1,2}+.*$ ]] ; then
@@ -2732,7 +2816,7 @@ while [[ -n "$1" ]] ; do
     if [[ -z "$argn" ]] ; then
       argn=$arg
     else
-      [[ -z "$argk" ]] && ( showArgValWarn "--$argn" 2> /dev/null || : ) || declare $argn=true
+      [[ -z "$argk" ]] && ( showArgValWarn "--$argn" 2> /dev/null || : ) || declare "$argn=true"
       argn=$arg
     fi
 
@@ -2742,7 +2826,7 @@ while [[ -n "$1" ]] ; do
     fi
 
     if [[ ${BASH_REMATCH[0]:0:1} == "!" ]] ; then
-      declare $argn=true ; unset argn ; argk=true
+      declare "$argn=true" ; unset argn ; argk=true
     else
       unset argk
     fi
@@ -2761,7 +2845,7 @@ while [[ -n "$1" ]] ; do
         shift && continue
       fi
 
-      [[ -n "${!argm}" && $MERGEABLE_ARGS\  =~ $argm\  ]] && declare $argm="${!argm} ${arg[@]:1:99}" || declare $argm="${arg[@]:1:99}"
+      [[ -n "${!argm}" && $MERGEABLE_ARGS\  =~ $argm\  ]] && declare "$argm=${!argm} ${arg[@]:1:99}" || declare "$argm=${arg[@]:1:99}"
 
       unset argm && shift && continue
     else
@@ -2770,7 +2854,7 @@ while [[ -n "$1" ]] ; do
       if [[ -z "$argn" ]] ; then
         argn=$arg
       else
-        [[ -z "$argk" ]] && ( showArgValWarn "--$argn" 2> /dev/null || : ) || declare $argn=true
+        [[ -z "$argk" ]] && ( showArgValWarn "--$argn" 2> /dev/null || : ) || declare "$argn=true"
         argn=$arg
       fi
 
@@ -2780,7 +2864,7 @@ while [[ -n "$1" ]] ; do
       fi
 
       if [[ ${BASH_REMATCH[0]:0:1} == "!" ]] ; then
-        declare $argn=true ; unset argn ; argk=true
+        declare "$argn=true" ; unset argn ; argk=true
       else
         unset argk
       fi
@@ -2789,7 +2873,7 @@ while [[ -n "$1" ]] ; do
     fi
   else
     if [[ -n "$argn" ]] ; then
-      [[ -n "${!argn}" && $MERGEABLE_ARGS\  =~ $argn\  ]] && declare $argn="${!argn} $1" || declare $argn="$1"
+      [[ -n "${!argn}" && $MERGEABLE_ARGS\  =~ $argn\  ]] && declare "$argn=${!argn} $1" || declare "$argn=$1"
 
       unset argn && shift && continue
     fi
@@ -2799,7 +2883,7 @@ while [[ -n "$1" ]] ; do
 
 done
 
-[[ -n "$argn" ]] && declare $argn=true
+[[ -n "$argn" ]] && declare "$argn=true"
 
 unset arg argn argm argk
 
