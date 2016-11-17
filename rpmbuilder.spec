@@ -2,7 +2,7 @@
 
 Summary:         RPM package build helper
 Name:            rpmbuilder
-Version:         1.2.0
+Version:         1.2.1
 Release:         0%{?dist}
 License:         EKOL
 Group:           Development/Tools
@@ -51,6 +51,9 @@ rm -rf %{buildroot}
 ###############################################################################
 
 %changelog
+* Thu Nov 17 2016 Anton Novojilov <andy@essentialkaos.com> - 1.2.1-0
+- Fixed bug with missing characters escaping in regular expressions
+
 * Mon Nov 14 2016 Anton Novojilov <andy@essentialkaos.com> - 1.2.0-0
 - Code refactoring
 - Improved help output
