@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 
 APP="RPMBuilder"
-VER="1.2.0"
+VER="1.2.1"
 
 ####################################################################
 
@@ -374,7 +374,7 @@ checkArgs() {
     doExit $ERROR_ARGS
   fi
 
-  if [[ $remote && ! $host && ! -r $remote && ! "$remote" =~ @|~ && ! "$remote" =~ :[0-9]{1,}$ ]] ; then
+  if [[ $remote && ! $host && ! -r $remote && ! "$remote" =~ \@|\~ && ! "$remote" =~ :[0-9]{1,}$ ]] ; then
     show "Can't start remote build process - you must define remote host." $RED
     doExit $ERROR_ARGS
   fi
@@ -491,9 +491,9 @@ processGithubSource() {
       branch="$github_branch"
     fi
   else
-    if [[ "$github" =~ : ]] ; then
+    if [[ "$github" =~ \: ]] ; then
       delim=":"
-    elif [[ "$github" =~ / ]] ; then
+    elif [[ "$github" =~ \/ ]] ; then
       delim="/"
     else
       return 1
@@ -537,7 +537,7 @@ processBitbucketSource() {
 
       [[ $is_tag ]] && tag="$bitbucket_tag"
       [[ $is_branch ]] && branch="$bitbucket_tag"
-    elif [[ "$bitbucket" =~ ?at= ]] ; then
+    elif [[ "$bitbucket" =~ \?at= ]] ; then
       bitbucket_branch=$(echo "$bitbucket" | cut -f2 -d"=")
 
       if [[ $tag ]] ; then
@@ -550,9 +550,9 @@ processBitbucketSource() {
       [[ $is_branch ]] && branch="$bitbucket_branch"
     fi
   else
-    if [[ "$bitbucket" =~ : ]] ; then
+    if [[ "$bitbucket" =~ \: ]] ; then
       delim=":"
-    elif [[ "$bitbucket" =~ / ]] ; then
+    elif [[ "$bitbucket" =~ \/ ]] ; then
       delim="/"
     else
       return 1
@@ -740,7 +740,7 @@ remoteRunBuild() {
     remote=$(sed -n "${r_line}p" "$r_file")
   fi
 
-  if [[ "$remote" =~ @|~i ]] ; then
+  if [[ "$remote" =~ \@|\~i ]] ; then
     host_info=($(getURLVars "$remote"))
 
     host="${host_info[0]/-/}"
@@ -1325,7 +1325,7 @@ prepareDeps() {
   deps=$(echo "$*" | sed 's/ \(>\|>=\|=\) /\1/g')
 
   for dep in $deps ; do
-    if [[ $dep =~ :: ]] ; then
+    if [[ $dep =~ \:\: ]] ; then
       fdep=$(echo "$dep" | sed 's/(\|::/-/g' | sed 's/)//g')
       result="$result $fdep"
     elif [[ $dep =~ (>=|>|=)[0-9A-Za-z.-]* ]] ; then
@@ -2206,11 +2206,11 @@ renderMacros() {
 
   local result="$value"
 
-  if [[ "$result" =~ % ]] ; then
+  if [[ "$result" =~ \% ]] ; then
     while : ; do
       local macro_name macro_value
 
-      [[ "$result" =~ %\{([A-Za-z0-9_?]{3,})\} ]] && macro_name="${BASH_REMATCH[1]}" || break
+      [[ "$result" =~ \%\{([A-Za-z0-9_?]{3,})\} ]] && macro_name="${BASH_REMATCH[1]}" || break
 
       macro_value=$(getMacroValue "$macro_name" "$spec")
 
@@ -2236,7 +2236,7 @@ getMacroValue() {
   if [[ ! $result ]] ; then
     local sys_macro=$(rpm --eval "%{$macro}")
 
-    [[ ! $sys_macro =~ % ]] && result="$sys_macro"
+    [[ ! $sys_macro =~ \% ]] && result="$sys_macro"
   fi
 
   if [[ ! $result ]] ; then
@@ -2456,16 +2456,16 @@ getURLVars() {
   
   local user pass user_pass host arch
 
-  if [[ "$url" =~ ~ ]] ; then
+  if [[ "$url" =~ \~ ]] ; then
     arch=$(echo "$url" | cut -f2 -d"~")
     url=$(echo "$url" | cut -f1 -d"~")
   fi
 
-  if [[ "$url" =~ @ ]] ; then
+  if [[ "$url" =~ \@ ]] ; then
     user_pass=$(echo "$url" | cut -f1 -d"@")
     host=$(echo "$url" | cut -f2 -d"@")
 
-    if [[ "$user_pass" =~ : ]] ; then
+    if [[ "$user_pass" =~ \: ]] ; then
       user=$(echo "$user_pass" | cut -f1 -d":")
       pass=$(echo "$user_pass" | cut -f2 -d":")
     else
