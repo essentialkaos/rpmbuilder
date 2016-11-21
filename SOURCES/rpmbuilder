@@ -2225,16 +2225,16 @@ getMacroValue() {
   local macro="$1"
   local spec="$2"
 
-  local result
+  local result sys_macro inner_macro
 
   if [[ "$MACRO" =~ $macro:([A-Za-z]*) ]] ; then
-    local inner_macro="${BASH_REMATCH[1]}"
+    inner_macro="${BASH_REMATCH[1]}"
 
     result=$(grep -v "^#" "$spec" | egrep "$inner_macro*.:" | sed 's/[\t]/ /g' | tr -s " " | cut -f2-99 -d" " | sed 's/,/ /g' | sed 's/ $//g' | head -1)
   fi
 
   if [[ ! $result ]] ; then
-    local sys_macro=$(rpm --eval "%{$macro}")
+    sys_macro=$(rpm --eval "%{$macro}")
 
     [[ ! $sys_macro =~ \% ]] && result="$sys_macro"
   fi
