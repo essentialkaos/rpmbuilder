@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 
 APP="RPMBuilder"
-VER="1.2.1"
+VER="1.2.2"
 
 ####################################################################
 
@@ -1814,7 +1814,7 @@ packSourcesFromSvn() {
 
   sources=($(getSpecValue "$MACRO_SOURCE" "$spec"))
   source_name=$(getArchName "${sources[0]}")
-  source_ext=$(getArchExt" ${sources[0]}")
+  source_ext=$(getArchExt "${sources[0]}")
 
   svn=$(renderMacros "$spec" "$svn")
 
