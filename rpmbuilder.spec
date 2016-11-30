@@ -2,7 +2,7 @@
 
 Summary:         RPM package build helper
 Name:            rpmbuilder
-Version:         1.2.3
+Version:         1.3.0
 Release:         0%{?dist}
 License:         EKOL
 Group:           Development/Tools
@@ -51,6 +51,9 @@ rm -rf %{buildroot}
 ###############################################################################
 
 %changelog
+* Wed Nov 30 2016 Anton Novojilov <andy@essentialkaos.com> - 1.3.0-0
+- Added package validation after build
+
 * Wed Nov 23 2016 Anton Novojilov <andy@essentialkaos.com> - 1.2.3-0
 - Fixed bug with unbuilding src package
 
