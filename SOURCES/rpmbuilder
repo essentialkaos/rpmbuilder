@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 
 APP="RPMBuilder"
-VER="1.2.3"
+VER="1.3.0"
 
 ####################################################################
 
@@ -875,7 +875,7 @@ remoteBuildProcess() {
   stopStatusObserver
   show ""
 
-  local has_errors bld_time grc_time packages package_name
+  local has_errors bld_time grc_time packages package_name package_file
 
   has_errors=$(tail -1 "$tmp_file" | grep -v "exit 0")
 
@@ -892,16 +892,14 @@ remoteBuildProcess() {
 
     for package in $packages ; do
       package=$(echo "$package" | tr -dc '[:print:]')
-
       package_name=$(basename "$package")
 
        if [[ $sign ]] ; then
         show "Signing package ${CL_CYAN}$package_name${CL_NORM}..."
-
         remoteSign "$package"
       fi
 
-      if [[ $dest_dir ]] ; then
+      if [[ -n "$dest_dir" ]] ; then
         downloadFromRemoteHost "$package" "$dest_dir"
       else
         downloadFromRemoteHost "$package"
@@ -912,6 +910,18 @@ remoteBuildProcess() {
       else
         show "Result: ${CL_CYAN}$package_name${CL_NORM} ${CL_DARK}(ALREADY EXIST)${CL_NORM}"
       fi
+    done
+
+    showSeparator "PACKAGE VALIDATION"
+
+    for package in $packages ; do
+      package=$(echo "$package" | tr -dc '[:print:]')
+      package_name=$(basename "$package")
+      package_file="$CWD/$package_name"
+
+      [[ -n "$dest_dir" ]] && package_file="$dest_dir/$package_name"
+
+      validatePackage "$package_file"
     done
 
     if [[ $post ]] ; then
@@ -1167,7 +1177,7 @@ localBuildProcess() {
       stopStatusObserver
       show ""
 
-      local bld_time grc_time package packages package_name
+      local bld_time grc_time package packages package_name package_file
 
       build_end=$(now)
       bld_time=$(( build_end - build_start ))
@@ -1195,6 +1205,17 @@ localBuildProcess() {
         else
           mv "$package" "$CWD"
         fi
+      done
+
+      showSeparator "PACKAGE VALIDATION"
+
+      for package in $packages ; do
+        package_name=$(basename "$package")
+        package_file="$CWD/$package_name"
+
+        [[ -n "$dest_dir" ]] && package_file="$dest_dir/$package_name"
+
+        validatePackage "$package_file"
       done
 
       pushd "$CWD" &> /dev/null
@@ -1501,7 +1522,7 @@ packSources() {
 
 packSourcesFromGit() {
   local spec
-  
+
   spec=$(getAbsPath "$1")
 
   show "Fetching sources from git repo ${CL_CYAN}$git${CL_NORM}..."
@@ -1613,7 +1634,7 @@ packSourcesFromGit() {
 
 packSourcesFromHg() {
   local spec
-  
+
   spec=$(getAbsPath "$1")
 
   show "Fetching sources from hg repo ${CL_CYAN}$hg${CL_NORM}..."
@@ -1725,7 +1746,7 @@ packSourcesFromHg() {
 
 packSourcesFromBzr() {
   local spec
-  
+
   spec=$(getAbsPath "$1")
 
   show "Fetching sources from bzr repo ${CL_CYAN}${bzr}${CL_NORM}..."
@@ -1805,7 +1826,7 @@ packSourcesFromBzr() {
 
 packSourcesFromSvn() {
   local spec
-  
+
   spec=$(getAbsPath "$1")
 
   show "Fetching sources from svn repo ${CL_CYAN}$svn${CL_NORM}..."
@@ -2127,7 +2148,7 @@ cleanPackDir() {
 packDir() {
   local dir="$1"
   local ext="$2"
-  
+
   local dir_name parent_dir arch_name
 
   dir_name=$(basename "$dir")
@@ -2453,7 +2474,7 @@ isSpecFile() {
 
 getURLVars() {
   local url="$1"
-  
+
   local user pass user_pass host arch
 
   if [[ "$url" =~ \~ ]] ; then
@@ -2478,6 +2499,37 @@ getURLVars() {
   echo "${host:-} ${user:-} ${pass:-} ${arch:-}"
 }
 
+validatePackage() {
+  local rpm_file rpm_name has_errors
+
+  rpm_file="$1"
+  rpm_name=$(basename "$rpm_file")
+
+  showm "${CL_CYAN}${rpm_name}:${CL_NORM} "
+
+  if rpm -qp --scripts "$rpm_file" 2>&1 | egrep -q '\%\{.*\}' ; then
+    has_errors=true
+    show "ERROR\n" $RED
+    show "RPM package $rpm_name contains unexpanded macroses in scriptlets:" $BROWN
+    show "${CL_GREY}"
+    rpm -qp --scripts "$rpm_file" 2>&1 | egrep -A1 -B1 '\%\{.*\}' | sed '/^$/d' | sed 's/^/  /g'
+    show "${CL_NORM}"
+  fi
+
+  if rpm -qlp "$rpm_file" 2>&1 | egrep -q '\%\{.*\}' ; then
+    has_errors=true
+    show "ERROR\n" $RED
+    show "RPM package $rpm_name contains unexpanded macroses in files section:" $BROWN
+    show "${CL_GREY}"
+    rpm -qlp "$rpm_file" 2>&1 | egrep -A1 -B1 '\%\{.*\}' | sed '/^$/d' | sed 's/^/  /g'
+    show "${CL_NORM}"
+  fi
+
+  if [[ -z "$has_errors" ]] ; then
+    show "OK" $GREEN
+  fi
+}
+
 ###############################################################################
 
 checkDeps() {
@@ -2497,6 +2549,7 @@ getAbsPath() {
 
 doExit() {
   clean
+
   stopStatusObserver
 
   if [[ $tmuxl ]] ; then
