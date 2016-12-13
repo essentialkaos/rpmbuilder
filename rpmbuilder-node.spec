@@ -38,6 +38,7 @@
 %define __ldconfig        %{_sbin}/ldconfig
 %define __groupadd        %{_sbindir}/groupadd
 %define __useradd         %{_sbindir}/useradd
+%define __userdel         %{_sbindir}/userdel
 
 ###############################################################################
 
@@ -49,7 +50,7 @@
 
 Summary:         Configuration package for rpmbuilder node
 Name:            rpmbuilder-node
-Version:         1.1.0
+Version:         1.2.0
 Release:         0%{?dist}
 License:         EKOL
 Group:           Development/Tools
@@ -59,8 +60,10 @@ Source0:         rpmmacros
 Source1:         %{service_name}
 Source2:         %{service_name}.init
 Source3:         %{user_name}.sudoers
+Source4:         nodeinfo
 
 BuildArch:       noarch
+
 BuildRoot:       %{_tmppath}/%{name}-%{version}-%{release}-root-%(%{__id_u} -n)
 
 Requires:        rpm >= 4.8.0 rpm-build rpmdevtools
@@ -70,8 +73,8 @@ Provides:        %{name} = %{version}-%{release}
 
 ###############################################################################
 
-%description 
-Package creates user for remote package building with rpmbuilder. 
+%description
+Package creates user for remote package building with rpmbuilder.
 
 ###############################################################################
 
@@ -95,19 +98,20 @@ install -pm 755 %{SOURCE0} %{buildroot}%{home_dir}/.rpmbld
 install -pm 755 %{SOURCE1} %{buildroot}%{home_dir}/
 install -pm 755 %{SOURCE2} %{buildroot}%{_initddir}/%{service_name}
 install -pm 644 %{SOURCE3} %{buildroot}%{_sysconfdir}/sudoers.d/%{user_name}
+install -pm 755 %{SOURCE4} %{buildroot}%{home_dir}/
 
 %clean
 rm -rf %{buildroot}
 
 ###############################################################################
 
-%post 
+%post
 %{__chown} %{user_name}:%{user_name} %{home_dir} -R
 
 if [[ $1 -eq 1 ]] ; then
   touch %{home_dir}/.ssh/authorized_keys
   chmod 0600 %{home_dir}/.ssh/authorized_keys
-  
+
   sudo -u %{user_name} rpmdev-setuptree
   sudo -u %{user_name} restorecon -R -v %{home_dir}/.ssh &> /dev/null
 
@@ -117,7 +121,7 @@ if [[ $1 -eq 1 ]] ; then
   %{__chkconfig} --add %{service_name}
 fi
 
-%postun 
+%postun
 if [[ $1 -eq 0 ]] ; then
   %{__service} %{service_name} stop &> /dev/null || :
   %{__chkconfig} --del %{service_name}
@@ -136,6 +140,9 @@ fi
 ###############################################################################
 
 %changelog
+* Wed Dec 14 2016 Anton Novojilov <andy@essentialkaos.com> - 1.2.0-0
+- Added nodeinfo utility
+
 * Wed Nov 16 2016 Anton Novojilov <andy@essentialkaos.com> - 1.1.0-0
 - Improvements
 
