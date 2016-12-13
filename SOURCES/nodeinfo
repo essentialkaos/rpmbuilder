@@ -1,0 +1,108 @@
+#!/usr/bin/env bash
+
+###############################################################################
+
+APP="RPMBuilder Node Info Viewer"
+VER="1.0.0"
+
+###############################################################################
+
+main() {
+  local cpu_model proc_num mem_usage swap_usage os_version kernel pkg_ver
+
+  cpu_model=$(getCPUModel)
+  proc_num=$(getProcNum)
+  kernel=$(getKernelVersion)
+  mem_usage=$(getMemUsage)
+  swap_usage=$(getSwapUsage)
+  os_version=$(getOSVersion)
+  pkg_ver=$(getNodePackageVersion)
+
+  echo ""
+  echo "  CPU:      $cpu_model ($proc_num)"
+  echo "  Memory:   $mem_usage"
+  echo "  Swap:     $swap_usage"
+  echo "  OS:       $os_version"
+  echo "  Kernel:   $kernel"
+  echo "  Package:  $pkg_ver"
+  echo ""
+}
+
+getProcNum() {
+  local count
+
+  count=$(grep -c "processor" /proc/cpuinfo)
+
+  if [[ $count -eq 1 ]] ; then
+    echo "1 core"
+    return
+  fi
+
+  echo "$count cores"
+}
+
+getCPUModel() {
+  grep "model name" /proc/cpuinfo | head -1 | tr "\t" " " | tr -s " " | cut -d" " -f4-99
+}
+
+getKernelVersion() {
+  uname -r
+}
+
+getMemUsage() {
+  local mem_total mem_free mem_cached mem_buffers mem_used
+
+  mem_total=$(readMemInfo "MemTotal")
+  mem_free=$(readMemInfo "MemFree")
+  mem_cached=$(readMemInfo "Cached")
+  mem_buffers=$(readMemInfo "Buffers")
+
+  mem_used=$(( mem_total - (mem_free + mem_cached + mem_buffers) ))
+  mem_used=$(( mem_used / 1024 ))
+  mem_total=$(( mem_total / 1024 ))
+
+  echo "$mem_used MB / $mem_total MB"
+}
+
+getSwapUsage() {
+  local swap_total swap_free swap_used
+
+  swap_total=$(readMemInfo "SwapTotal")
+  swap_free=$(readMemInfo "SwapFree")
+
+  if [[ $swap_total -eq 0 ]] ; then
+    echo "disabled"
+    return
+  fi
+
+  swap_used=$(( swap_total - swap_free ))
+  swap_used=$(( swap_used / 1024 ))
+  swap_total=$(( swap_total / 1024 ))
+
+  echo "$swap_used MB / $swap_total MB"
+}
+
+readMemInfo() {
+  cat "/proc/meminfo" | tr -s " " | egrep "^$1:" | cut -f2 -d" "
+}
+
+getOSVersion() {
+  local os_version
+
+  os_version=$(cat /etc/redhat-release 2>/dev/null)
+
+  if [[ -z "$os_version" ]] ; then
+    echo "unknown"
+    return
+  fi
+
+  echo "$os_version"
+}
+
+getNodePackageVersion() {
+  rpm -q rpmbuilder-node
+}
+
+###############################################################################
+
+main "$@"
