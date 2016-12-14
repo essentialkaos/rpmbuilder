@@ -2,7 +2,7 @@
 
 Summary:         RPM package build helper
 Name:            rpmbuilder
-Version:         1.3.0
+Version:         1.4.0
 Release:         0%{?dist}
 License:         EKOL
 Group:           Development/Tools
@@ -51,6 +51,13 @@ rm -rf %{buildroot}
 ###############################################################################
 
 %changelog
+* Wed Dec 14 2016 Anton Novojilov <andy@essentialkaos.com> - 1.4.0-0
+- Added nodeinfo usage support
+- Added gopack support
+
+* Mon Dec 12 2016 Anton Novojilov <andy@essentialkaos.com> - 1.3.1-0
+- Minor fixes
+
 * Wed Nov 30 2016 Anton Novojilov <andy@essentialkaos.com> - 1.3.0-0
 - Added package validation after build
 

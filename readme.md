@@ -1,46 +1,52 @@
+<p align="center"><a href="#usage-demo">Usage demo</a> • <a href="#installation">Installation</a> • <a href="#usage">Usage</a> • <a href="#contributing">Contributing</a> • <a href="#license">License</a></p>
+
 ## RPMBuilder [![Code Climate](https://codeclimate.com/github/essentialkaos/rpmbuilder/badges/gpa.svg)](https://codeclimate.com/github/essentialkaos/rpmbuilder)
 
 `rpmbuilder` is RPM package build helper
 
 ### Usage demo
 
-Building redis rpm on three remote build nodes:
+Building redis rpm for CentOS6 on three remote build nodes:
 
-[![asciicast](https://essentialkaos.com/github/rpmbuilder-115.gif)](https://asciinema.org/a/90959)
+[![demo](https://gh.kaos.io/rpmbuilder-140.gif)](#usage-demo)
 
 ### Installation
 
-##### From ESSENTIAL KAOS Public repository for RHEL6/CentOS6
-
+<details>
+<summary><strong>From ESSENTIAL KAOS Public repo for RHEL6/CentOS6</strong></summary>
 ```
-sudo yum install -y https://yum.kaos.io/6/release/i386/kaos-repo-7.0-0.el6.noarch.rpm
-sudo yum install rpmbuilder
-```
-
-Build node:
-```
-sudo yum install -y https://yum.kaos.io/6/release/i386/kaos-repo-7.0-0.el6.noarch.rpm
-sudo yum install rpmbuilder-node
-sudo passwd builder
-... change builder user password here
-sudo service buildmon start
-```
-
-##### From ESSENTIAL KAOS Public repository for RHEL7/CentOS7
-
-```
-sudo yum install -y https://yum.kaos.io/7/release/x86_64/kaos-repo-7.0-0.el7.noarch.rpm
-sudo yum install rpmbuilder
+[sudo] yum install -y https://yum.kaos.io/6/release/i386/kaos-repo-7.2-0.el6.noarch.rpm
+[sudo] yum install rpmbuilder
 ```
 
 Build node:
 ```
-sudo yum install -y https://yum.kaos.io/7/release/x86_64/kaos-repo-7.0-0.el7.noarch.rpm
-sudo yum install rpmbuilder-node
-sudo passwd builder
+[sudo] yum install -y https://yum.kaos.io/6/release/i386/kaos-repo-7.2-0.el6.noarch.rpm
+[sudo] yum install rpmbuilder-node
+[sudo] passwd builder
 ... change builder user password here
-sudo service buildmon start
+[sudo] service buildmon start
 ```
+</details>
+
+<details>
+<summary><strong>From ESSENTIAL KAOS Public repo for RHEL7/CentOS7</strong></summary>
+```
+[sudo] yum install -y https://yum.kaos.io/7/release/x86_64/kaos-repo-7.2-0.el7.noarch.rpm
+[sudo] yum install rpmbuilder
+```
+
+Build node:
+```
+[sudo] yum install -y https://yum.kaos.io/7/release/x86_64/kaos-repo-7.2-0.el7.noarch.rpm
+[sudo] yum install rpmbuilder-node
+[sudo] passwd builder
+... change builder user password here
+[sudo] service buildmon start
+```
+</details>
+
+Also we have superb [Terrafarm](https://github.com/essentialkaos/terrafarm) utility for starting and managing rpmbuilder-based farm on [DigitalOcean](https://www.digitalocean.com).
 
 ### Usage
 
@@ -78,10 +84,12 @@ Source packaging:
   --github, -gh user:project         Fetch sources from github.com repository by user and project
   --github, -gh user/project         Fetch sources from github.com repository by user and project
   --bitbucket, -bb url               Fetch sources from bitbucket.org repository by url (macro supported)
-  --bitbucket, -bb user>:<project    Fetch sources from bitbucket.org repository by user and project
+  --bitbucket, -bb user:project      Fetch sources from bitbucket.org repository by user and project
   --bitbucket, -bb user/project      Fetch sources from bitbucket.org repository by user and project
   --launchpad, -lp url               Fetch sources from launchpad.net repository by url (macro supported)
   --launchpad, -lp project-name      Fetch sources from launchpad.net repository by project name
+
+  --gopack, -G url  Fetch and pack golang sources using gopack
 
   Examples:
 
@@ -95,6 +103,7 @@ Source packaging:
     rpmbuilder package.spec --git git://github.com/user/project.git -rr f8debbfdbebb97f5d0ee2218edf1425ac219cff5
     rpmbuilder package.spec -bb user:project
     rpmbuilder package.spec --github https://github.com/user/project/
+    rpmbuilder package.spec --gopack github.com/user/project --version v1.2.3
 
 Dependencies install:
 
