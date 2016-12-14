@@ -53,6 +53,7 @@ rm -rf %{buildroot}
 %changelog
 * Wed Dec 14 2016 Anton Novojilov <andy@essentialkaos.com> - 1.4.0-0
 - Added nodeinfo usage support
+- Added gopack support
 
 * Mon Dec 12 2016 Anton Novojilov <andy@essentialkaos.com> - 1.3.1-0
 - Minor fixes

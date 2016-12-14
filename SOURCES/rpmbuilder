@@ -96,7 +96,7 @@ SUPPORTED_ARGS="remote !parallel host user pass key source_dir source_list
  svn_pass path !bump bump_comment tmp dlcache !depinstall !dep_install github 
  bitbucket launchpad with without define output !verbose !help !usage !ver 
  !version !raw_version qa_rpaths !tmuxl no_colors !keep_log notify arch 
- download !relative_pack enable_repo disable_repo"
+ download !relative_pack enable_repo disable_repo gopack"
 
 SHORT_ARGS="r:remote P:!parallel hh:host uu:user pp:pass kk:key sd:source_dir 
  sl:source_list nb:!no_build nc:!no_clean nd:!no_deps nr:!no_binary ns:!no_source 
@@ -105,10 +105,10 @@ SHORT_ARGS="r:remote P:!parallel hh:host uu:user pp:pass kk:key sd:source_dir
  di:!depinstall rb:branch rt:tag rr:revision gh:github bb:bitbucket lp:launchpad 
  w:with W:without s:!sign D:define O:output V:!verbose h:help v:!version 
  C:no_colors kl:!keep_log n:notify a:arch dl:download R:relative_pack 
- ER:enable_repo DR:disable_repo"
+ ER:enable_repo DR:disable_repo G:gopack"
 
 INSPEC_ARGS="git svn hg bzr branch revision tag svn_user svn_pass github 
- bitbucket launchpad qa_rpaths pedantic strict no_lint relative_pack"
+ bitbucket launchpad qa_rpaths pedantic strict no_lint relative_pack gopack"
 
 MERGEABLE_ARGS="pack with without enable_repo disable_repo define"
 
@@ -209,11 +209,13 @@ main() {
 
     readInspecArgs "$spec"
 
-    [[ "$github" == "true" || "$bitbucket" == "true" || $launchpad == "true" ]] && parseSourceURL "$spec"
+    [[ -n "${github}${bitbucket}${launchpad}" ]] && parseSourceURL "$spec"
 
     [[ $github ]]    && processGithubSource
     [[ $bitbucket ]] && processBitbucketSource
     [[ $launchpad ]] && processLaunchpadSource
+
+    [[ $gopack ]] && processGolangSource "$spec"
 
     if [[ $download ]] ; then
       downloadRemoteSources "$spec"
@@ -406,6 +408,11 @@ checkArgs() {
     doExit $ERROR_DEPS
   fi
 
+  if ! checkDeps "gopack" && [[ $gopack ]] ; then
+    show "Can't start build process - for using --gopack argument, you must install gopack first." $RED
+    doExit $ERROR_DEPS
+  fi
+
   if ! checkDeps "sshpass" && [[ $pass ]] ; then
     show "Can't start build process - for using --pass argument, you must install sshpass first." $RED
     doExit $ERROR_DEPS
@@ -586,6 +593,36 @@ processLaunchpadSource() {
   else
     bzr="$launchpad"
   fi
+}
+
+processGolangSource() {
+  local spec="$1"
+  local args sources output status
+
+  sources=($(getSpecValue "$MACRO_SOURCE" "$spec"))
+
+  if [[ -n "$source_dir" ]] ; then
+    output="${source_dir}/${sources[0]}"
+  else
+    output="${sources[0]}"
+  fi
+
+  [[ -e $output ]] && return
+
+  showSeparator "GOPACK"
+
+  args="-o $output"
+
+  [[ -n "$revision" ]] && args="$args -r $revision"
+  [[ -n "$branch" ]]   && args="$args -b $branch"
+  [[ -n "$tag" ]]      && args="$args -t $tag"
+  [[ -n "$verbose" ]]  && args="$args -V"
+
+  args="$args $gopack"
+
+  gopack $args
+
+  [[ $? -ne 0 ]] && doExit 1
 }
 
 parseSourceURL() {
