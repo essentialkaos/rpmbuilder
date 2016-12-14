@@ -25,7 +25,7 @@ Build node:
 ... change builder user password here
 [sudo] service buildmon start
 ```
-<details>
+</details>
 
 <details>
 <summary><strong>From ESSENTIAL KAOS Public repo for RHEL7/CentOS7</strong></summary>
@@ -42,7 +42,7 @@ Build node:
 ... change builder user password here
 [sudo] service buildmon start
 ```
-<details>
+</details>
 
 Also we have superb [Terrafarm](https://github.com/essentialkaos/terrafarm) utility for starting and managing rpmbuilder-based farm on [DigitalOcean](https://www.digitalocean.com).
 
