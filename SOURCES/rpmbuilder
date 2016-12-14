@@ -2773,7 +2773,7 @@ usage() {
   show "  ${CL_GREEN}--github, -gh${CL_NORM} ${CL_GREY}user:project${CL_NORM}         Fetch sources from github.com repository by user and project"
   show "  ${CL_GREEN}--github, -gh${CL_NORM} ${CL_GREY}user/project${CL_NORM}         Fetch sources from github.com repository by user and project"
   show "  ${CL_GREEN}--bitbucket, -bb${CL_NORM} ${CL_GREY}url${CL_NORM}               Fetch sources from bitbucket.org repository by url ${CL_DARK}(macro supported)${CL_NORM}"
-  show "  ${CL_GREEN}--bitbucket, -bb${CL_NORM} ${CL_GREY}user>:<project${CL_NORM}    Fetch sources from bitbucket.org repository by user and project"
+  show "  ${CL_GREEN}--bitbucket, -bb${CL_NORM} ${CL_GREY}user:project${CL_NORM}      Fetch sources from bitbucket.org repository by user and project"
   show "  ${CL_GREEN}--bitbucket, -bb${CL_NORM} ${CL_GREY}user/project${CL_NORM}      Fetch sources from bitbucket.org repository by user and project"
   show "  ${CL_GREEN}--launchpad, -lp${CL_NORM} ${CL_GREY}url${CL_NORM}               Fetch sources from launchpad.net repository by url ${CL_DARK}(macro supported)${CL_NORM}"
   show "  ${CL_GREEN}--launchpad, -lp${CL_NORM} ${CL_GREY}project-name${CL_NORM}      Fetch sources from launchpad.net repository by project name"

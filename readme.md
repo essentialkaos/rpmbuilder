@@ -4,9 +4,9 @@
 
 ### Usage demo
 
-Building redis rpm on three remote build nodes:
+Building redis rpm for CentOS6 on three remote build nodes:
 
-[![asciicast](https://essentialkaos.com/github/rpmbuilder-115.gif)](https://asciinema.org/a/90959)
+![demo](https://gh.kaos.io/rpmbuilder-140.gif)
 
 ### Installation
 
@@ -82,7 +82,7 @@ Source packaging:
   --github, -gh user:project         Fetch sources from github.com repository by user and project
   --github, -gh user/project         Fetch sources from github.com repository by user and project
   --bitbucket, -bb url               Fetch sources from bitbucket.org repository by url (macro supported)
-  --bitbucket, -bb user>:<project    Fetch sources from bitbucket.org repository by user and project
+  --bitbucket, -bb user:project      Fetch sources from bitbucket.org repository by user and project
   --bitbucket, -bb user/project      Fetch sources from bitbucket.org repository by user and project
   --launchpad, -lp url               Fetch sources from launchpad.net repository by url (macro supported)
   --launchpad, -lp project-name      Fetch sources from launchpad.net repository by project name
