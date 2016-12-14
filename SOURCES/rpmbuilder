@@ -2778,18 +2778,21 @@ usage() {
   show "  ${CL_GREEN}--launchpad, -lp${CL_NORM} ${CL_GREY}url${CL_NORM}               Fetch sources from launchpad.net repository by url ${CL_DARK}(macro supported)${CL_NORM}"
   show "  ${CL_GREEN}--launchpad, -lp${CL_NORM} ${CL_GREY}project-name${CL_NORM}      Fetch sources from launchpad.net repository by project name"
   show ""
+  show "  ${CL_GREEN}--gopack, -G${CL_NORM} ${CL_GREY}url${CL_NORM}  Fetch and pack golang sources using gopack"
+  show ""
   show "  Examples:" $BOLD
   show ""
-  show "    rpmbuilder package.spec -sl sources/current -d ~/mypackages"
-  show "    rpmbuilder package.spec --source-list files.list --dest ~/mypackages"
-  show "    rpmbuilder package.spec --pack \"file1 file2 dir1 dir2 file3\""
-  show "    rpmbuilder package.spec -p \"file1 file2\" -p \"dir1 dir2 file3\" -p file4"
-  show "    rpmbuilder package.spec --git git://github.com/user/project.git --tag 1.3-12"
-  show "    rpmbuilder package.spec --git git://github.com/%{vendor}/%{name}.git --tag \"v%{version}-%{release}\""
-  show "    rpmbuilder package.spec --git git://github.com/user/project.git -rb develop"
-  show "    rpmbuilder package.spec --git git://github.com/user/project.git -rr f8debbfdbebb97f5d0ee2218edf1425ac219cff5"
-  show "    rpmbuilder package.spec -bb user:project"
-  show "    rpmbuilder package.spec --github https://github.com/user/project/"
+  show "    rpmbuilder package.spec -sl sources/current -d ~/mypackages" $GREY
+  show "    rpmbuilder package.spec --source-list files.list --dest ~/mypackages" $GREY
+  show "    rpmbuilder package.spec --pack \"file1 file2 dir1 dir2 file3\"" $GREY
+  show "    rpmbuilder package.spec -p \"file1 file2\" -p \"dir1 dir2 file3\" -p file4" $GREY
+  show "    rpmbuilder package.spec --git git://github.com/user/project.git --tag 1.3-12" $GREY
+  show "    rpmbuilder package.spec --git git://github.com/%{vendor}/%{name}.git --tag \"v%{version}-%{release}\"" $GREY
+  show "    rpmbuilder package.spec --git git://github.com/user/project.git -rb develop" $GREY
+  show "    rpmbuilder package.spec --git git://github.com/user/project.git -rr f8debbfdbebb97f5d0ee2218edf1425ac219cff5" $GREY
+  show "    rpmbuilder package.spec -bb user:project" $GREY
+  show "    rpmbuilder package.spec --github https://github.com/user/project/" $GREY
+  show "    rpmbuilder package.spec --gopack github.com/user/project --version v1.2.3" $GREY
   show ""
   show "Dependencies install:" $BOLD
   show ""
@@ -2810,9 +2813,9 @@ usage() {
   show ""
   show "  Examples:" $BOLD
   show ""
-  show "    rpmbuilder package.spec --remote -ru builder -rp mypass -rh 127.0.0.1"
-  show "    rpmbuilder package.spec -r builder:mypass@127.0.0.1 -i ~/.ssh/id_dsa"
-  show "    rpmbuilder package.spec --remote ~/servers.list --key ~/.ssh/id_dsa"
+  show "    rpmbuilder package.spec --remote -ru builder -rp mypass -rh 127.0.0.1" $GREY
+  show "    rpmbuilder package.spec -r builder:mypass@127.0.0.1 -i ~/.ssh/id_dsa" $GREY
+  show "    rpmbuilder package.spec --remote ~/servers.list --key ~/.ssh/id_dsa" $GREY
   show ""
   show "Build options:" $BOLD
   show ""
@@ -2832,12 +2835,12 @@ usage() {
   show ""
   show "  Examples:" $BOLD
   show ""
-  show "    rpmbuilder package.spec --with ssl --with ldap"
-  show "    rpmbuilder package.spec -w ssl -W ldap"
-  show "    rpmbuilder package.spec --with \"ssl ldap\""
-  show "    rpmbuilder package.spec --define \"install_dir=/some/dir\" --define \"service_user=someone\""
+  show "    rpmbuilder package.spec --with ssl --with ldap" $GREY
+  show "    rpmbuilder package.spec -w ssl -W ldap" $GREY
+  show "    rpmbuilder package.spec --with \"ssl ldap\"" $GREY
+  show "    rpmbuilder package.spec --define \"install_dir=/some/dir\" --define \"service_user=someone\"" $GREY
   show ""
-  show "  ${CL_BOLD}More info:${CL_NORM} http://rpm5.org/docs/api/conditionalbuilds.html"
+  show "  More info: http://rpm5.org/docs/api/conditionalbuilds.html" $DARK
   show ""
   show "Spec validation:" $BOLD
   show ""
@@ -2863,8 +2866,8 @@ about() {
   show ""
   show "${CL_BL_CYAN}$APP${CL_NORM} ${CL_CYAN}$VER${CL_NORM} - RPM package build helper"
   show ""
-  show "Copyright (C) 2009-2016 Essential Kaos" $DARK
-  show "Essential Kaos Open Source License <http://essentialkaos.com/ekol?en>" $DARK
+  show "Copyright (C) 2009-2016 ESSENTIAL KAOS" $DARK
+  show "Essential Kaos Open Source License <https://essentialkaos.com/ekol>" $DARK
   show ""
 }
 
