@@ -716,7 +716,7 @@ remoteBuild() {
   [[ $git ]] && packSourcesFromGit "$spec"
   [[ $svn ]] && packSourcesFromSvn "$spec"
   [[ $bzr ]] && packSourcesFromBzr "$spec"
-  [[ $hg ]] && packSourcesFromHg "$spec"
+  [[ $hg ]]  && packSourcesFromHg  "$spec"
 
   [[ $repo_spec ]] && spec="$repo_spec"
 
@@ -1671,6 +1671,10 @@ packSourcesFromGit() {
 
     rm -rf "$source_name"
 
+    if [[ -n "$dlcache" ]] ; then
+      cp "${source_name}.${source_ext}" "$dlcache/"
+    fi
+
   popd &> /dev/null
 
   show "Source files from ${CL_BOLD}git${CL_NORM} repo packed as ${CL_CYAN}${source_name}.${source_ext}${CL_NORM}"
@@ -1783,6 +1787,10 @@ packSourcesFromHg() {
 
     rm -rf "$source_name"
 
+    if [[ -n "$dlcache" ]] ; then
+      cp "${source_name}.${source_ext}" "$dlcache/"
+    fi
+
   popd &> /dev/null
 
   show "Source files from ${CL_BOLD}hg${CL_NORM} repo packed as ${CL_CYAN}${source_name}.${source_ext}${CL_NORM}"
@@ -1862,6 +1870,10 @@ packSourcesFromBzr() {
     packDir "$abs_dir_path" "$source_ext"
 
     rm -rf "$source_name"
+
+    if [[ -n "$dlcache" ]] ; then
+      cp "${source_name}.${source_ext}" "$dlcache/"
+    fi
 
   popd &> /dev/null
 
@@ -1951,6 +1963,10 @@ packSourcesFromSvn() {
       packDir "$abs_dir_path" "$source_ext"
 
       rm -rf "$source_name"
+    fi
+
+    if [[ -n "$dlcache" ]] ; then
+      cp "${source_name}.${source_ext}" "$dlcache/"
     fi
 
   popd &> /dev/null
