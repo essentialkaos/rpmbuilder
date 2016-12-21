@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 
 APP="RPMBuilder"
-VER="1.4.0"
+VER="1.4.1"
 
 ####################################################################
 
@@ -1645,7 +1645,12 @@ packSourcesFromGit() {
         fi
       fi
 
-      rm -rf .git .gitignore "$git_log" &> /dev/null
+      # Fetch submodules if exist
+      if [[ -f .gitmodules ]] ; then
+        git submodule update --init --recursive
+      fi
+
+      rm -rf .git .gitignore .gitmodules "$git_log" &> /dev/null
     popd &> /dev/null
 
     if [[ $path ]] ; then

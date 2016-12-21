@@ -2,7 +2,7 @@
 
 ## RPMBuilder [![Code Climate](https://codeclimate.com/github/essentialkaos/rpmbuilder/badges/gpa.svg)](https://codeclimate.com/github/essentialkaos/rpmbuilder)
 
-`rpmbuilder` is RPM package build helper
+`rpmbuilder` is RPM package build helper.
 
 ### Usage demo
 
