@@ -657,15 +657,20 @@ downloadRemoteSources() {
   local download_count=0
 
   if [[ "$download" == "true" ]] ; then
-    download="."
+    dlcache="."
   fi
 
-  if [[ ! -d $download ]] ; then
+  if [[ ! -d "$dlcache" ]] ; then
     show "Can't download sources - download destination directory is not exist." $RED
     doExit $ERROR_ARGS
   fi
 
   showSeparator "DOWNLOADING"
+
+  [[ $git ]] && packSourcesFromGit "$spec"
+  [[ $svn ]] && packSourcesFromSvn "$spec"
+  [[ $bzr ]] && packSourcesFromBzr "$spec"
+  [[ $hg ]]  && packSourcesFromHg  "$spec"
 
   local source_file sources_list source_file_name patches_list files
 
