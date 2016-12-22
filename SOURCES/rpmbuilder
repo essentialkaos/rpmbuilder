@@ -161,7 +161,7 @@ build_end=0
 ###############################################################################
 
 main() {
-  if [[ ! -t 1 || $no_colors ]] ; then
+  if [[ ! -t 1 || -n "$no_colors" ]] ; then
     unset CL_NORM CL_BOLD CL_UNLN CL_RED CL_GREEN CL_BROWN CL_BLUE CL_MAG
     unset CL_CYAN CL_GREY CL_DARK CL_BL_RED CL_BL_GREEN CL_BL_BROWN CL_BL_BLUE
     unset CL_BL_MAG CL_BL_CYAN CL_BL_GREY CL_UL_RED CL_UL_GREEN CL_UL_BROWN
@@ -169,9 +169,9 @@ main() {
     unset CL_BG_BROWN CL_BG_BLUE CL_BG_MAG CL_BG_CYAN CL_BG_GREY
   fi
 
-  [[ $raw_version ]] && echo $VER && doExit
-  [[ $ver || $version ]] && about && doExit
-  [[ $# -eq 0 || $help || $usage ]] && usage && doExit
+  [[ -n "$raw_version" ]] && echo $VER && doExit
+  [[ -n "$ver" || -n "$version" ]] && about && doExit
+  [[ $# -eq 0 || -n "$help" || -n "$usage" ]] && usage && doExit
 
   local spec="$1"
 
@@ -187,22 +187,22 @@ main() {
 
   checkArgs
 
-  if [[ $parallel && $(wc -l "$remote" | cut -f1 -d" ") -gt 1 ]] ; then
+  if [[ -n "$parallel" && $(wc -l "$remote" | cut -f1 -d" ") -gt 1 ]] ; then
     parallelBuild "$@"
   else
     local start_ts
     start_ts=$(now)
 
-    [[ $dest ]] && dest_dir="$dest"
-    [[ $dest_dir ]] && dest_dir=$(getAbsPath "$dest_dir")
-    [[ $dlcache ]] && dlcache=$(getAbsPath "$dlcache")
-    [[ $download ]] && dlcache=$(getAbsPath "$download")
+    [[ -n "$dest" ]]     && dest_dir="$dest"
+    [[ -n "$dest_dir" ]] && dest_dir=$(getAbsPath "$dest_dir")
+    [[ -n "$dlcache" ]]  && dlcache=$(getAbsPath "$dlcache")
+    [[ -n "$download" ]] && dlcache=$(getAbsPath "$download")
 
     makeTemp
 
     trap termExit SIGINT
 
-    if [[ $verbose ]] ; then
+    if [[ -n "$verbose" ]] ; then
       verbose=true
       verb_output=/dev/stdout
     fi
@@ -211,16 +211,16 @@ main() {
 
     [[ -n "${github}${bitbucket}${launchpad}" ]] && parseSourceURL "$spec"
 
-    [[ $github ]]    && processGithubSource
-    [[ $bitbucket ]] && processBitbucketSource
-    [[ $launchpad ]] && processLaunchpadSource
+    [[ -n "$github" ]]    && processGithubSource
+    [[ -n "$bitbucket" ]] && processBitbucketSource
+    [[ -n "$launchpad" ]] && processLaunchpadSource
 
-    [[ $gopack ]] && processGolangSource "$spec"
+    [[ -n "$gopack" ]] && processGolangSource "$spec"
 
-    if [[ $download ]] ; then
+    if [[ -n "$download" ]] ; then
       downloadRemoteSources "$spec"
     else
-      if [[ $remote ]] ; then
+      if [[ -n "$remote" ]] ; then
         remoteBuild "$spec"
       else
         localBuild "$spec"
@@ -678,7 +678,7 @@ downloadRemoteSources() {
     if [[ "$source_file" =~ ^(http|https|ftp) ]] ; then
       source_file_name=$(basename "$source_file")
 
-      if [[ -f "$download/$source_file_name" ]] ; then
+      if [[ -f "$dlcache/$source_file_name" ]] ; then
         show "File ${CL_CYAN}${source_file_name}${CL_NORM} already downloaded."
         continue
       fi
@@ -1055,7 +1055,7 @@ localBuild() {
   [[ $git ]] && packSourcesFromGit "$spec"
   [[ $svn ]] && packSourcesFromSvn "$spec"
   [[ $bzr ]] && packSourcesFromBzr "$spec"
-  [[ $hg ]] && packSourcesFromHg "$spec"
+  [[ $hg ]] &&  packSourcesFromHg  "$spec"
 
   [[ $repo_spec ]] && spec="$repo_spec"
 
@@ -1560,17 +1560,19 @@ packSources() {
 }
 
 packSourcesFromGit() {
-  local spec
+  local spec sources source_name source_ext dir_name git_log abs_dir_path
 
   spec=$(getAbsPath "$1")
-
-  show "Fetching sources from git repo ${CL_CYAN}$git${CL_NORM}..."
-
-  local sources source_name source_ext dir_name git_log abs_dir_path
-
   sources=($(getSpecValue "$MACRO_SOURCE" "$spec"))
+
+  if [[ -n $(findSource "${sources[0]}") ]] ; then
+    return
+  fi
+
   source_name=$(getArchName "${sources[0]}")
   source_ext=$(getArchExt "${sources[0]}")
+
+  show "Fetching sources from git repo ${CL_CYAN}$git${CL_NORM}..."
 
   dir_name=$(mktemp -u "$source_name-XXXX")
 
@@ -1681,17 +1683,19 @@ packSourcesFromGit() {
 }
 
 packSourcesFromHg() {
-  local spec
+  local spec sources source_name source_ext dir_name hg_log abs_dir_path
 
   spec=$(getAbsPath "$1")
-
-  show "Fetching sources from hg repo ${CL_CYAN}$hg${CL_NORM}..."
-
-  local sources source_name source_ext dir_name hg_log abs_dir_path
-
   sources=($(getSpecValue "$MACRO_SOURCE" "$spec"))
+
+  if [[ -n $(findSource "${sources[0]}") ]] ; then
+    return
+  fi
+
   source_name=$(getArchName "${sources[0]}")
   source_ext=$(getArchExt "${sources[0]}")
+
+  show "Fetching sources from hg repo ${CL_CYAN}$hg${CL_NORM}..."
 
   dir_name=$(mktemp -u "$source_name-XXXX")
 
@@ -1797,17 +1801,19 @@ packSourcesFromHg() {
 }
 
 packSourcesFromBzr() {
-  local spec
+  local spec sources source_name source_ext dir_name bzr_log bzr_opts abs_dir_path
 
   spec=$(getAbsPath "$1")
-
-  show "Fetching sources from bzr repo ${CL_CYAN}${bzr}${CL_NORM}..."
-
-  local sources source_name source_ext dir_name bzr_log bzr_opts abs_dir_path
-
   sources=($(getSpecValue "$MACRO_SOURCE" "$spec"))
+
+  if [[ -n $(findSource "${sources[0]}") ]] ; then
+    return
+  fi
+
   source_name=$(getArchName "${sources[0]}")
   source_ext=$(getArchExt "${sources[0]}")
+
+  show "Fetching sources from bzr repo ${CL_CYAN}${bzr}${CL_NORM}..."
 
   bzr=$(renderMacros "$spec" "$bzr")
 
@@ -1881,17 +1887,19 @@ packSourcesFromBzr() {
 }
 
 packSourcesFromSvn() {
-  local spec
+  local spec sources source_name source_ext svn_opts svn_log abs_dir_path
 
   spec=$(getAbsPath "$1")
-
-  show "Fetching sources from svn repo ${CL_CYAN}$svn${CL_NORM}..."
-
-  local sources source_name source_ext svn_opts svn_log abs_dir_path
-
   sources=($(getSpecValue "$MACRO_SOURCE" "$spec"))
+
+  if [[ -n $(findSource "${sources[0]}") ]] ; then
+    return
+  fi
+
   source_name=$(getArchName "${sources[0]}")
   source_ext=$(getArchExt "${sources[0]}")
+
+  show "Fetching sources from svn repo ${CL_CYAN}$svn${CL_NORM}..."
 
   svn=$(renderMacros "$spec" "$svn")
 
