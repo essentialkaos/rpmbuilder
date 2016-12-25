@@ -3,7 +3,7 @@
 ###############################################################################
 
 APP="RPMBuilder Node Info Viewer"
-VER="1.0.0"
+VER="1.0.1"
 
 ###############################################################################
 
@@ -19,13 +19,12 @@ main() {
   pkg_ver=$(getNodePackageVersion)
 
   echo ""
-  echo "  CPU:      $cpu_model ($proc_num)"
-  echo "  Memory:   $mem_usage"
-  echo "  Swap:     $swap_usage"
-  echo "  OS:       $os_version"
-  echo "  Kernel:   $kernel"
-  echo "  Package:  $pkg_ver"
-  echo ""
+  echo "  CPU:      ${cpu_model:--} (${proc_num:--})"
+  echo "  Memory:   ${mem_usage:--}"
+  echo "  Swap:     ${swap_usage:--}"
+  echo "  OS:       ${os_version:--}"
+  echo "  Kernel:   ${kernel:--}"
+  echo "  Package:  ${pkg_ver:--}"
 }
 
 getProcNum() {
