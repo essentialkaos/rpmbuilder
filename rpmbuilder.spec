@@ -2,7 +2,7 @@
 
 Summary:         RPM package build helper
 Name:            rpmbuilder
-Version:         1.4.0
+Version:         1.5.0
 Release:         0%{?dist}
 License:         EKOL
 Group:           Development/Tools
@@ -51,6 +51,12 @@ rm -rf %{buildroot}
 ###############################################################################
 
 %changelog
+* Mon Dec 26 2016 Anton Novojilov <andy@essentialkaos.com> - 1.5.0-0
+- Git submodules fetching support
+- Download cache usage for sources from VCS's
+- Fetching sources from VCS's if --download argument is used
+- Fixed bug with downloading sources from VCS's when source file already exist
+
 * Wed Dec 14 2016 Anton Novojilov <andy@essentialkaos.com> - 1.4.0-0
 - Added nodeinfo usage support
 - Added gopack support
