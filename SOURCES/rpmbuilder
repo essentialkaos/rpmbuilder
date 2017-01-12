@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 
 APP="RPMBuilder"
-VER="1.5.0"
+VER="1.5.1"
 
 ####################################################################
 
@@ -198,6 +198,8 @@ main() {
     [[ -n "$dlcache" ]]  && dlcache=$(getAbsPath "$dlcache")
     [[ -n "$download" ]] && dlcache=$(getAbsPath "$download")
 
+    [[ -n "$key" && -r "$HOME/.ssh/$key" ]] && key="$HOME/.ssh/$key"
+
     makeTemp
 
     trap termExit SIGINT
@@ -356,9 +358,11 @@ removeParalellLock() {
 }
 
 checkArgs() {
-  if [[ -n "$key" && ! -r $key ]] ; then
-    show "Can't start build process - key file is not readable." $RED
-    doExit $ERROR_ARGS
+  if [[ -n "$key" ]] ; then
+    if [[ ! -r "$key" && ! -r "$HOME/.ssh/$key" ]] ; then
+      show "Can't start build process - key file is not readable." $RED
+      doExit $ERROR_ARGS
+    fi
   fi
 
   if [[ -n "$parallel" && -z "$remote" ]] ; then
