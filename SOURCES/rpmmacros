@@ -1,5 +1,0 @@
-%_topdir %(echo $HOME)/rpmbuild
-%_smp_mflags -j3
-%__arch_install_post   /usr/lib/rpm/check-rpaths   /usr/lib/rpm/check-buildroot
-%_source_payload w7.xzdio
-%_binary_payload w7.xzdio
