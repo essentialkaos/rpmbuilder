@@ -51,16 +51,18 @@
 Summary:         Configuration package for rpmbuilder node
 Name:            rpmbuilder-node
 Version:         1.2.1
-Release:         0%{?dist}
+Release:         1%{?dist}
 License:         EKOL
 Group:           Development/Tools
 URL:             https://github.com/essentialkaos/rpmbuilder
 
-Source0:         rpmmacros
-Source1:         %{service_name}
-Source2:         %{service_name}.init
-Source3:         %{user_name}.sudoers
-Source4:         nodeinfo
+Source0:         %{service_name}
+Source1:         %{service_name}.init
+Source2:         %{user_name}.sudoers
+Source3:         nodeinfo
+
+Source10:        rpmmacros_centos6
+Source11:        rpmmacros_centos7
 
 BuildArch:       noarch
 
@@ -74,7 +76,8 @@ Provides:        %{name} = %{version}-%{release}
 ###############################################################################
 
 %description
-Package creates user for remote package building with rpmbuilder.
+Package configure remote node for building rpm packages with rpmbuilder 
+utility.
 
 ###############################################################################
 
@@ -94,11 +97,16 @@ install -dm 755 %{buildroot}%{_sysconfdir}/sudoers.d
 install -dm 755 %{buildroot}%{home_dir}
 install -dm 700 %{buildroot}%{home_dir}/.ssh
 
-install -pm 755 %{SOURCE0} %{buildroot}%{home_dir}/.rpmbld
-install -pm 755 %{SOURCE1} %{buildroot}%{home_dir}/
-install -pm 755 %{SOURCE2} %{buildroot}%{_initddir}/%{service_name}
-install -pm 644 %{SOURCE3} %{buildroot}%{_sysconfdir}/sudoers.d/%{user_name}
-install -pm 755 %{SOURCE4} %{buildroot}%{home_dir}/
+install -pm 755 %{SOURCE0} %{buildroot}%{home_dir}/
+install -pm 755 %{SOURCE1} %{buildroot}%{_initddir}/%{service_name}
+install -pm 644 %{SOURCE2} %{buildroot}%{_sysconfdir}/sudoers.d/%{user_name}
+install -pm 755 %{SOURCE3} %{buildroot}%{home_dir}/
+
+%if 0%{?rhel} >= 7
+install -pm 755 %{SOURCE11} %{buildroot}%{home_dir}/.rpmmacros_rpmbuilder
+%else
+install -pm 755 %{SOURCE10} %{buildroot}%{home_dir}/.rpmmacros_rpmbuilder
+%endif
 
 %clean
 rm -rf %{buildroot}
@@ -106,8 +114,6 @@ rm -rf %{buildroot}
 ###############################################################################
 
 %post
-%{__chown} %{user_name}:%{user_name} %{home_dir} -R
-
 if [[ $1 -eq 1 ]] ; then
   touch %{home_dir}/.ssh/authorized_keys
   chmod 0600 %{home_dir}/.ssh/authorized_keys
@@ -115,15 +121,21 @@ if [[ $1 -eq 1 ]] ; then
   sudo -u %{user_name} rpmdev-setuptree
   sudo -u %{user_name} restorecon -R -v %{home_dir}/.ssh &> /dev/null
 
-  cat %{home_dir}/.rpmbld > %{home_dir}/.rpmmacros
+  cat %{home_dir}/.rpmmacros_rpmbuilder > %{home_dir}/.rpmmacros
 
   %{__service} %{service_name} start &> /dev/null || :
   %{__chkconfig} --add %{service_name}
 fi
 
-%postun
+%{__chown} %{user_name}:%{user_name} %{home_dir} -R
+
+%preun
 if [[ $1 -eq 0 ]] ; then
   %{__service} %{service_name} stop &> /dev/null || :
+fi
+
+%postun
+if [[ $1 -eq 0 ]] ; then
   %{__chkconfig} --del %{service_name}
   %{__userdel} -r %{user_name}
   rm -rf %{home_dir}
@@ -140,6 +152,10 @@ fi
 ###############################################################################
 
 %changelog
+* Thu Jan 12 2017 Anton Novojilov <andy@essentialkaos.com> - 1.2.1-1
+- Added improved rpmmacroses for centos6 and centos7
+- Improved spec
+
 * Mon Dec 26 2016 Anton Novojilov <andy@essentialkaos.com> - 1.2.1-0
 - Minor UI fixes in nodeinfo utility
 

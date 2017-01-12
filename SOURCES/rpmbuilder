@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 
 APP="RPMBuilder"
-VER="1.5.0"
+VER="1.5.1"
 
 ####################################################################
 
@@ -198,6 +198,8 @@ main() {
     [[ -n "$dlcache" ]]  && dlcache=$(getAbsPath "$dlcache")
     [[ -n "$download" ]] && dlcache=$(getAbsPath "$download")
 
+    [[ -n "$key" && -r "$HOME/.ssh/$key" ]] && key="$HOME/.ssh/$key"
+
     makeTemp
 
     trap termExit SIGINT
@@ -356,9 +358,11 @@ removeParalellLock() {
 }
 
 checkArgs() {
-  if [[ -n "$key" && ! -r $key ]] ; then
-    show "Can't start build process - key file is not readable." $RED
-    doExit $ERROR_ARGS
+  if [[ -n "$key" ]] ; then
+    if [[ ! -r "$key" && ! -r "$HOME/.ssh/$key" ]] ; then
+      show "Can't start build process - key file is not readable." $RED
+      doExit $ERROR_ARGS
+    fi
   fi
 
   if [[ -n "$parallel" && -z "$remote" ]] ; then
@@ -2385,9 +2389,9 @@ scpCommand() {
   ssh_opts=$(getSSHOpts)
 
   if [[ -n "$pass" ]] ; then
-    sshpass -p "$pass" scp $SSH_BASE_OPTS $ssh_opts "$from" "$to"
+    sshpass -p "$pass" scp -q $SSH_BASE_OPTS $ssh_opts "$from" "$to"
   else
-    scp $SSH_BASE_OPTS $ssh_opts "$from" "$to"
+    scp -q $SSH_BASE_OPTS $ssh_opts "$from" "$to"
   fi
 
   return $?
@@ -2471,7 +2475,7 @@ getSSHOpts() {
   local opts
 
   if [[ -n "$key" ]] ; then
-    opts="$opts -i $key"
+    opts="-i $key"
   else
     opts="-o PubkeyAuthentication=no"
   fi
@@ -2900,7 +2904,7 @@ about() {
   show ""
   show "${CL_BL_CYAN}$APP${CL_NORM} ${CL_CYAN}$VER${CL_NORM} - RPM package build helper"
   show ""
-  show "Copyright (C) 2009-2016 ESSENTIAL KAOS" $DARK
+  show "Copyright (C) 2009-$(date +%Y) ESSENTIAL KAOS" $DARK
   show "Essential Kaos Open Source License <https://essentialkaos.com/ekol>" $DARK
   show ""
 }
