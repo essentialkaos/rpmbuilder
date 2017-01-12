@@ -2,7 +2,7 @@
 
 Summary:         RPM package build helper
 Name:            rpmbuilder
-Version:         1.5.0
+Version:         1.5.1
 Release:         0%{?dist}
 License:         EKOL
 Group:           Development/Tools
@@ -51,6 +51,10 @@ rm -rf %{buildroot}
 ###############################################################################
 
 %changelog
+* Thu Jan 12 2017 Anton Novojilov <andy@essentialkaos.com> - 1.5.1-0
+- Simplified key definition support
+- Removed scp output in situtation when key-based auth is used
+
 * Mon Dec 26 2016 Anton Novojilov <andy@essentialkaos.com> - 1.5.0-0
 - Git submodules fetching support
 - Download cache usage for sources from VCS's
