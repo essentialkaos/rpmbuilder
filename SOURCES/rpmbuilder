@@ -2389,9 +2389,9 @@ scpCommand() {
   ssh_opts=$(getSSHOpts)
 
   if [[ -n "$pass" ]] ; then
-    sshpass -p "$pass" scp $SSH_BASE_OPTS $ssh_opts "$from" "$to"
+    sshpass -p "$pass" scp -q $SSH_BASE_OPTS $ssh_opts "$from" "$to"
   else
-    scp $SSH_BASE_OPTS $ssh_opts "$from" "$to"
+    scp -q $SSH_BASE_OPTS $ssh_opts "$from" "$to"
   fi
 
   return $?
@@ -2475,7 +2475,7 @@ getSSHOpts() {
   local opts
 
   if [[ -n "$key" ]] ; then
-    opts="$opts -i $key"
+    opts="-i $key"
   else
     opts="-o PubkeyAuthentication=no"
   fi
