@@ -51,7 +51,7 @@
 Summary:         Configuration package for rpmbuilder node
 Name:            rpmbuilder-node
 Version:         1.2.1
-Release:         1%{?dist}
+Release:         2%{?dist}
 License:         EKOL
 Group:           Development/Tools
 URL:             https://github.com/essentialkaos/rpmbuilder
@@ -114,6 +114,8 @@ rm -rf %{buildroot}
 ###############################################################################
 
 %post
+chown %{user_name}:%{user_name} %{home_dir} -R
+
 if [[ $1 -eq 1 ]] ; then
   touch %{home_dir}/.ssh/authorized_keys
   chmod 0600 %{home_dir}/.ssh/authorized_keys
@@ -125,9 +127,9 @@ if [[ $1 -eq 1 ]] ; then
 
   %{__service} %{service_name} start &> /dev/null || :
   %{__chkconfig} --add %{service_name}
-fi
 
-%{__chown} %{user_name}:%{user_name} %{home_dir} -R
+  chown %{user_name}:%{user_name} %{home_dir} -R
+fi
 
 %preun
 if [[ $1 -eq 0 ]] ; then
@@ -152,7 +154,7 @@ fi
 ###############################################################################
 
 %changelog
-* Thu Jan 12 2017 Anton Novojilov <andy@essentialkaos.com> - 1.2.1-1
+* Thu Jan 12 2017 Anton Novojilov <andy@essentialkaos.com> - 1.2.1-2
 - Added improved rpmmacroses for centos6 and centos7
 - Improved spec
 
