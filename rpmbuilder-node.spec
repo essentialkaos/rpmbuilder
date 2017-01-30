@@ -39,6 +39,7 @@
 %define __groupadd        %{_sbindir}/groupadd
 %define __useradd         %{_sbindir}/useradd
 %define __userdel         %{_sbindir}/userdel
+%define __systemctl       %{_bindir}/systemctl
 
 ###############################################################################
 
@@ -50,8 +51,8 @@
 
 Summary:         Configuration package for rpmbuilder node
 Name:            rpmbuilder-node
-Version:         1.2.1
-Release:         2%{?dist}
+Version:         1.2.2
+Release:         0%{?dist}
 License:         EKOL
 Group:           Development/Tools
 URL:             https://github.com/essentialkaos/rpmbuilder
@@ -83,11 +84,6 @@ utility.
 
 %prep
 %build
-
-%pre
-getent group %{user_name} >/dev/null || groupadd -r %{user_name}
-getent passwd %{user_name} >/dev/null || useradd -r -g %{user_name} -d %{_home}/%{user_name} -s /bin/bash %{user_name}
-
 %install
 rm -rf %{buildroot}
 
@@ -113,6 +109,10 @@ rm -rf %{buildroot}
 
 ###############################################################################
 
+%pre
+getent group %{user_name} >/dev/null || groupadd -r %{user_name}
+getent passwd %{user_name} >/dev/null || useradd -r -g %{user_name} -d %{_home}/%{user_name} -s /bin/bash %{user_name}
+
 %post
 chown %{user_name}:%{user_name} %{home_dir} -R
 
@@ -129,6 +129,15 @@ if [[ $1 -eq 1 ]] ; then
   %{__chkconfig} --add %{service_name}
 
   chown %{user_name}:%{user_name} %{home_dir} -R
+
+  # Enable password authentication for build node
+  sed -i 's/PasswordAuthentication no/PasswordAuthentication yes/' %{_sysconfdir}/ssh/sshd_config
+
+  %if 0%{?rhel} >= 7
+  %{__systemctl} restart sshd.service &>/dev/null || :
+  %else
+  %{__service} sshd restart &>/dev/null || :
+  %endif
 fi
 
 %preun
@@ -154,6 +163,9 @@ fi
 ###############################################################################
 
 %changelog
+* Mon Jan 30 2017 Anton Novojilov <andy@essentialkaos.com> - 1.2.2-0
+- Enable password authentication by default
+
 * Thu Jan 12 2017 Anton Novojilov <andy@essentialkaos.com> - 1.2.1-2
 - Added improved rpmmacroses for centos6 and centos7
 - Improved spec
