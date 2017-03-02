@@ -166,7 +166,7 @@ fi
 
 %changelog
 * Fri Mar 03 2017 Anton Novojilov <andy@essentialkaos.com> - 1.3.0-0
-- Fixed bug with deleting directories inside rpmbuilder directory
+- Fixed bug with deleting directories inside rpmbuild directory
 - Added initenv utility
 - buildmon refactoring
 
