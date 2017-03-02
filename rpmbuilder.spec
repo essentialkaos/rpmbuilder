@@ -54,6 +54,7 @@ rm -rf %{buildroot}
 * Fri Mar 03 2017 Anton Novojilov <andy@essentialkaos.com> - 1.6.0-0
 - Added compatibility with latest version of rpmbuilder-node package
 - Failed validation now fail entire build
+- Minor improvements
 
 * Mon Jan 23 2017 Anton Novojilov <andy@essentialkaos.com> - 1.5.2-0
 - Improved checking remote sources availability

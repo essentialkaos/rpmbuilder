@@ -120,7 +120,7 @@ KEEP_ARGS=true
 SUPPORTED_ARCH_TYPES="tbz2 tar.bz2 tgz tar.gz tbz tar.bz txz tar.xz"
 
 TMUX_OK_SLEEP=5
-TMUX_ERROR_SLEEP=300
+TMUX_ERROR_SLEEP=1800
 
 LINT_WAIT=3
 
