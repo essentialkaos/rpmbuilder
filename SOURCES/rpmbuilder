@@ -81,6 +81,7 @@ ERROR_BUILD=5
 ERROR_LINT=6
 ERROR_REMOTE=7
 ERROR_DEPS=8
+ERROR_VALIDATE=9
 
 MACRO="name:Name version:Version release:Release url:URL vendor:Vendor epoch:Epoch"
 
@@ -961,6 +962,8 @@ remoteBuildProcess() {
 
     showSeparator "PACKAGE VALIDATION"
 
+    has_errors=""
+
     for package in $packages ; do
       package=$(echo "$package" | tr -dc '[:print:]')
       package_name=$(basename "$package")
@@ -968,8 +971,14 @@ remoteBuildProcess() {
 
       [[ -n "$dest_dir" ]] && package_file="$dest_dir/$package_name"
 
-      validatePackage "$package_file"
+      if ! validatePackage "$package_file" ; then
+        has_errors=true
+      fi
     done
+
+    if [[ -z "$has_errors" ]] ; then
+      doExit $ERROR_VALIDATE
+    fi
 
     if [[ -n "$post" ]] ; then
       show "Executing post-build script..."
@@ -994,7 +1003,7 @@ remoteBuildProcess() {
       fi
     fi
   else
-    show "Error! Package was not be builded." $RED
+    show "Error! Can't build package." $RED
 
     if [[ -z "$verbose" ]] ; then
       show "Last $LOG_QUOTE_SIZE lines from build log:" $RED
@@ -1198,7 +1207,7 @@ localBuildProcess() {
       stopStatusObserver
       show ""
 
-      show "Error! Package was not be builded." $RED
+      show "Error! Can't build package." $RED
 
       if [[ -z "$verbose" ]] ; then
         show "Last $LOG_QUOTE_SIZE lines from build log:" $RED
@@ -1256,14 +1265,22 @@ localBuildProcess() {
 
       showSeparator "PACKAGE VALIDATION"
 
+      has_errors=""
+
       for package in $packages ; do
         package_name=$(basename "$package")
         package_file="$CWD/$package_name"
 
         [[ -n "$dest_dir" ]] && package_file="$dest_dir/$package_name"
 
-        validatePackage "$package_file"
+        if ! validatePackage "$package_file" ; then
+          has_errors=true
+        fi
       done
+
+      if [[ -z "$has_errors" ]] ; then
+        doExit $ERROR_VALIDATE
+      fi
 
       pushd "$CWD" &> /dev/null
 
@@ -2602,7 +2619,10 @@ validatePackage() {
 
   if [[ -z "$has_errors" ]] ; then
     show "OK" $GREEN
+    return 0
   fi
+
+  return 1
 }
 
 ###############################################################################
@@ -2631,7 +2651,7 @@ doExit() {
     if [[ -z "$1" || "$1" == "0" ]] ; then
       sleep $TMUX_OK_SLEEP
     else
-      [[ -z "$keep_log" ]] && sleep $TMUX_ERROR_SLEEP
+      [[ -z "$keep_log" || $1 -eq $ERROR_VALIDATE ]] && sleep $TMUX_ERROR_SLEEP
     fi
   fi
 
