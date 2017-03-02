@@ -51,7 +51,7 @@
 
 Summary:         Configuration package for rpmbuilder node
 Name:            rpmbuilder-node
-Version:         1.2.2
+Version:         1.3.0
 Release:         0%{?dist}
 License:         EKOL
 Group:           Development/Tools
@@ -61,6 +61,7 @@ Source0:         %{service_name}
 Source1:         %{service_name}.init
 Source2:         %{user_name}.sudoers
 Source3:         nodeinfo
+Source4:         initenv
 
 Source10:        rpmmacros_centos6
 Source11:        rpmmacros_centos7
@@ -97,6 +98,7 @@ install -pm 755 %{SOURCE0} %{buildroot}%{home_dir}/
 install -pm 755 %{SOURCE1} %{buildroot}%{_initddir}/%{service_name}
 install -pm 644 %{SOURCE2} %{buildroot}%{_sysconfdir}/sudoers.d/%{user_name}
 install -pm 755 %{SOURCE3} %{buildroot}%{home_dir}/
+install -pm 755 %{SOURCE4} %{buildroot}%{home_dir}/
 
 %if 0%{?rhel} >= 7
 install -pm 755 %{SOURCE11} %{buildroot}%{home_dir}/.rpmmacros_rpmbuilder
@@ -163,6 +165,11 @@ fi
 ###############################################################################
 
 %changelog
+* Fri Mar 03 2017 Anton Novojilov <andy@essentialkaos.com> - 1.3.0-0
+- Fixed bug with deleting directories inside rpmbuilder directory
+- Added initenv utility
+- buildmon refactoring
+
 * Mon Jan 30 2017 Anton Novojilov <andy@essentialkaos.com> - 1.2.2-0
 - Enable password authentication by default
 

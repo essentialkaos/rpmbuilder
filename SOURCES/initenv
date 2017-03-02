@@ -1,0 +1,29 @@
+#!/usr/bin/env bash
+
+###############################################################################
+
+APP="Build Env Init"
+VER="1.0.0"
+
+###############################################################################
+
+BUILDER_HOME="/home/builder"
+
+###############################################################################
+
+main() {
+  initEnv &> /dev/null
+}
+
+initEnv() {
+  mkdir -p "$BUILDER_HOME/rpmbuild/BUILD"
+  mkdir -p "$BUILDER_HOME/rpmbuild/BUILDROOT"
+  mkdir -p "$BUILDER_HOME/rpmbuild/RPMS"
+  mkdir -p "$BUILDER_HOME/rpmbuild/SOURCES"
+  mkdir -p "$BUILDER_HOME/rpmbuild/SPECS"
+  mkdir -p "$BUILDER_HOME/rpmbuild/SRPMS"
+}
+
+###############################################################################
+
+main "$@"

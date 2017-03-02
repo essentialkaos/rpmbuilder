@@ -2,7 +2,7 @@
 
 Summary:         RPM package build helper
 Name:            rpmbuilder
-Version:         1.5.2
+Version:         1.6.0
 Release:         0%{?dist}
 License:         EKOL
 Group:           Development/Tools
@@ -51,6 +51,9 @@ rm -rf %{buildroot}
 ###############################################################################
 
 %changelog
+* Fri Mar 03 2017 Anton Novojilov <andy@essentialkaos.com> - 1.6.0-0
+- Added compatibility with latest version of rpmbuilder-node package
+
 * Mon Jan 23 2017 Anton Novojilov <andy@essentialkaos.com> - 1.5.2-0
 - Improved checking remote sources availability
 

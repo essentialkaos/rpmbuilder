@@ -3,7 +3,7 @@
 ###############################################################################
 
 APP="RPMBuilder Node Monitor"
-VER="1.1.0"
+VER="1.1.1"
 
 ###############################################################################
 
@@ -12,7 +12,7 @@ BUILDER_DIR="/home/builder"
 EXEC="$BUILDER_DIR/buildmon"
 BUILD_LOCK="$BUILDER_DIR/.buildlock"
 CLEAN_DELAY=600
-KEEP_DAYS=7 # 1 Week
+MAX_KEEP_DAYS=7 # 1 Week
 DIR_LIST="BUILD BUILDROOT RPMS SOURCES SPECS SRPMS"
 
 CWD=$(pwd)
@@ -21,15 +21,15 @@ CWD=$(pwd)
 
 main() {
   trap doExit SIGINT SIGTERM
+
   check
+
   doExit
 }
 
 check() {
   local has_lock
-  local dl
-
-  dl=0
+  local counter=0
 
   while : ; do
     sleep 1
@@ -38,23 +38,25 @@ check() {
       touch $BUILD_LOCK
       has_lock=true
     else
-      if [[ $has_lock ]] ; then
+      if [[ -n $has_lock ]] ; then
         rm -f $BUILD_LOCK
         has_lock=""
       fi
     fi
 
-    ((dl++))
+    ((counter++))
 
-    if [[ $dl -eq $CLEAN_DELAY ]] ; then
-      dl=0 ; clean
+    if [[ $counter -eq $CLEAN_DELAY ]] ; then
+      counter=0
+      clean
     fi
   done
 }
 
 clean() {
-  local rbdir="$BUILDER_DIR/rpmbuild"
-  find $rbdir -maxdepth 1 -type d -mtime +$KEEP_DAYS -delete
+  for dir in $DIR_LIST ; do
+    find "$BUILDER_DIR/rpmbuild/$dir" -maxdepth 1 -mtime +$MAX_KEEP_DAYS -delete
+  done
 }
 
 doExit() {

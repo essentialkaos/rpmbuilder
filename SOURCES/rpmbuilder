@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 
 APP="RPMBuilder"
-VER="1.5.2"
+VER="1.5.3"
 
 ####################################################################
 
@@ -127,6 +127,8 @@ LONG_DOWNLOADING=60
 LONG_BUILD=300
 
 BUILD_LOCK=".buildlock"
+
+BUILDER_HOME="/home/builder"
 
 BUILD_LOCK_LOCAL="/tmp/rpmbuilder-local-lock"
 BUILD_LOCK_PARALLEL="/tmp/rpmbuilder-parallel-lock"
@@ -831,14 +833,11 @@ remoteCheckEnv() {
     doExit $ERROR_REMOTE
   fi
 
-  sshCommand "$user@$host" "ls rpmbuild 2>&1" &> /dev/null
+  # Print info about node
+  sshCommand "$user@$host" "$BUILDER_HOME/nodeinfo 2>/dev/null"
 
-  if [[ $? -ne 0 ]] ; then
-    show "rpmbuild directory structure not created on remote server." $RED
-    doExit $ERROR_REMOTE
-  fi
-
-  sshCommand "$user@$host" "/home/builder/nodeinfo 2>/dev/null"
+  # Initialize build environment
+  sshCommand "$user@$host" "$BUILDER_HOME/initenv" &> /dev/null
 }
 
 remoteDepsInstall() {
