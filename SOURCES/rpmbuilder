@@ -220,8 +220,6 @@ main() {
     [[ -n "$bitbucket" ]] && processBitbucketSource
     [[ -n "$launchpad" ]] && processLaunchpadSource
 
-    [[ -n "$gopack" ]] && processGolangSource "$spec"
-
     if [[ -n "$download" ]] ; then
       downloadRemoteSources "$spec"
     else
@@ -602,36 +600,6 @@ processLaunchpadSource() {
   fi
 }
 
-processGolangSource() {
-  local spec="$1"
-  local args sources output status
-
-  sources=($(getSpecValue "$MACRO_SOURCE" "$spec"))
-
-  if [[ -n "$source_dir" ]] ; then
-    output="${source_dir}/${sources[0]}"
-  else
-    output="${sources[0]}"
-  fi
-
-  [[ -e $output ]] && return
-
-  showSeparator "GOPACK"
-
-  args="-o $output"
-
-  [[ -n "$revision" ]] && args="$args -r $revision"
-  [[ -n "$branch" ]]   && args="$args -b $branch"
-  [[ -n "$tag" ]]      && args="$args -t $tag"
-  [[ -n "$verbose" ]]  && args="$args -V"
-
-  args="$args $gopack"
-
-  gopack $args
-
-  [[ $? -ne 0 ]] && doExit 1
-}
-
 parseSourceURL() {
   local spec="$1"
 
@@ -667,17 +635,18 @@ downloadRemoteSources() {
     dlcache="."
   fi
 
+  showSeparator "DOWNLOADING"
+
   if [[ ! -d "$dlcache" ]] ; then
     show "Can't download sources - download destination directory is not exist." $RED
     doExit $ERROR_ARGS
   fi
 
-  showSeparator "DOWNLOADING"
-
-  [[ -n "$git" ]] && packSourcesFromGit "$spec"
-  [[ -n "$svn" ]] && packSourcesFromSvn "$spec"
-  [[ -n "$bzr" ]] && packSourcesFromBzr "$spec"
-  [[ -n "$hg" ]]  && packSourcesFromHg  "$spec"
+  [[ -n "$git" ]]    && packSourcesFromGit "$spec"
+  [[ -n "$svn" ]]    && packSourcesFromSvn "$spec"
+  [[ -n "$bzr" ]]    && packSourcesFromBzr "$spec"
+  [[ -n "$hg" ]]     && packSourcesFromHg  "$spec"
+  [[ -n "$gopack" ]] && packGolangSources  "$spec"
 
   local source_file sources_list source_file_name patches_list files
 
@@ -695,7 +664,7 @@ downloadRemoteSources() {
         continue
       fi
 
-      show "Downloading source file ${CL_CYAN}$source_file${CL_NORM}..."
+      show "Downloading source file ${CL_CYAN}${source_file}${CL_NORM}..."
 
       downloadSource "$source_file" "$download"
 
@@ -725,10 +694,11 @@ remoteBuild() {
     $($pre)
   fi
 
-  [[ -n "$git" ]] && packSourcesFromGit "$spec"
-  [[ -n "$svn" ]] && packSourcesFromSvn "$spec"
-  [[ -n "$bzr" ]] && packSourcesFromBzr "$spec"
-  [[ -n "$hg" ]]  && packSourcesFromHg  "$spec"
+  [[ -n "$git" ]]    && packSourcesFromGit "$spec"
+  [[ -n "$svn" ]]    && packSourcesFromSvn "$spec"
+  [[ -n "$bzr" ]]    && packSourcesFromBzr "$spec"
+  [[ -n "$hg" ]]     && packSourcesFromHg  "$spec"
+  [[ -n "$gopack" ]] && packGolangSources  "$spec"
 
   [[ -n "$repo_spec" ]] && spec="$repo_spec"
 
@@ -1069,10 +1039,11 @@ localBuild() {
     $($pre)
   fi
 
-  [[ -n "$git" ]] && packSourcesFromGit "$spec"
-  [[ -n "$svn" ]] && packSourcesFromSvn "$spec"
-  [[ -n "$bzr" ]] && packSourcesFromBzr "$spec"
-  [[ -n "$hg" ]] &&  packSourcesFromHg  "$spec"
+  [[ -n "$git" ]]    && packSourcesFromGit "$spec"
+  [[ -n "$svn" ]]    && packSourcesFromSvn "$spec"
+  [[ -n "$bzr" ]]    && packSourcesFromBzr "$spec"
+  [[ -n "$hg" ]]     && packSourcesFromHg  "$spec"
+  [[ -n "$gopack" ]] && packGolangSources  "$spec"
 
   [[ -n "$repo_spec" ]] && spec="$repo_spec"
 
@@ -2007,6 +1978,37 @@ packSourcesFromSvn() {
   show "Source files from ${CL_BOLD}svn${CL_NORM} repo packed as ${CL_CYAN}${source_name}.${source_ext}${CL_NORM}"
 }
 
+packGolangSources() {
+  local spec="$1"
+  local args sources output status
+
+  sources=($(getSpecValue "$MACRO_SOURCE" "$spec"))
+
+  if [[ -n "$source_dir" ]] ; then
+    output="${source_dir}/${sources[0]}"
+  else
+    output="${sources[0]}"
+  fi
+
+  if [[ -e $output ]] ; then
+    show "File ${CL_CYAN}${sources[0]}${CL_NORM} already created."
+    return
+  fi
+
+  args="-o $output"
+
+  [[ -n "$revision" ]] && args="$args -r $revision"
+  [[ -n "$branch" ]]   && args="$args -b $branch"
+  [[ -n "$tag" ]]      && args="$args -t $tag"
+  [[ -n "$verbose" ]]  && args="$args -V"
+
+  args="$args $gopack"
+
+  gopack $args
+
+  [[ $? -ne 0 ]] && doExit 1
+}
+
 processSpec() {
   local spec="$1"
 
@@ -2292,7 +2294,7 @@ downloadSource() {
     if [[ -z "$tmuxl" && -z "$dlcache" && $time_diff -gt $LONG_DOWNLOADING ]] ; then
       show ""
       show "HINT: Downloading took more than $LONG_DOWNLOADING seconds. We strongly recommend use download" $BROWN
-      show "cache feature in this case. Use -ds <path> or --dlcache <path>." $BROWN
+      show "cache feature in this case. Use -dc <path> or --dlcache <path>." $BROWN
       show ""
     fi
   fi
