@@ -43,3 +43,4 @@ ratings:
      - SOURCES/rpmbuilder
      - SOURCES/rpmunbuilder
      - SOURCES/buildmon
+     - SOURCES/initenv

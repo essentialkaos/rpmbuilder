@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 
 APP="RPMBuilder"
-VER="1.5.2"
+VER="1.5.3"
 
 ####################################################################
 
@@ -81,6 +81,7 @@ ERROR_BUILD=5
 ERROR_LINT=6
 ERROR_REMOTE=7
 ERROR_DEPS=8
+ERROR_VALIDATE=9
 
 MACRO="name:Name version:Version release:Release url:URL vendor:Vendor epoch:Epoch"
 
@@ -119,7 +120,7 @@ KEEP_ARGS=true
 SUPPORTED_ARCH_TYPES="tbz2 tar.bz2 tgz tar.gz tbz tar.bz txz tar.xz"
 
 TMUX_OK_SLEEP=5
-TMUX_ERROR_SLEEP=300
+TMUX_ERROR_SLEEP=1800
 
 LINT_WAIT=3
 
@@ -128,14 +129,16 @@ LONG_BUILD=300
 
 BUILD_LOCK=".buildlock"
 
+BUILDER_HOME="/home/builder"
+
 BUILD_LOCK_LOCAL="/tmp/rpmbuilder-local-lock"
 BUILD_LOCK_PARALLEL="/tmp/rpmbuilder-parallel-lock"
 LOCK_TIME_MAX_DIFF=10800 # 3 Hours
 
 SSH_BASE_OPTS="-o UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no -o LogLevel=quiet"
 
-CHECK_QUEUE_DELAY=10
 CHECK_LOCAL_QUEUE_DELAY=2
+CHECK_REMOTE_QUEUE_DELAY=15
 
 LOG_QUOTE_SIZE=50
 REPO_LOG_QUOTE_SIZE=25
@@ -216,8 +219,6 @@ main() {
     [[ -n "$github" ]]    && processGithubSource
     [[ -n "$bitbucket" ]] && processBitbucketSource
     [[ -n "$launchpad" ]] && processLaunchpadSource
-
-    [[ -n "$gopack" ]] && processGolangSource "$spec"
 
     if [[ -n "$download" ]] ; then
       downloadRemoteSources "$spec"
@@ -599,36 +600,6 @@ processLaunchpadSource() {
   fi
 }
 
-processGolangSource() {
-  local spec="$1"
-  local args sources output status
-
-  sources=($(getSpecValue "$MACRO_SOURCE" "$spec"))
-
-  if [[ -n "$source_dir" ]] ; then
-    output="${source_dir}/${sources[0]}"
-  else
-    output="${sources[0]}"
-  fi
-
-  [[ -e $output ]] && return
-
-  showSeparator "GOPACK"
-
-  args="-o $output"
-
-  [[ -n "$revision" ]] && args="$args -r $revision"
-  [[ -n "$branch" ]]   && args="$args -b $branch"
-  [[ -n "$tag" ]]      && args="$args -t $tag"
-  [[ -n "$verbose" ]]  && args="$args -V"
-
-  args="$args $gopack"
-
-  gopack $args
-
-  [[ $? -ne 0 ]] && doExit 1
-}
-
 parseSourceURL() {
   local spec="$1"
 
@@ -664,17 +635,18 @@ downloadRemoteSources() {
     dlcache="."
   fi
 
+  showSeparator "DOWNLOADING"
+
   if [[ ! -d "$dlcache" ]] ; then
     show "Can't download sources - download destination directory is not exist." $RED
     doExit $ERROR_ARGS
   fi
 
-  showSeparator "DOWNLOADING"
-
-  [[ -n "$git" ]] && packSourcesFromGit "$spec"
-  [[ -n "$svn" ]] && packSourcesFromSvn "$spec"
-  [[ -n "$bzr" ]] && packSourcesFromBzr "$spec"
-  [[ -n "$hg" ]]  && packSourcesFromHg  "$spec"
+  [[ -n "$git" ]]    && packSourcesFromGit "$spec"
+  [[ -n "$svn" ]]    && packSourcesFromSvn "$spec"
+  [[ -n "$bzr" ]]    && packSourcesFromBzr "$spec"
+  [[ -n "$hg" ]]     && packSourcesFromHg  "$spec"
+  [[ -n "$gopack" ]] && packGolangSources  "$spec"
 
   local source_file sources_list source_file_name patches_list files
 
@@ -692,7 +664,7 @@ downloadRemoteSources() {
         continue
       fi
 
-      show "Downloading source file ${CL_CYAN}$source_file${CL_NORM}..."
+      show "Downloading source file ${CL_CYAN}${source_file}${CL_NORM}..."
 
       downloadSource "$source_file" "$download"
 
@@ -722,10 +694,11 @@ remoteBuild() {
     $($pre)
   fi
 
-  [[ -n "$git" ]] && packSourcesFromGit "$spec"
-  [[ -n "$svn" ]] && packSourcesFromSvn "$spec"
-  [[ -n "$bzr" ]] && packSourcesFromBzr "$spec"
-  [[ -n "$hg" ]]  && packSourcesFromHg  "$spec"
+  [[ -n "$git" ]]    && packSourcesFromGit "$spec"
+  [[ -n "$svn" ]]    && packSourcesFromSvn "$spec"
+  [[ -n "$bzr" ]]    && packSourcesFromBzr "$spec"
+  [[ -n "$hg" ]]     && packSourcesFromHg  "$spec"
+  [[ -n "$gopack" ]] && packGolangSources  "$spec"
 
   [[ -n "$repo_spec" ]] && spec="$repo_spec"
 
@@ -831,14 +804,11 @@ remoteCheckEnv() {
     doExit $ERROR_REMOTE
   fi
 
-  sshCommand "$user@$host" "ls rpmbuild 2>&1" &> /dev/null
+  # Print info about node
+  sshCommand "$user@$host" "$BUILDER_HOME/nodeinfo 2>/dev/null"
 
-  if [[ $? -ne 0 ]] ; then
-    show "rpmbuild directory structure not created on remote server." $RED
-    doExit $ERROR_REMOTE
-  fi
-
-  sshCommand "$user@$host" "/home/builder/nodeinfo 2>/dev/null"
+  # Initialize build environment
+  sshCommand "$user@$host" "$BUILDER_HOME/initenv" &> /dev/null
 }
 
 remoteDepsInstall() {
@@ -962,6 +932,8 @@ remoteBuildProcess() {
 
     showSeparator "PACKAGE VALIDATION"
 
+    has_errors=""
+
     for package in $packages ; do
       package=$(echo "$package" | tr -dc '[:print:]')
       package_name=$(basename "$package")
@@ -969,8 +941,14 @@ remoteBuildProcess() {
 
       [[ -n "$dest_dir" ]] && package_file="$dest_dir/$package_name"
 
-      validatePackage "$package_file"
+      if ! validatePackage "$package_file" ; then
+        has_errors=true
+      fi
     done
+
+    if [[ -z "$has_errors" ]] ; then
+      doExit $ERROR_VALIDATE
+    fi
 
     if [[ -n "$post" ]] ; then
       show "Executing post-build script..."
@@ -995,7 +973,7 @@ remoteBuildProcess() {
       fi
     fi
   else
-    show "Error! Package was not be builded." $RED
+    show "Error! Can't build package." $RED
 
     if [[ -z "$verbose" ]] ; then
       show "Last $LOG_QUOTE_SIZE lines from build log:" $RED
@@ -1029,7 +1007,7 @@ checkRemoteAvailability() {
     showt "\r${CL_GREEN}Executing:${CL_NORM} ${CL_BROWN}waiting in queue${CL_NORM}"
 
     while : ; do
-      sleep $CHECK_QUEUE_DELAY
+      sleep $CHECK_REMOTE_QUEUE_DELAY
 
       showt "\r${CL_GREEN}Executing:${CL_NORM} ${CL_CYAN}checking queue${CL_NORM}"
 
@@ -1061,10 +1039,11 @@ localBuild() {
     $($pre)
   fi
 
-  [[ -n "$git" ]] && packSourcesFromGit "$spec"
-  [[ -n "$svn" ]] && packSourcesFromSvn "$spec"
-  [[ -n "$bzr" ]] && packSourcesFromBzr "$spec"
-  [[ -n "$hg" ]] &&  packSourcesFromHg  "$spec"
+  [[ -n "$git" ]]    && packSourcesFromGit "$spec"
+  [[ -n "$svn" ]]    && packSourcesFromSvn "$spec"
+  [[ -n "$bzr" ]]    && packSourcesFromBzr "$spec"
+  [[ -n "$hg" ]]     && packSourcesFromHg  "$spec"
+  [[ -n "$gopack" ]] && packGolangSources  "$spec"
 
   [[ -n "$repo_spec" ]] && spec="$repo_spec"
 
@@ -1199,7 +1178,7 @@ localBuildProcess() {
       stopStatusObserver
       show ""
 
-      show "Error! Package was not be builded." $RED
+      show "Error! Can't build package." $RED
 
       if [[ -z "$verbose" ]] ; then
         show "Last $LOG_QUOTE_SIZE lines from build log:" $RED
@@ -1257,14 +1236,22 @@ localBuildProcess() {
 
       showSeparator "PACKAGE VALIDATION"
 
+      has_errors=""
+
       for package in $packages ; do
         package_name=$(basename "$package")
         package_file="$CWD/$package_name"
 
         [[ -n "$dest_dir" ]] && package_file="$dest_dir/$package_name"
 
-        validatePackage "$package_file"
+        if ! validatePackage "$package_file" ; then
+          has_errors=true
+        fi
       done
+
+      if [[ -z "$has_errors" ]] ; then
+        doExit $ERROR_VALIDATE
+      fi
 
       pushd "$CWD" &> /dev/null
 
@@ -1991,6 +1978,37 @@ packSourcesFromSvn() {
   show "Source files from ${CL_BOLD}svn${CL_NORM} repo packed as ${CL_CYAN}${source_name}.${source_ext}${CL_NORM}"
 }
 
+packGolangSources() {
+  local spec="$1"
+  local args sources output status
+
+  sources=($(getSpecValue "$MACRO_SOURCE" "$spec"))
+
+  if [[ -n "$source_dir" ]] ; then
+    output="${source_dir}/${sources[0]}"
+  else
+    output="${sources[0]}"
+  fi
+
+  if [[ -e $output ]] ; then
+    show "File ${CL_CYAN}${sources[0]}${CL_NORM} already created."
+    return
+  fi
+
+  args="-o $output"
+
+  [[ -n "$revision" ]] && args="$args -r $revision"
+  [[ -n "$branch" ]]   && args="$args -b $branch"
+  [[ -n "$tag" ]]      && args="$args -t $tag"
+  [[ -n "$verbose" ]]  && args="$args -V"
+
+  args="$args $gopack"
+
+  gopack $args
+
+  [[ $? -ne 0 ]] && doExit 1
+}
+
 processSpec() {
   local spec="$1"
 
@@ -2276,7 +2294,7 @@ downloadSource() {
     if [[ -z "$tmuxl" && -z "$dlcache" && $time_diff -gt $LONG_DOWNLOADING ]] ; then
       show ""
       show "HINT: Downloading took more than $LONG_DOWNLOADING seconds. We strongly recommend use download" $BROWN
-      show "cache feature in this case. Use -ds <path> or --dlcache <path>." $BROWN
+      show "cache feature in this case. Use -dc <path> or --dlcache <path>." $BROWN
       show ""
     fi
   fi
@@ -2603,7 +2621,10 @@ validatePackage() {
 
   if [[ -z "$has_errors" ]] ; then
     show "OK" $GREEN
+    return 0
   fi
+
+  return 1
 }
 
 ###############################################################################
@@ -2632,7 +2653,7 @@ doExit() {
     if [[ -z "$1" || "$1" == "0" ]] ; then
       sleep $TMUX_OK_SLEEP
     else
-      [[ -z "$keep_log" ]] && sleep $TMUX_ERROR_SLEEP
+      [[ -z "$keep_log" || $1 -eq $ERROR_VALIDATE ]] && sleep $TMUX_ERROR_SLEEP
     fi
   fi
 

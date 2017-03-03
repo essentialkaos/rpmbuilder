@@ -3,7 +3,7 @@
 ###############################################################################
 
 APP="RPMBuilder Node Monitor"
-VER="1.1.0"
+VER="1.1.1"
 
 ###############################################################################
 
@@ -11,8 +11,8 @@ BUILDER_USER="builder"
 BUILDER_DIR="/home/builder"
 EXEC="$BUILDER_DIR/buildmon"
 BUILD_LOCK="$BUILDER_DIR/.buildlock"
-CLEAN_DELAY=600
-KEEP_DAYS=7 # 1 Week
+CLEAN_PERIOD=600 # 10 Min
+MAX_KEEP_DAYS=7 # 1 Week
 DIR_LIST="BUILD BUILDROOT RPMS SOURCES SPECS SRPMS"
 
 CWD=$(pwd)
@@ -21,40 +21,51 @@ CWD=$(pwd)
 
 main() {
   trap doExit SIGINT SIGTERM
+
   check
+
   doExit
 }
 
 check() {
-  local has_lock
-  local dl
-
-  dl=0
+  local counter=0
 
   while : ; do
-    sleep 1
+    sleep 3
 
-    if [[ $(pgrep -U $BUILDER_USER rpmbuild) ]] ; then
-      touch $BUILD_LOCK
-      has_lock=true
+    if isBuildInProgress ; then
+      touch "$BUILD_LOCK"
     else
-      if [[ $has_lock ]] ; then
-        rm -f $BUILD_LOCK
-        has_lock=""
+      if [[ -n "$has_lock" ]] ; then
+        rm -f "$BUILD_LOCK"
       fi
     fi
 
-    ((dl++))
+    ((counter++))
 
-    if [[ $dl -eq $CLEAN_DELAY ]] ; then
-      dl=0 ; clean
+    if [[ $counter -gt $CLEAN_PERIOD ]] ; then
+      counter=0
+      clean
     fi
   done
 }
 
+isBuildInProgress() {
+  if [[ $(pgrep -U "$BUILDER_USER" "rpmbuild") ]] ; then
+    return 0
+  fi
+
+  if [[ $(pgrep -U "$BUILDER_USER" "yum-builddep") ]] ; then
+    return 0
+  fi
+
+  return 1
+}
+
 clean() {
-  local rbdir="$BUILDER_DIR/rpmbuild"
-  find $rbdir -maxdepth 1 -type d -mtime +$KEEP_DAYS -delete
+  for dir in $DIR_LIST ; do
+    find "$BUILDER_DIR/rpmbuild/$dir" -maxdepth 1 -mtime +$MAX_KEEP_DAYS -delete
+  done
 }
 
 doExit() {
