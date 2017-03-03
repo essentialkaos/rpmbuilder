@@ -137,8 +137,8 @@ LOCK_TIME_MAX_DIFF=10800 # 3 Hours
 
 SSH_BASE_OPTS="-o UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no -o LogLevel=quiet"
 
-CHECK_QUEUE_DELAY=10
 CHECK_LOCAL_QUEUE_DELAY=2
+CHECK_REMOTE_QUEUE_DELAY=15
 
 LOG_QUOTE_SIZE=50
 REPO_LOG_QUOTE_SIZE=25
@@ -1037,7 +1037,7 @@ checkRemoteAvailability() {
     showt "\r${CL_GREEN}Executing:${CL_NORM} ${CL_BROWN}waiting in queue${CL_NORM}"
 
     while : ; do
-      sleep $CHECK_QUEUE_DELAY
+      sleep $CHECK_REMOTE_QUEUE_DELAY
 
       showt "\r${CL_GREEN}Executing:${CL_NORM} ${CL_CYAN}checking queue${CL_NORM}"
 

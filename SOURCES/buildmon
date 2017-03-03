@@ -11,7 +11,7 @@ BUILDER_USER="builder"
 BUILDER_DIR="/home/builder"
 EXEC="$BUILDER_DIR/buildmon"
 BUILD_LOCK="$BUILDER_DIR/.buildlock"
-CLEAN_DELAY=600
+CLEAN_PERIOD=600 # 10 Min
 MAX_KEEP_DAYS=7 # 1 Week
 DIR_LIST="BUILD BUILDROOT RPMS SOURCES SPECS SRPMS"
 
@@ -28,29 +28,38 @@ main() {
 }
 
 check() {
-  local has_lock
   local counter=0
 
   while : ; do
-    sleep 1
+    sleep 3
 
-    if [[ $(pgrep -U $BUILDER_USER rpmbuild) ]] ; then
-      touch $BUILD_LOCK
-      has_lock=true
+    if isBuildInProgress ; then
+      touch "$BUILD_LOCK"
     else
-      if [[ -n $has_lock ]] ; then
-        rm -f $BUILD_LOCK
-        has_lock=""
+      if [[ -n "$has_lock" ]] ; then
+        rm -f "$BUILD_LOCK"
       fi
     fi
 
     ((counter++))
 
-    if [[ $counter -eq $CLEAN_DELAY ]] ; then
+    if [[ $counter -gt $CLEAN_PERIOD ]] ; then
       counter=0
       clean
     fi
   done
+}
+
+isBuildInProgress() {
+  if [[ $(pgrep -U "$BUILDER_USER" "rpmbuild") ]] ; then
+    return 0
+  fi
+
+  if [[ $(pgrep -U "$BUILDER_USER" "yum-builddep") ]] ; then
+    return 0
+  fi
+
+  return 1
 }
 
 clean() {
