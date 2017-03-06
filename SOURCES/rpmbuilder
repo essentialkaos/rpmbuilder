@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 
 APP="RPMBuilder"
-VER="1.6.0"
+VER="1.6.1"
 
 ####################################################################
 
@@ -946,7 +946,7 @@ remoteBuildProcess() {
       fi
     done
 
-    if [[ -z "$has_errors" ]] ; then
+    if [[ -n "$has_errors" ]] ; then
       doExit $ERROR_VALIDATE
     fi
 
@@ -1249,7 +1249,7 @@ localBuildProcess() {
         fi
       done
 
-      if [[ -z "$has_errors" ]] ; then
+      if [[ -n "$has_errors" ]] ; then
         doExit $ERROR_VALIDATE
       fi
 

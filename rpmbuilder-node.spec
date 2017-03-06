@@ -51,7 +51,7 @@
 
 Summary:         Configuration package for rpmbuilder node
 Name:            rpmbuilder-node
-Version:         1.3.0
+Version:         1.3.1
 Release:         0%{?dist}
 License:         EKOL
 Group:           Development/Tools
@@ -165,6 +165,9 @@ fi
 ###############################################################################
 
 %changelog
+* Mon Mar 06 2017 Anton Novojilov <andy@essentialkaos.com> - 1.3.1-0
+- Fixed bug with removing lock file
+
 * Fri Mar 03 2017 Anton Novojilov <andy@essentialkaos.com> - 1.3.0-0
 - Fixed bug with deleting directories inside rpmbuild directory
 - Added initenv utility

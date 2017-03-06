@@ -2,7 +2,7 @@
 
 Summary:         RPM package build helper
 Name:            rpmbuilder
-Version:         1.6.0
+Version:         1.6.1
 Release:         0%{?dist}
 License:         EKOL
 Group:           Development/Tools
@@ -51,6 +51,9 @@ rm -rf %{buildroot}
 ###############################################################################
 
 %changelog
+* Mon Mar 06 2017 Anton Novojilov <andy@essentialkaos.com> - 1.6.1-0
+- Fixed bug with handling errors during package validation
+
 * Fri Mar 03 2017 Anton Novojilov <andy@essentialkaos.com> - 1.6.0-0
 - Added compatibility with latest version of rpmbuilder-node package
 - Failed validation now fail entire build
