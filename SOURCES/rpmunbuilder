@@ -3,7 +3,7 @@
 ########################################################################################
 
 APP="RPMUnBuilder"
-VER="1.1.1"
+VER="1.1.2"
 
 ########################################################################################
 
@@ -72,7 +72,7 @@ main() {
   fi
 
   if [[ ! $(checkDeps "rpm" "rpm2cpio" "cpio") ]] ; then
-    show "For usage this utility install this packages first: rpm rpm2cpio cpio" $BROWN
+    show "For using this utility install this packages first: rpm rpm2cpio cpio" $BROWN
     exit 2
   fi
 
@@ -80,7 +80,7 @@ main() {
   local path="$2"
 
   if [[ ! $(isRPMPackage "$pkg") ]] ; then
-    show "Error! [$pkg] is not a rpm package!" $RED
+    show "Error! [$pkg] is not an rpm package!" $RED
     exit 1
   fi
 

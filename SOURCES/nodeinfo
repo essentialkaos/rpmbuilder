@@ -3,7 +3,7 @@
 ###############################################################################
 
 APP="RPMBuilder Node Info Viewer"
-VER="1.0.1"
+VER="1.0.2"
 
 ###############################################################################
 
@@ -19,7 +19,7 @@ main() {
   pkg_ver=$(getNodePackageVersion)
 
   echo ""
-  echo "  CPU:      ${cpu_model:--} (${proc_num:--})"
+  echo "  CPU:      ${proc_num:-1} × ${cpu_model:--}"
   echo "  Memory:   ${mem_usage:--}"
   echo "  Swap:     ${swap_usage:--}"
   echo "  OS:       ${os_version:--}"
@@ -28,16 +28,7 @@ main() {
 }
 
 getProcNum() {
-  local count
-
-  count=$(grep -c "processor" /proc/cpuinfo)
-
-  if [[ $count -eq 1 ]] ; then
-    echo "1 core"
-    return
-  fi
-
-  echo "$count cores"
+  grep -c "processor" /proc/cpuinfo
 }
 
 getCPUModel() {

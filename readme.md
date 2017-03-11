@@ -61,19 +61,19 @@ Spec file:
 
 Source packaging:
 
-  --pack, -p files           Pack specified files to tgz archive with default source name (mergeable)
+  --pack, -p files           Pack specified files to archive with default source name (mergeable)
   --relative-pack, -R        Use relative path in source archive instead of absolute
-  --source-dir, -sd path     Path to directory which contains source files specified in spec file
-  --source-list, -sl file    Path to file which contains list of source files specified in spec file,
-                             and will be packed to tgz archive with default source name
-  --dlcache, -dc path        Path to directory for downloads caching
-  --download, -dl path       Download all remote sources to specified directory
+  --source-dir, -sd path     Path to a directory which contains source files specified in spec file
+  --source-list, -sl file    Path to file which contains a list of source files specified in spec file,
+                             and will be packed to archive with default source name
+  --dlcache, -dc path        Path to a directory for downloads caching
+  --download, -dl path       Download all remote sources to a specified directory
 
   --git url                   Fetch sources from Git repository (macro supported)
   --svn url                   Fetch sources from SVN repository (macro supported)
   --hg url                    Fetch sources from Mercurial repository (macro supported)
   --bzr url                   Fetch sources from Bazar repository (macro supported)
-  --path, -rp path            Path to directory with sources in repo
+  --path, -rp path            Path to a directory with sources in repository
   --branch, -rb name          Use specified repository branch (macro supported)
   --revision, -rr name        Use specified revision
   --tag, -rt name             Use specified tag (macro supported)
@@ -115,12 +115,12 @@ Remote build:
 
   --parallel, -P                 Parallel build on all build servers in same time
   --remote, -r                   Build rpm package on remote server
-  --remote, -r user:pass@host    Build rpm package on the remote server with specified host, user and pass
+  --remote, -r user:pass@host    Build rpm package on the remote server with specified host, username and password
   --remote, -r file              Build rpm package on the remote servers listed in specified file
-  --host, -hh host               Remote host ip or domain name
+  --host, -hh host               Remote host IP or domain name
   --user, -uu user               Remote host user
   --pass, -pp password           Password for specified user
-  --key, -kk file                Path to private key for specified user
+  --key, -kk file                Path to the private key for specified user
 
   Examples:
 
@@ -135,7 +135,7 @@ Build options:
   --no-deps, -nd                       Don't verify build dependencies
   --no-binary, -nr                     Don't build binary packages
   --no-source, -ns                     Don't build source package
-  --arch, -a arch                      Override target arch for build
+  --arch, -a arch                      Override target arch for a build
   --qa-rpaths="<value>,<value>,..."    Ignoring rpaths check
 
 Arguments passing:
@@ -162,12 +162,13 @@ Spec validation:
 Other:
 
   --sign, -s                     Sign package after build
-  --dest, --dest-dir, -d path    Save builded packages to specified directory
-  --keep-log, -kl                Save build log after unsuccessful build
-  --bump, -b                     Bump release in spec file after successful package build
+  --dest, --dest-dir, -d path    Save built packages to a specified directory
+  --keep-log, -kl                Save build log after an unsuccessful build
+  --bump, -b                     Bump release in spec file after a successful build
   --bump-comment, -bc comment    Comment which will be added while release bump
-  --tmp path                     Path to temporary directory
+  --tmp path                     Path to a temporary directory
   --verbose, -V                  Verbose output
+  --no-color, -C                 Disable colors in output
   --help, --usage, -h            Show this help message
   --ver, --version, -v           Show information about version
 

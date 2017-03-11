@@ -51,7 +51,7 @@
 
 Summary:         Configuration package for rpmbuilder node
 Name:            rpmbuilder-node
-Version:         1.3.1
+Version:         1.3.2
 Release:         0%{?dist}
 License:         EKOL
 Group:           Development/Tools
@@ -165,6 +165,9 @@ fi
 ###############################################################################
 
 %changelog
+* Sat Mar 11 2017 Anton Novojilov <andy@essentialkaos.com> - 1.3.2-0
+- Improved nodeinfo output
+
 * Mon Mar 06 2017 Anton Novojilov <andy@essentialkaos.com> - 1.3.1-0
 - Fixed bug with removing lock file
 
