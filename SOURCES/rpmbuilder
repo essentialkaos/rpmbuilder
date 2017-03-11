@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 
 APP="RPMBuilder"
-VER="1.6.1"
+VER="1.6.2"
 
 ####################################################################
 
@@ -10,7 +10,7 @@ BOLD=1
 UNLN=4
 RED=31
 GREEN=32
-BROWN=33
+YELLOW=33
 BLUE=34
 MAG=35
 CYAN=36
@@ -22,7 +22,7 @@ CL_BOLD="\e[${BOLD}m"
 CL_UNLN="\e[${UNLN}m"
 CL_RED="\e[${RED}m"
 CL_GREEN="\e[${GREEN}m"
-CL_BROWN="\e[${BROWN}m"
+CL_YELLOW="\e[${YELLOW}m"
 CL_BLUE="\e[${BLUE}m"
 CL_MAG="\e[${MAG}m"
 CL_CYAN="\e[${CYAN}m"
@@ -30,21 +30,21 @@ CL_GREY="\e[${GREY}m"
 CL_DARK="\e[${DARK}m"
 CL_BL_RED="\e[${RED};1m"
 CL_BL_GREEN="\e[${GREEN};1m"
-CL_BL_BROWN="\e[${BROWN};1m"
+CL_BL_YELLOW="\e[${YELLOW};1m"
 CL_BL_BLUE="\e[${BLUE};1m"
 CL_BL_MAG="\e[${MAG};1m"
 CL_BL_CYAN="\e[${CYAN};1m"
 CL_BL_GREY="\e[${GREY};1m"
 CL_UL_RED="\e[${RED};4m"
 CL_UL_GREEN="\e[${GREEN};4m"
-CL_UL_BROWN="\e[${BROWN};4m"
+CL_UL_YELLOW="\e[${YELLOW};4m"
 CL_UL_BLUE="\e[${BLUE};4m"
 CL_UL_MAG="\e[${MAG};4m"
 CL_UL_CYAN="\e[${CYAN};4m"
 CL_UL_GREY="\e[${GREY};4m"
 CL_BG_RED="\e[${RED};7m"
 CL_BG_GREEN="\e[${GREEN};7m"
-CL_BG_BROWN="\e[${BROWN};7m"
+CL_BG_YELLOW="\e[${YELLOW};7m"
 CL_BG_BLUE="\e[${BLUE};7m"
 CL_BG_MAG="\e[${MAG};7m"
 CL_BG_CYAN="\e[${CYAN};7m"
@@ -96,7 +96,7 @@ SUPPORTED_ARGS="remote !parallel host user pass key source_dir source_list
  pre post dest dest_dir upload git svn hg bzr branch revision tag svn_user 
  svn_pass path !bump bump_comment tmp dlcache !depinstall !dep_install github 
  bitbucket launchpad with without define output !verbose !help !usage !ver 
- !version !raw_version qa_rpaths !tmuxl no_colors !keep_log notify arch 
+ !version !raw_version qa_rpaths !tmuxl !no_colors !keep_log !notify arch 
  download !relative_pack enable_repo disable_repo gopack"
 
 SHORT_ARGS="r:remote P:!parallel hh:host uu:user pp:pass kk:key sd:source_dir 
@@ -105,7 +105,7 @@ SHORT_ARGS="r:remote P:!parallel hh:host uu:user pp:pass kk:key sd:source_dir
  su:svn_user sp:svn_pass rp:path b:!bump bc:bump_comment dc:dlcache 
  di:!depinstall rb:branch rt:tag rr:revision gh:github bb:bitbucket lp:launchpad 
  w:with W:without s:!sign D:define O:output V:!verbose h:help v:!version 
- C:no_colors kl:!keep_log n:notify a:arch dl:download R:relative_pack 
+ C:!no_colors kl:!keep_log n:!notify a:arch dl:download R:relative_pack 
  ER:enable_repo DR:disable_repo G:gopack"
 
 INSPEC_ARGS="git svn hg bzr branch revision tag svn_user svn_pass github 
@@ -165,11 +165,12 @@ build_end=0
 
 main() {
   if [[ ! -t 1 || -n "$no_colors" ]] ; then
-    unset CL_NORM CL_BOLD CL_UNLN CL_RED CL_GREEN CL_BROWN CL_BLUE CL_MAG
-    unset CL_CYAN CL_GREY CL_DARK CL_BL_RED CL_BL_GREEN CL_BL_BROWN CL_BL_BLUE
-    unset CL_BL_MAG CL_BL_CYAN CL_BL_GREY CL_UL_RED CL_UL_GREEN CL_UL_BROWN
+    unset NORM BOLD UNLN RED GREEN YELLOW BLUE MAG CYAN GREY DARK
+    unset CL_NORM CL_BOLD CL_UNLN CL_RED CL_GREEN CL_YELLOW CL_BLUE CL_MAG CL_DARK
+    unset CL_CYAN CL_GREY CL_DARK CL_BL_RED CL_BL_GREEN CL_BL_YELLOW CL_BL_BLUE
+    unset CL_BL_MAG CL_BL_CYAN CL_BL_GREY CL_UL_RED CL_UL_GREEN CL_UL_YELLOW
     unset CL_UL_BLUE CL_UL_MAG CL_UL_CYAN CL_UL_GREY CL_BG_RED CL_BG_GREEN
-    unset CL_BG_BROWN CL_BG_BLUE CL_BG_MAG CL_BG_CYAN CL_BG_GREY
+    unset CL_BG_YELLOW CL_BG_BLUE CL_BG_MAG CL_BG_CYAN CL_BG_GREY
   fi
 
   [[ -n "$raw_version" ]] && echo $VER && doExit
@@ -259,7 +260,7 @@ parallelBuild() {
   fi
 
   if [[ -n "$dlcache" ]] ; then
-    show "Warning! You can't use parallel build with download cache." $BROWN
+    show "Warning! You can't use a parallel build with download cache." $YELLOW
     doExit $ERROR_ARGS
   fi
 
@@ -312,12 +313,12 @@ checkParalellBuildAvailability() {
   cdf=$(( ct - cdt ))
 
   if [[ $cdf -gt $LOCK_TIME_MAX_DIFF ]] ; then
-    show "We found lock file created more than 3 hours ago. It's too much time for usual build process."
-    show "If another build process does not occur, you must remove file $BUILD_LOCK_PARALLEL manually."
-    show "We will continue build when this file will be removed." $BROWN
+    show "We found lock file created more than 3 hours ago. It's too much time for the usual build process."
+    show "If another build process doesn't occur, you must remove file $BUILD_LOCK_PARALLEL manually."
+    show "We will continue to build when this file will be removed." $YELLOW
   else
-    show "Another parallel build process in progress." $BROWN
-    show "We will continue build when other process complete." $BROWN
+    show "Another parallel build process in progress." $YELLOW
+    show "We will continue to build when another process complete." $YELLOW
   fi
 
   while : ; do
@@ -372,17 +373,17 @@ checkArgs() {
   fi
 
   if [[ -n "$dest_dir" && ! -d $dest_dir ]] ; then
-    show "Can't start build process - destination directory is not exist." $RED
+    show "Can't start build process - destination directory doesn't exist." $RED
     doExit $ERROR_ARGS
   fi
 
   if [[ -n "$dlcache" && ! -d $dlcache ]] ; then
-    show "Can't start build process - download cached directory is not exist." $RED
+    show "Can't start build process - download cached directory doesn't exist." $RED
     doExit $ERROR_ARGS
   fi
 
   if [[ -n "$remote" && -z "$host" && ! -r $remote && ! "$remote" =~ \@|\~ && ! "$remote" =~ :[0-9]{1,}$ ]] ; then
-    show "Can't start remote build process - you must define remote host." $RED
+    show "Can't start remote build process - you must define the remote host." $RED
     doExit $ERROR_ARGS
   fi
 
@@ -434,12 +435,12 @@ checkArgs() {
   fi
 
   if [[ ! -d $tmp ]] ; then
-    show "Can't start build process - temp directory is not exist." $RED
+    show "Can't start build process - temp directory doesn't exist." $RED
     doExit $ERROR_UNKNOWN
   fi
 
   if [[ -n "$dlcache" && ! -d $dlcache ]] ; then
-    show "Can't start build process - download cache directory is not exist." $RED
+    show "Can't start build process - download cache directory doesn't exist." $RED
     doExit $ERROR_UNKNOWN
   fi
 
@@ -638,7 +639,7 @@ downloadRemoteSources() {
   showSeparator "DOWNLOADING"
 
   if [[ ! -d "$dlcache" ]] ; then
-    show "Can't download sources - download destination directory is not exist." $RED
+    show "Can't download sources - download destination directory doesn't exist." $RED
     doExit $ERROR_ARGS
   fi
 
@@ -680,7 +681,7 @@ downloadRemoteSources() {
   show ""
 
   if [[ $download_count -ne 0 ]] ; then
-    show "All source files downloaded and stored to $dlcache directory." $GREEN
+    show "All source files downloaded and stored to a $dlcache directory." $GREEN
   fi
 }
 
@@ -752,7 +753,7 @@ remoteRunBuild() {
     tlines=$(wc -l "$r_file" | cut -f1 -d" ")
 
     if [[ $r_line -gt $tlines ]] ; then
-      show "\nError - file $r_file don't contain line with number $r_line." $RED
+      show "\nError - file $r_file don't contain a line with number $r_line." $RED
       return 1
     fi
 
@@ -792,7 +793,7 @@ remoteRunBuild() {
 remoteCheckEnv() {
   showSeparator "REMOTE CHECK"
 
-  show "Connecting to remote build server on ${CL_CYAN}$host${CL_NORM}."
+  show "Connecting to a remote build server on ${CL_CYAN}$host${CL_NORM}."
 
   if isRemoteServerReachable "$host" ; then
     if ! isSSHConnectionWorks "$user" "$host" ; then
@@ -845,14 +846,14 @@ remoteSpecValidate() {
 
   if [[ -n "$strict" && $(echo "$result" | grep " E: ") ]] ; then
     show ""
-    show "Build canceled because spec has errors and strict mode is enabled." $BROWN
+    show "Build canceled because spec has errors and strict mode is enabled." $YELLOW
     doExit $ERROR_LINT
   fi
 
   if [[ -n "$pedantic" ]] ; then
     if [[ $(echo "$result" | grep " E: ") || $(echo "$result" | grep " W: ") ]] ; then
       show ""
-      show "Build canceled because spec has errors or warnings and pedantic mode is enabled." $BROWN
+      show "Build canceled because spec has errors or warnings and a pedantic mode is enabled." $YELLOW
       doExit $ERROR_LINT
     fi
   fi
@@ -902,7 +903,7 @@ remoteBuildProcess() {
     bld_time=$(( build_end - build_start ))
     grc_time=$(getGraceTime "$bld_time")
 
-    show "Build complete! Build took $grc_time." $GREEN
+    show "Build complete! The build took $grc_time." $GREEN
 
     showSeparator "PACKAGE PROCESSING"
 
@@ -962,18 +963,18 @@ remoteBuildProcess() {
         uploadPackages "$dest_dir" "$packages"
       else
         show ""
-        show "All rpm packages saved to directory $dest_dir." $GREEN
+        show "All rpm packages saved to a directory $dest_dir." $GREEN
       fi
     else
       if [[ -n "$upload" ]] ; then
         uploadPackages "$CWD" "$packages"
       else
         show ""
-        show "All rpm packages saved to current directory." $GREEN
+        show "All rpm packages saved to a current directory." $GREEN
       fi
     fi
   else
-    show "Error! Can't build package." $RED
+    show "Error! Can't build a package." $RED
 
     if [[ -z "$verbose" ]] ; then
       show "Last $LOG_QUOTE_SIZE lines from build log:" $RED
@@ -991,7 +992,7 @@ remoteBuildProcess() {
 
       cp "$tmp_file" "$CWD/$lname"
 
-      show "Build log saved to current dir as $lname" $BROWN
+      show "Build log saved to a current directory as $lname" $YELLOW
     fi
 
     doExit $ERROR_BUILD
@@ -1004,7 +1005,7 @@ checkRemoteAvailability() {
   remote_available=$(sshCommand "$user@$host" "stat $BUILD_LOCK &> /dev/null || echo 1")
 
   if [[ -z "$remote_available" ]] ; then
-    showt "\r${CL_GREEN}Executing:${CL_NORM} ${CL_BROWN}waiting in queue${CL_NORM}"
+    showt "\r${CL_GREEN}Executing:${CL_NORM} ${CL_YELLOW}waiting in queue${CL_NORM}"
 
     while : ; do
       sleep $CHECK_REMOTE_QUEUE_DELAY
@@ -1014,10 +1015,10 @@ checkRemoteAvailability() {
       remote_available=$(sshCommand "$user@$host" "stat $BUILD_LOCK &> /dev/null || echo 1")
 
       if [[ -n "$remote_available" ]] ; then
-        showt "\r${CL_GREEN}Executing:${CL_NORM} ${CL_BROWN}~${CL_NORM}"
+        showt "\r${CL_GREEN}Executing:${CL_NORM} ${CL_YELLOW}~${CL_NORM}"
         break
       else
-        showt "\r${CL_GREEN}Executing:${CL_NORM} ${CL_BROWN}waiting in queue${CL_NORM}"
+        showt "\r${CL_GREEN}Executing:${CL_NORM} ${CL_YELLOW}waiting in queue${CL_NORM}"
       fi
     done
   fi
@@ -1107,14 +1108,14 @@ localSpecValidate() {
 
   if [[ -n "$strict" && $(echo "$result" | grep " E: ") ]] ; then
     show ""
-    show "Build canceled because spec has errors and strict mode is enabled." $BROWN
+    show "Build canceled because spec has errors and strict mode is enabled." $YELLOW
     doExit $ERROR_LINT
   fi
 
   if [[ -n "$pedantic" ]] ; then
     if [[ $(echo "$result" | grep " E: ") || $(echo "$result" | grep " W: ") ]] ; then
       show ""
-      show "Build canceled because spec has errors or warnings and pedantic mode is enabled." $BROWN
+      show "Build canceled because spec has errors or warnings and a pedantic mode is enabled." $YELLOW
       doExit $ERROR_LINT
     fi
   fi
@@ -1178,7 +1179,7 @@ localBuildProcess() {
       stopStatusObserver
       show ""
 
-      show "Error! Can't build package." $RED
+      show "Error! Can't build a package." $RED
 
       if [[ -z "$verbose" ]] ; then
         show "Last $LOG_QUOTE_SIZE lines from build log:" $RED
@@ -1196,7 +1197,7 @@ localBuildProcess() {
 
         cp "$tmp_file" "$CWD/$lname"
 
-        show "Build log saved to current dir as $lname" $BROWN
+        show "Build log saved to current directory as $lname" $YELLOW
       fi
 
       doExit $ERROR_BUILD
@@ -1210,7 +1211,7 @@ localBuildProcess() {
       bld_time=$(( build_end - build_start ))
       grc_time=$(getGraceTime "$bld_time")
 
-      show "Build complete! Build took $grc_time." $GREEN
+      show "Build complete! The build took $grc_time." $GREEN
 
       showSeparator "PACKAGE PROCESSING"
 
@@ -1269,14 +1270,14 @@ localBuildProcess() {
           uploadPackages "$dest_dir" "$packages"
         else
           show ""
-          show "All rpm packages saved to directory $dest_dir." $GREEN
+          show "All rpm packages saved to a directory $dest_dir." $GREEN
         fi
       else
         if [[ -n "$upload" ]] ; then
           uploadPackages "$CWD" "$packages"
         else
           show ""
-          show "All rpm packages saved to current directory." $GREEN
+          show "All rpm packages saved to a current directory." $GREEN
         fi
       fi
     fi
@@ -1298,19 +1299,19 @@ checkLocalBuildAvailability() {
   cdf=$(( ct - cdt ))
 
   if [[ $cdf -gt $LOCK_TIME_MAX_DIFF ]] ; then
-    show "We found lock file created more than 3 hours ago. It's too much time for usual build process."
-    show "If another build process does not occur, you must remove file $BUILD_LOCK_LOCAL manually."
-    show "We will continue build when this file will be removed." $BROWN
+    show "We found lock file created more than 3 hours ago. It's too much time for the usual build process."
+    show "If another build process doesn't occur, you must remove file $BUILD_LOCK_LOCAL manually."
+    show "We will continue to build when this file will be removed." $YELLOW
     show ""
   fi
 
-  showt "\r${CL_GREEN}Executing:${CL_NORM} ${CL_BROWN}waiting in queue${CL_NORM}"
+  showt "\r${CL_GREEN}Executing:${CL_NORM} ${CL_YELLOW}waiting in queue${CL_NORM}"
 
   while : ; do
     sleep $CHECK_LOCAL_QUEUE_DELAY
 
     if ! hasLocalLock ; then
-      showt "\r${CL_GREEN}Executing:${CL_NORM} ${CL_BROWN}~${CL_NORM}"
+      showt "\r${CL_GREEN}Executing:${CL_NORM} ${CL_YELLOW}~${CL_NORM}"
       break
     fi
   done
@@ -1322,14 +1323,19 @@ hasLocalLock() {
   local pid
   pid=$(cat "$BUILD_LOCK_LOCAL")
 
-  [[ ! -d "/proc/$pid" ]] && removeLocalLock && return 1
+  if [[ ! -d "/proc/$pid" ]] ; then
+    removeLocalLock
+    return $?
+  fi
 
   return 0
 }
 
 createLocalLock() {
-  echo "$$" > $BUILD_LOCK_LOCAL
-  chmod 666 "$BUILD_LOCK_LOCAL"
+  if ! hasLocalLock ; then
+    echo "$$" > $BUILD_LOCK_LOCAL 2> /dev/null
+    chmod 666 "$BUILD_LOCK_LOCAL" &> /dev/null
+  fi
 }
 
 removeLocalLock() {
@@ -1341,8 +1347,13 @@ removeLocalLock() {
 
     if [[ "$cur_user" == "$lock_owner" ]] ; then
       rm -f "$BUILD_LOCK_LOCAL" &> /dev/null
+      return 0
+    else
+      return 1
     fi
   fi
+
+  return 0
 }
 
 localSign() {
@@ -1357,7 +1368,7 @@ localSign() {
   fi
 
   if [[ $? -ne 0 ]] ; then
-    show "Can't sign package." $BROWN
+    show "Can't sign package." $YELLOW
   fi
 }
 
@@ -1371,7 +1382,7 @@ releaseBump() {
   fi
 
   if [[ $? -ne 0 ]] ; then
-    show "Can't bump release - bumpspec return error code." $BROWN
+    show "Can't bump release - bumpspec return error code." $YELLOW
   fi
 }
 
@@ -1421,7 +1432,7 @@ uploadPackages() {
       show ""
 
       if [[ -n "$has_errors" ]] ; then
-        show "All rpm packages saved to directory ${CL_CYAN}$packages_dir${CL_NORM}."
+        show "All rpm packages saved to a directory ${CL_CYAN}$packages_dir${CL_NORM}."
       else
         rm -f "$package_list"
         show "All rpm packages uploaded to all remote servers!" $GREEN
@@ -1429,7 +1440,7 @@ uploadPackages() {
     else
       show "Can't read file $upload" $RED
       show ""
-      show "All rpm packages saved to directory ${CL_CYAN}$packages_dir${CL_NORM}."
+      show "All rpm packages saved to a directory ${CL_CYAN}$packages_dir${CL_NORM}."
     fi
   else
     target=$(echo "$upload" | cut -f1 -d":")
@@ -1440,9 +1451,9 @@ uploadPackages() {
 
     if [[ $? -eq 0 ]] ; then
       rm -f "$package_list"
-      show "All rpm packages uploaded to remote server!" $GREEN
+      show "All rpm packages uploaded to a remote server!" $GREEN
     else
-      show "All rpm packages saved to directory ${CL_CYAN}$packages_dir${CL_NORM}."
+      show "All rpm packages saved to a directory ${CL_CYAN}$packages_dir${CL_NORM}."
     fi
   fi
 }
@@ -1478,14 +1489,14 @@ uploadPackagesToServer() {
         if [[ $? -eq 0 ]] ; then
           show "Package ${CL_CYAN}$package_name${CL_NORM} uploaded to remote host."
         else
-          show "Can't upload package $package_name to directory $url_path on $url_host" $RED
+          show "Can't upload package $package_name to a directory $url_path on $url_host" $RED
           has_errors=true
         fi
       done
 
       [[ -n "$has_errors" ]] && return 1
     else
-      show "Remote server $url_host not accesable!" $RED
+      show "Remote server $url_host not accessible!" $RED
       return 1
     fi
   else
@@ -1538,7 +1549,7 @@ packSources() {
   fi
 
   if [[ $? -ne 0 ]] ; then
-    show "Can't copy source files to temporary ditrectory" $RED
+    show "Can't copy source files to a temporary directory" $RED
     doExit 1
   fi
 
@@ -1580,7 +1591,7 @@ packSourcesFromGit() {
     [[ -n "$verbose" ]] && git clone "$git" "$dir_name" | tee -a "$git_log" || git clone "$git" "$dir_name" &> "$git_log"
 
     if [[ $? -ne 0 ]] ; then
-      show "Can't clone repo - error while cloning." $RED
+      show "Can't clone repo - error while cloning" $RED
 
       if [[ -z "$verbose" ]] ; then
         show "\nLast ${REPO_LOG_QUOTE_SIZE} lines from log ($git_log):"
@@ -1823,7 +1834,7 @@ packSourcesFromBzr() {
     [[ -n "$verbose" ]] && bzr $bzr_opts branch "$bzr" "$dir_name" | tee -a "$bzr_log" || bzr $bzr_opts branch "$bzr" "$dir_name" &> "$bzr_log"
 
     if [[ $? -ne 0 ]] ; then
-      show "Can't make a copy of branch." $RED
+      show "Can't make a copy of the branch." $RED
 
       if [[ -z "$verbose" ]] ; then
         show "\nLast ${REPO_LOG_QUOTE_SIZE} lines from log ($bzr_log):"
@@ -2031,13 +2042,13 @@ processSpec() {
       found_source=$(findSource "$file_name")
 
       if [[ -n "$found_source" ]] ; then
-        show "File ${CL_CYAN}$file_name${CL_NORM} listed in spec and will be used for build."
+        show "File ${CL_CYAN}$file_name${CL_NORM} listed in spec and will be used for the build."
         cp "$found_source" "$tmp_dir"
       elif [[ -f "$tmp_dir/$file_name" ]] ; then
-        show "File ${CL_CYAN}$file_name${CL_NORM} listed in spec and will be used for build."
+        show "File ${CL_CYAN}$file_name${CL_NORM} listed in spec and will be used for the build."
       elif [[ -n "$dlcache" ]] ; then
         if [[ -f "$dlcache/$file_name" ]] ; then
-          show "File ${CL_CYAN}$file_name${CL_NORM} listed in spec and will be used for build."
+          show "File ${CL_CYAN}$file_name${CL_NORM} listed in spec and will be used for the build."
           cp "$dlcache/$file_name" "$tmp_dir"
         else
           show "Downloading source file ${CL_CYAN}${source_file}${CL_NORM}..."
@@ -2063,7 +2074,7 @@ processSpec() {
       fi
     else
       if [[ -f "$tmp_dir/$source_file" ]] ; then
-        show "File ${CL_CYAN}${source_file}${CL_NORM} listed in spec and will be used for build."
+        show "File ${CL_CYAN}${source_file}${CL_NORM} listed in spec and will be used for the build."
         source_num=$(( source_num + 1 )) && continue
       fi
 
@@ -2150,7 +2161,7 @@ copySourcesToBuildDir() {
       fi
     done
   else
-    show "Error! Can't copy source files - directory $src_dir is not exist" $RED
+    show "Error! Can't copy source files - directory $src_dir doesn't exist" $RED
     doExit $ERROR_SOURCE
   fi
 
@@ -2164,7 +2175,7 @@ copySourcesToBuildDir() {
 
     [[ -n "$bump" ]] && releaseBump "$specs_dir/$spec"
   else
-    show "Error! Can't copy spec file - directory $specs_dir is not exist." $RED
+    show "Error! Can't copy spec file - directory $specs_dir doesn't exist." $RED
     doExit $ERROR_SOURCE
   fi
 }
@@ -2293,8 +2304,8 @@ downloadSource() {
 
     if [[ -z "$tmuxl" && -z "$dlcache" && $time_diff -gt $LONG_DOWNLOADING ]] ; then
       show ""
-      show "HINT: Downloading took more than $LONG_DOWNLOADING seconds. We strongly recommend use download" $BROWN
-      show "cache feature in this case. Use -dc <path> or --dlcache <path>." $BROWN
+      show "HINT: Downloading took more than $LONG_DOWNLOADING seconds. We strongly recommend use download" $YELLOW
+      show "cache feature in this case. Use -dc <path> or --dlcache <path>." $YELLOW
       show ""
     fi
   fi
@@ -2604,7 +2615,7 @@ validatePackage() {
   if rpm -qp --scripts "$rpm_file" 2>&1 | egrep -q '\%\{.*\}' ; then
     has_errors=true
     show "ERROR\n" $RED
-    show "RPM package $rpm_name contains unexpanded macroses in scriptlets:" $BROWN
+    show "RPM package $rpm_name contains unexpanded macroses in scriptlets:" $YELLOW
     show "${CL_GREY}"
     rpm -qp --scripts "$rpm_file" 2>&1 | egrep -A1 -B1 '\%\{.*\}' | sed '/^$/d' | sed 's/^/  /g'
     show "${CL_NORM}"
@@ -2613,7 +2624,7 @@ validatePackage() {
   if rpm -qlp "$rpm_file" 2>&1 | egrep -q '\%\{.*\}' ; then
     has_errors=true
     show "ERROR\n" $RED
-    show "RPM package $rpm_name contains unexpanded macroses in files section:" $BROWN
+    show "RPM package $rpm_name contains unexpanded macroses in files section:" $YELLOW
     show "${CL_GREY}"
     rpm -qlp "$rpm_file" 2>&1 | egrep -A1 -B1 '\%\{.*\}' | sed '/^$/d' | sed 's/^/  /g'
     show "${CL_NORM}"
@@ -2799,29 +2810,29 @@ showArgWarn() {
 
 usage() {
   show ""
-  show "${CL_BOLD}Usage:${CL_NORM} rpmbuilder ${CL_BROWN}{spec-file}${CL_NORM} ${CL_GREEN}{options}${CL_NORM}"
+  show "${CL_BOLD}Usage:${CL_NORM} rpmbuilder ${CL_YELLOW}{spec-file}${CL_NORM} ${CL_GREEN}{options}${CL_NORM}"
   show ""
   show "${CL_BOLD}Spec file:${CL_NORM}"
   show ""
   show "  You can define absolute or relative path to spec file. You also can define only spec name (without extension)."
-  show "  In this case, rpmbuilder try use ${CL_BROWN}{name}${CL_NORM}.spec file for build and try to find ${CL_BROWN}{name}${CL_NORM}.source file and use as "
+  show "  In this case, rpmbuilder try use ${CL_YELLOW}{name}${CL_NORM}.spec file for build and try to find ${CL_YELLOW}{name}${CL_NORM}.source file and use as "
   show "  sources list."
   show ""
   show "Source packaging:" $BOLD
   show ""
-  show "  ${CL_GREEN}--pack, -p${CL_NORM} ${CL_GREY}files${CL_NORM}           Pack specified files to tgz archive with default source name ${CL_DARK}(mergeable)${CL_NORM}"
+  show "  ${CL_GREEN}--pack, -p${CL_NORM} ${CL_GREY}files${CL_NORM}           Pack specified files to archive with default source name ${CL_DARK}(mergeable)${CL_NORM}"
   show "  ${CL_GREEN}--relative-pack, -R${CL_NORM}        Use relative path in source archive instead of absolute"
-  show "  ${CL_GREEN}--source-dir, -sd${CL_NORM} ${CL_GREY}path${CL_NORM}     Path to directory which contains source files specified in spec file"
-  show "  ${CL_GREEN}--source-list, -sl${CL_NORM} ${CL_GREY}file${CL_NORM}    Path to file which contains list of source files specified in spec file,"
-  show "                             and will be packed to tgz archive with default source name"
-  show "  ${CL_GREEN}--dlcache, -dc${CL_NORM} ${CL_GREY}path${CL_NORM}        Path to directory for downloads caching"
-  show "  ${CL_GREEN}--download, -dl${CL_NORM} ${CL_GREY}path${CL_NORM}       Download all remote sources to specified directory"
+  show "  ${CL_GREEN}--source-dir, -sd${CL_NORM} ${CL_GREY}path${CL_NORM}     Path to a directory which contains source files specified in spec file"
+  show "  ${CL_GREEN}--source-list, -sl${CL_NORM} ${CL_GREY}file${CL_NORM}    Path to file which contains a list of source files specified in spec file,"
+  show "                             and will be packed to archive with default source name"
+  show "  ${CL_GREEN}--dlcache, -dc${CL_NORM} ${CL_GREY}path${CL_NORM}        Path to a directory for downloads caching"
+  show "  ${CL_GREEN}--download, -dl${CL_NORM} ${CL_GREY}path${CL_NORM}       Download all remote sources to a specified directory"
   show ""
   show "  ${CL_GREEN}--git${CL_NORM} ${CL_GREY}url${CL_NORM}                   Fetch sources from Git repository ${CL_DARK}(macro supported)${CL_NORM}"
   show "  ${CL_GREEN}--svn${CL_NORM} ${CL_GREY}url${CL_NORM}                   Fetch sources from SVN repository ${CL_DARK}(macro supported)${CL_NORM}"
   show "  ${CL_GREEN}--hg${CL_NORM} ${CL_GREY}url${CL_NORM}                    Fetch sources from Mercurial repository ${CL_DARK}(macro supported)${CL_NORM}"
   show "  ${CL_GREEN}--bzr${CL_NORM} ${CL_GREY}url${CL_NORM}                   Fetch sources from Bazar repository ${CL_DARK}(macro supported)${CL_NORM}"
-  show "  ${CL_GREEN}--path, -rp${CL_NORM} ${CL_GREY}path${CL_NORM}            Path to directory with sources in repo"
+  show "  ${CL_GREEN}--path, -rp${CL_NORM} ${CL_GREY}path${CL_NORM}            Path to a directory with sources in repository"
   show "  ${CL_GREEN}--branch, -rb${CL_NORM} ${CL_GREY}name${CL_NORM}          Use specified repository branch ${CL_DARK}(macro supported)${CL_NORM}"
   show "  ${CL_GREEN}--revision, -rr${CL_NORM} ${CL_GREY}name${CL_NORM}        Use specified revision"
   show "  ${CL_GREEN}--tag, -rt${CL_NORM} ${CL_GREY}name${CL_NORM}             Use specified tag ${CL_DARK}(macro supported)${CL_NORM}"
@@ -2863,12 +2874,12 @@ usage() {
   show ""
   show "  ${CL_GREEN}--parallel, -P${CL_NORM}                 Parallel build on all build servers in same time"
   show "  ${CL_GREEN}--remote, -r${CL_NORM}                   Build rpm package on remote server"
-  show "  ${CL_GREEN}--remote, -r${CL_NORM} ${CL_GREY}user:pass@host${CL_NORM}    Build rpm package on the remote server with specified host, user and pass"
+  show "  ${CL_GREEN}--remote, -r${CL_NORM} ${CL_GREY}user:pass@host${CL_NORM}    Build rpm package on the remote server with specified host, username and password"
   show "  ${CL_GREEN}--remote, -r${CL_NORM} ${CL_GREY}file${CL_NORM}              Build rpm package on the remote servers listed in specified file"
-  show "  ${CL_GREEN}--host, -hh${CL_NORM} ${CL_GREY}host${CL_NORM}               Remote host ip or domain name"
+  show "  ${CL_GREEN}--host, -hh${CL_NORM} ${CL_GREY}host${CL_NORM}               Remote host IP or domain name"
   show "  ${CL_GREEN}--user, -uu${CL_NORM} ${CL_GREY}user${CL_NORM}               Remote host user"
   show "  ${CL_GREEN}--pass, -pp${CL_NORM} ${CL_GREY}password${CL_NORM}           Password for specified user"
-  show "  ${CL_GREEN}--key, -kk${CL_NORM} ${CL_GREY}file${CL_NORM}                Path to private key for specified user"
+  show "  ${CL_GREEN}--key, -kk${CL_NORM} ${CL_GREY}file${CL_NORM}                Path to the private key for specified user"
   show ""
   show "  Examples:" $BOLD
   show ""
@@ -2883,7 +2894,7 @@ usage() {
   show "  ${CL_GREEN}--no-deps, -nd${CL_NORM}                       Don't verify build dependencies"
   show "  ${CL_GREEN}--no-binary, -nr${CL_NORM}                     Don't build binary packages"
   show "  ${CL_GREEN}--no-source, -ns${CL_NORM}                     Don't build source package"
-  show "  ${CL_GREEN}--arch, -a${CL_NORM} ${CL_GREY}arch${CL_NORM}                      Override target arch for build"
+  show "  ${CL_GREEN}--arch, -a${CL_NORM} ${CL_GREY}arch${CL_NORM}                      Override target arch for a build"
   show "  ${CL_GREEN}--qa-rpaths${CL_NORM}${CL_GREY}=\"<value>,<value>,...\"${CL_NORM}    Ignoring rpaths check"
   show ""
   show "Arguments passing:" $BOLD
@@ -2910,12 +2921,13 @@ usage() {
   show "Other:" $BOLD
   show ""
   show "  ${CL_GREEN}--sign, -s${CL_NORM}                     Sign package after build"
-  show "  ${CL_GREEN}--dest, --dest-dir, -d${CL_NORM} ${CL_GREY}path${CL_NORM}    Save builded packages to specified directory"
-  show "  ${CL_GREEN}--keep-log, -kl${CL_NORM}                Save build log after unsuccessful build"
-  show "  ${CL_GREEN}--bump, -b${CL_NORM}                     Bump release in spec file after successful package build"
+  show "  ${CL_GREEN}--dest, --dest-dir, -d${CL_NORM} ${CL_GREY}path${CL_NORM}    Save built packages to a specified directory"
+  show "  ${CL_GREEN}--keep-log, -kl${CL_NORM}                Save build log after an unsuccessful build"
+  show "  ${CL_GREEN}--bump, -b${CL_NORM}                     Bump release in spec file after a successful build"
   show "  ${CL_GREEN}--bump-comment, -bc${CL_NORM} ${CL_GREY}comment${CL_NORM}    Comment which will be added while release bump"
-  show "  ${CL_GREEN}--tmp${CL_NORM} ${CL_GREY}path${CL_NORM}                     Path to temporary directory"
+  show "  ${CL_GREEN}--tmp${CL_NORM} ${CL_GREY}path${CL_NORM}                     Path to a temporary directory"
   show "  ${CL_GREEN}--verbose, -V${CL_NORM}                  Verbose output"
+  show "  ${CL_GREEN}--no-color, -C${CL_NORM}                 Disable colors in output"
   show "  ${CL_GREEN}--help, --usage, -h${CL_NORM}            Show this help message"
   show "  ${CL_GREEN}--ver, --version, -v${CL_NORM}           Show information about version"
   show ""
