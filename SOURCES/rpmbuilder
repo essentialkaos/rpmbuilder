@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 
 APP="RPMBuilder"
-VER="1.6.2"
+VER="1.6.3"
 
 ####################################################################
 
@@ -695,15 +695,15 @@ remoteBuild() {
     $($pre)
   fi
 
-  [[ -n "$git" ]]    && packSourcesFromGit "$spec"
-  [[ -n "$svn" ]]    && packSourcesFromSvn "$spec"
-  [[ -n "$bzr" ]]    && packSourcesFromBzr "$spec"
-  [[ -n "$hg" ]]     && packSourcesFromHg  "$spec"
-  [[ -n "$gopack" ]] && packGolangSources  "$spec"
+  [[ -n "$git" ]]    && packSourcesFromGit "$spec" && show ""
+  [[ -n "$svn" ]]    && packSourcesFromSvn "$spec" && show ""
+  [[ -n "$bzr" ]]    && packSourcesFromBzr "$spec" && show ""
+  [[ -n "$hg" ]]     && packSourcesFromHg  "$spec" && show ""
+  [[ -n "$gopack" ]] && packGolangSources  "$spec" && show ""
 
   [[ -n "$repo_spec" ]] && spec="$repo_spec"
 
-  [[ -n "$pack" || -n "$source_list" ]] && packSources "$spec"
+  [[ -n "$pack" || -n "$source_list" ]] && packSources "$spec" && show ""
 
   processSpec "$spec"
 
@@ -892,6 +892,7 @@ remoteBuildProcess() {
   fi
 
   stopStatusObserver
+
   show ""
 
   local has_errors bld_time grc_time packages package_name package_file
@@ -1040,18 +1041,19 @@ localBuild() {
     $($pre)
   fi
 
-  [[ -n "$git" ]]    && packSourcesFromGit "$spec"
-  [[ -n "$svn" ]]    && packSourcesFromSvn "$spec"
-  [[ -n "$bzr" ]]    && packSourcesFromBzr "$spec"
-  [[ -n "$hg" ]]     && packSourcesFromHg  "$spec"
-  [[ -n "$gopack" ]] && packGolangSources  "$spec"
+  [[ -n "$git" ]]    && packSourcesFromGit "$spec" && show ""
+  [[ -n "$svn" ]]    && packSourcesFromSvn "$spec" && show ""
+  [[ -n "$bzr" ]]    && packSourcesFromBzr "$spec" && show ""
+  [[ -n "$hg" ]]     && packSourcesFromHg  "$spec" && show ""
+  [[ -n "$gopack" ]] && packGolangSources  "$spec" && show ""
 
   [[ -n "$repo_spec" ]] && spec="$repo_spec"
 
-  [[ -n "$pack" || -n "$source_list" ]] && packSources "$spec"
+  [[ -n "$pack" || -n "$source_list" ]] && packSources "$spec" && show ""
 
   processSpec "$spec"
 
+  show ""
   show "All source files are ready for build." $GREEN
 
   copySourcesToBuildDir "$spec"
@@ -1203,6 +1205,7 @@ localBuildProcess() {
       doExit $ERROR_BUILD
     else
       stopStatusObserver
+
       show ""
 
       local bld_time grc_time package packages package_name package_file
@@ -2721,6 +2724,7 @@ stopStatusObserver() {
   wait "$observer_pid" &> /dev/null
 
   showm "\r${CL_GREEN}Executing:${CL_NORM} ${CL_CYAN}clean${CL_NORM}                                                               "
+  show ""
 
   unset observer_pid
 }
