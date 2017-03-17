@@ -2,7 +2,7 @@
 
 Summary:         RPM package build helper
 Name:            rpmbuilder
-Version:         1.6.2
+Version:         1.6.3
 Release:         0%{?dist}
 License:         EKOL
 Group:           Development/Tools
@@ -51,6 +51,9 @@ rm -rf %{buildroot}
 ###############################################################################
 
 %changelog
+* Fri Mar 17 2017 Anton Novojilov <andy@essentialkaos.com> - 1.6.3-0
+- Minor UI fixes
+
 * Sat Mar 11 2017 Anton Novojilov <andy@essentialkaos.com> - 1.6.2-0
 - Fixed bug with colors disabling
 - Fixed bug with changing permissions on local lock
