@@ -44,3 +44,4 @@ ratings:
      - SOURCES/rpmunbuilder
      - SOURCES/buildmon
      - SOURCES/initenv
+     - SOURCES/nodeinfo
