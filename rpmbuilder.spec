@@ -2,7 +2,7 @@
 
 Summary:         RPM package build helper
 Name:            rpmbuilder
-Version:         1.6.4
+Version:         1.7.0
 Release:         0%{?dist}
 License:         EKOL
 Group:           Development/Tools
@@ -51,6 +51,11 @@ rm -rf %{buildroot}
 ###############################################################################
 
 %changelog
+* Thu Mar 23 2017 Anton Novojilov <andy@essentialkaos.com> - 1.7.0-0
+- Added error message if dependencies can't be installed
+- Improved UI
+- Some minor bugfixes
+
 * Tue Mar 21 2017 Anton Novojilov <andy@essentialkaos.com> - 1.6.4-0
 - Fixed bug with using --without flag
 
@@ -127,7 +132,7 @@ rm -rf %{buildroot}
 - -dl without given path download files to current directory
 
 * Thu Apr 21 2016 Anton Novojilov <andy@essentialkaos.com> - 1.1.0-0
-- Improved dependecies installation process
+- Improved dependencies installation process
 
 * Wed Apr 20 2016 Anton Novojilov <andy@essentialkaos.com> - 1.0.8-0
 - Improved working with yum cache
