@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 
 APP="RPMBuilder"
-VER="1.7.0"
+VER="1.7.1"
 
 ####################################################################
 
@@ -292,13 +292,13 @@ checkParalellBuildAvailability() {
 
   local cdt ct cdf
 
-  cdt=$(stat $BUILD_LOCK_PARALLEL -c "%Y")
+  cdt=$(stat $BUILD_LOCK_PARALLEL -c "%Y" 2> /dev/null)
   ct=$(now)
   cdf=$(( ct - cdt ))
 
   if [[ $cdf -gt $LOCK_TIME_MAX_DIFF ]] ; then
-    show "We found lock file created more than 3 hours ago. It's too much time for the usual build process."
-    show "If another build process doesn't occur, you must remove file $BUILD_LOCK_PARALLEL manually."
+    show "We found lock file created more than 3 hours ago. It's too much time for the usual build process." $YELLOW
+    show "If another build process doesn't occur, you must remove file $BUILD_LOCK_PARALLEL manually." $YELLOW
     show "We will continue to build when this file will be removed." $YELLOW
   else
     show "Another parallel build process in progress." $YELLOW
@@ -315,12 +315,16 @@ checkParalellBuildAvailability() {
 }
 
 hasParalellLock() {
-  [[ ! -f $BUILD_LOCK_PARALLEL ]] && return 1
+  [[ ! -e $BUILD_LOCK_PARALLEL ]] && return 1
 
   local pid
   pid=$(cat "$BUILD_LOCK_PARALLEL")
 
-  [[ ! -d "/proc/$pid" ]] && removeParalellLock && return 1
+  if [[ ! -d "/proc/$pid" ]] ; then
+    if removeParalellLock ; then
+      return 1
+    fi
+  fi
 
   return 0
 }
@@ -1185,6 +1189,8 @@ localBuildProcess() {
         show "Build log saved to current directory as ${CL_BL_YELLOW}${lname}" $YELLOW
       fi
 
+      removeLocalLock
+
       doExit $ERROR_BUILD
     else
       stopStatusObserver
@@ -1237,6 +1243,7 @@ localBuildProcess() {
       done
 
       if [[ -n "$has_errors" ]] ; then
+        removeLocalLock
         doExit $ERROR_VALIDATE
       fi
 
@@ -1280,13 +1287,13 @@ checkLocalBuildAvailability() {
 
   local cdt ct cdf
 
-  cdt=$(stat "$BUILD_LOCK_LOCAL" -c "%Y")
+  cdt=$(stat "$BUILD_LOCK_LOCAL" -c "%Y" 2> /dev/null)
   ct=$(now)
   cdf=$(( ct - cdt ))
 
   if [[ $cdf -gt $LOCK_TIME_MAX_DIFF ]] ; then
-    show "We found lock file created more than 3 hours ago. It's too much time for the usual build process."
-    show "If another build process doesn't occur, you must remove file $BUILD_LOCK_LOCAL manually."
+    show "We found lock file created more than 3 hours ago. It's too much time for the usual build process." $YELLOW
+    show "If another build process doesn't occur, you must remove file $BUILD_LOCK_LOCAL manually." $YELLOW
     show "We will continue to build when this file will be removed." $YELLOW
     show ""
   fi
@@ -1304,14 +1311,15 @@ checkLocalBuildAvailability() {
 }
 
 hasLocalLock() {
-  [[ ! -f "$BUILD_LOCK_LOCAL" ]] && return 1
+  [[ ! -e "$BUILD_LOCK_LOCAL" ]] && return 1
 
   local pid
   pid=$(cat "$BUILD_LOCK_LOCAL")
 
   if [[ ! -d "/proc/$pid" ]] ; then
-    removeLocalLock
-    return $?
+    if removeLocalLock ; then
+      return 1
+    fi
   fi
 
   return 0
