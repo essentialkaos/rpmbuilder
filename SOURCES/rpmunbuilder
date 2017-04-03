@@ -3,7 +3,7 @@
 ########################################################################################
 
 APP="RPMUnBuilder"
-VER="1.1.2"
+VER="1.1.3"
 
 ########################################################################################
 
@@ -12,48 +12,31 @@ BOLD=1
 UNLN=4
 RED=31
 GREEN=32
-BROWN=33
+YELLOW=33
 BLUE=34
 MAG=35
 CYAN=36
 GREY=37
 DARK=90
 
-CL_NORM="\e[${NORM}m"
-CL_BOLD="\e[${BOLD}m"
-CL_UNLN="\e[${UNLN}m"
-CL_RED="\e[${RED}m"
-CL_GREEN="\e[${GREEN}m"
-CL_BROWN="\e[${BROWN}m"
-CL_BLUE="\e[${BLUE}m"
-CL_MAG="\e[${MAG}m"
-CL_CYAN="\e[${CYAN}m"
-CL_GREY="\e[${GREY}m"
-CL_DARK="\e[${DARK}m"
-CL_BL_RED="\e[${RED};1m"
-CL_BL_GREEN="\e[${GREEN};1m"
-CL_BL_BROWN="\e[${BROWN};1m"
-CL_BL_BLUE="\e[${BLUE};1m"
-CL_BL_MAG="\e[${MAG};1m"
-CL_BL_CYAN="\e[${CYAN};1m"
-CL_BL_GREY="\e[${GREY};1m"
-CL_BL_DARK="\e[${DARK};1m"
-CL_UL_RED="\e[${RED};4m"
-CL_UL_GREEN="\e[${GREEN};4m"
-CL_UL_BROWN="\e[${BROWN};4m"
-CL_UL_BLUE="\e[${BLUE};4m"
-CL_UL_MAG="\e[${MAG};4m"
-CL_UL_CYAN="\e[${CYAN};4m"
-CL_UL_GREY="\e[${GREY};4m"
-CL_UL_DARK="\e[${DARK};4m"
-CL_BG_RED="\e[${RED};7m"
-CL_BG_GREEN="\e[${GREEN};7m"
-CL_BG_BROWN="\e[${BROWN};7m"
-CL_BG_BLUE="\e[${BLUE};7m"
-CL_BG_MAG="\e[${MAG};7m"
-CL_BG_CYAN="\e[${CYAN};7m"
-CL_BG_GREY="\e[${GREY};7m"
-CL_BG_DARK="\e[${DARK};7m"
+CL_NORM="\e[0m"
+CL_BOLD="\e[0;${BOLD};49m"
+CL_UNLN="\e[0;${UNLN};49m"
+CL_RED="\e[0;${RED};49m"
+CL_GREEN="\e[0;${GREEN};49m"
+CL_YELLOW="\e[0;${YELLOW};49m"
+CL_BLUE="\e[0;${BLUE};49m"
+CL_MAG="\e[0;${MAG};49m"
+CL_CYAN="\e[0;${CYAN};49m"
+CL_GREY="\e[0;${GREY};49m"
+CL_DARK="\e[0;${DARK};49m"
+CL_BL_RED="\e[1;${RED};49m"
+CL_BL_GREEN="\e[1;${GREEN};49m"
+CL_BL_YELLOW="\e[1;${YELLOW};49m"
+CL_BL_BLUE="\e[1;${BLUE};49m"
+CL_BL_MAG="\e[1;${MAG};49m"
+CL_BL_CYAN="\e[1;${CYAN};49m"
+CL_BL_GREY="\e[1;${GREY};49m"
 
 SUPPORTED_ARGS="help usage ver version"
 SHORT_ARGS="h:help v:version"
@@ -72,7 +55,7 @@ main() {
   fi
 
   if [[ ! $(checkDeps "rpm" "rpm2cpio" "cpio") ]] ; then
-    show "For using this utility install this packages first: rpm rpm2cpio cpio" $BROWN
+    error "For using this utility install this packages first: rpm rpm2cpio cpio" $BROWN
     exit 2
   fi
 
@@ -80,20 +63,20 @@ main() {
   local path="$2"
 
   if [[ ! $(isRPMPackage "$pkg") ]] ; then
-    show "Error! [$pkg] is not an rpm package!" $RED
+    error "Error! [$pkg] is not an rpm package!" $RED
     exit 1
   fi
 
   if [[ -n "$path" ]] ; then
     if [[ ! $(checkPerms "$path" "DWX") ]] ; then
-      show "Error! Please check permissions for directory [$path]." $RED
+      error "Error! Please check permissions for directory [$path]." $RED
       exit 3
     fi
   else
     path=$(pwd)
 
     if [[ ! $(checkPerms "$path" "DWX") ]] ; then
-      show "Error! Please check permissions for directory [$path]." $RED
+      error "Error! Please check permissions for directory [$path]." $RED
       exit 3
     fi
   fi
@@ -190,8 +173,12 @@ showm() {
   fi
 }
 
+error() {
+  show "$@" 1>&2
+}
+
 showArgWarn() {
-  show "Error! Unknown argument $1." $RED
+  error "Error! Unknown argument $1." $RED
   doExit 1
 }
 
