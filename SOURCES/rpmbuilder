@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 
 APP="RPMBuilder"
-VER="1.7.0"
+VER="1.7.1"
 
 ####################################################################
 
@@ -168,7 +168,7 @@ main() {
       [[ -r "${spec}.source" && -z "$source_list" ]] && source_list="$spec.source"
       spec="${spec}.spec"
     else
-      show "${CL_BL_RED}${spec}${CL_RED} is not a spec file!${CL_NORM}"
+      error "${CL_BL_RED}${spec}${CL_RED} is not a spec file!${CL_NORM}"
       doExit $ERROR_SPEC
     fi
   fi
@@ -239,12 +239,12 @@ notify() {
 
 parallelBuild() {
   if [[ ! -r $remote ]] ; then
-    show "Error! Can't start parallel build process - builder list not readable." $RED
+    error "Error! Can't start parallel build process - builder list not readable." $RED
     doExit $ERROR_ARGS
   fi
 
   if [[ -n "$dlcache" ]] ; then
-    show "Warning! You can't use a parallel build with download cache." $YELLOW
+    error "Warning! You can't use a parallel build with download cache." $YELLOW
     doExit $ERROR_ARGS
   fi
 
@@ -292,17 +292,17 @@ checkParalellBuildAvailability() {
 
   local cdt ct cdf
 
-  cdt=$(stat $BUILD_LOCK_PARALLEL -c "%Y")
+  cdt=$(stat $BUILD_LOCK_PARALLEL -c "%Y" 2> /dev/null)
   ct=$(now)
   cdf=$(( ct - cdt ))
 
   if [[ $cdf -gt $LOCK_TIME_MAX_DIFF ]] ; then
-    show "We found lock file created more than 3 hours ago. It's too much time for the usual build process."
-    show "If another build process doesn't occur, you must remove file $BUILD_LOCK_PARALLEL manually."
-    show "We will continue to build when this file will be removed." $YELLOW
+    error "We found lock file created more than 3 hours ago. It's too much time for the usual build process." $YELLOW
+    error "If another build process doesn't occur, you must remove file $BUILD_LOCK_PARALLEL manually." $YELLOW
+    error "We will continue to build when this file will be removed." $YELLOW
   else
-    show "Another parallel build process in progress." $YELLOW
-    show "We will continue to build when another process complete." $YELLOW
+    error "Another parallel build process in progress." $YELLOW
+    error "We will continue to build when another process complete." $YELLOW
   fi
 
   while : ; do
@@ -315,12 +315,16 @@ checkParalellBuildAvailability() {
 }
 
 hasParalellLock() {
-  [[ ! -f $BUILD_LOCK_PARALLEL ]] && return 1
+  [[ ! -e $BUILD_LOCK_PARALLEL ]] && return 1
 
   local pid
   pid=$(cat "$BUILD_LOCK_PARALLEL")
 
-  [[ ! -d "/proc/$pid" ]] && removeParalellLock && return 1
+  if [[ ! -d "/proc/$pid" ]] ; then
+    if removeParalellLock ; then
+      return 1
+    fi
+  fi
 
   return 0
 }
@@ -346,84 +350,84 @@ removeParalellLock() {
 checkArgs() {
   if [[ -n "$key" ]] ; then
     if [[ ! -r "$key" && ! -r "$HOME/.ssh/$key" ]] ; then
-      show "Can't start build process - key file is not readable." $RED
+      error "Can't start build process - key file is not readable." $RED
       doExit $ERROR_ARGS
     fi
   fi
 
   if [[ -n "$parallel" && -z "$remote" ]] ; then
-    show "Can't start build process - remote build server not defined." $RED
+    error "Can't start build process - remote build server not defined." $RED
     doExit $ERROR_ARGS
   fi
 
   if [[ -n "$dest_dir" && ! -d $dest_dir ]] ; then
-    show "Can't start build process - destination directory doesn't exist." $RED
+    error "Can't start build process - destination directory doesn't exist." $RED
     doExit $ERROR_ARGS
   fi
 
   if [[ -n "$dlcache" && ! -d $dlcache ]] ; then
-    show "Can't start build process - download cached directory doesn't exist." $RED
+    error "Can't start build process - download cached directory doesn't exist." $RED
     doExit $ERROR_ARGS
   fi
 
   if [[ -n "$remote" && -z "$host" && ! -r $remote && ! "$remote" =~ \@|\~ && ! "$remote" =~ :[0-9]{1,}$ ]] ; then
-    show "Can't start remote build process - you must define the remote host." $RED
+    error "Can't start remote build process - you must define the remote host." $RED
     doExit $ERROR_ARGS
   fi
 
   if ! checkDeps "git" && [[ -n "$git" ]] ; then
-    show "Can't start build process - for using --git argument, you must install git first." $RED
+    error "Can't start build process - for using --git argument, you must install git first." $RED
     doExit $ERROR_DEPS
   fi
 
   if ! checkDeps "svn" && [[ -n "$svn" ]] ; then
-    show "Can't start build process - for using --svn argument, you must install svn first." $RED
+    error "Can't start build process - for using --svn argument, you must install svn first." $RED
     doExit $ERROR_DEPS
   fi
 
   if ! checkDeps "hg" && [[ -n "$hg" ]] ; then
-    show "Can't start build process - for using --hg argument, you must install hg first." $RED
+    error "Can't start build process - for using --hg argument, you must install hg first." $RED
     doExit $ERROR_DEPS
   fi
 
   if ! checkDeps "bzr" && [[ -n "$bzr" ]] ; then
-    show "Can't start build process - for using --bzr argument, you must install bzr first." $RED
+    error "Can't start build process - for using --bzr argument, you must install bzr first." $RED
     doExit $ERROR_DEPS
   fi
 
   if ! checkDeps "gopack" && [[ -n "$gopack" ]] ; then
-    show "Can't start build process - for using --gopack argument, you must install gopack first." $RED
+    error "Can't start build process - for using --gopack argument, you must install gopack first." $RED
     doExit $ERROR_DEPS
   fi
 
   if ! checkDeps "sshpass" && [[ -n "$pass" ]] ; then
-    show "Can't start build process - for using --pass argument, you must install sshpass first." $RED
+    error "Can't start build process - for using --pass argument, you must install sshpass first." $RED
     doExit $ERROR_DEPS
   fi
 
   if ! checkDeps "rpmbuild" "rpmlint" && [[ -z "$remote" ]] ; then
-    show "Can't start local build process -  you must install rpmbuild and rpmlint first." $RED
+    error "Can't start local build process -  you must install rpmbuild and rpmlint first." $RED
     doExit $ERROR_DEPS
   fi
 
   if ! checkDeps "rpm" && [[ -n "$sign" && -z "$remote" ]] ; then
-    show "Can't start local build process - for signing packages you must install rpm first." $RED
+    error "Can't start local build process - for signing packages you must install rpm first." $RED
     doExit $ERROR_DEPS
   fi
 
   if [[ ! -d $tmp ]] ; then
-    show "Can't start build process - temp directory doesn't exist." $RED
+    error "Can't start build process - temp directory doesn't exist." $RED
     doExit $ERROR_UNKNOWN
   fi
 
   if [[ -n "$dlcache" && ! -d $dlcache ]] ; then
-    show "Can't start build process - download cache directory doesn't exist." $RED
+    error "Can't start build process - download cache directory doesn't exist." $RED
     doExit $ERROR_UNKNOWN
   fi
 
   if [[ -n "$bump" ]] ; then
     if ! checkDeps "rpmdev-packager" "rpmdev-bumpspec" ; then
-      show "Can't start build process - for automatic release bumping you must install
+      error "Can't start build process - for automatic release bumping you must install
       rpmdev-bumpspec and rpmdev-packager (from rpmdevtools package) first." $RED
       doExit $ERROR_DEPS
     fi
@@ -431,7 +435,7 @@ checkArgs() {
     packager=$(rpmdev-packager)
 
     if [[ -z "$packager" ]] ; then
-      show "Can't start build process - for automatic release bumping you must define %packager
+      error "Can't start build process - for automatic release bumping you must define %packager
       (name + email e.g. \"%packager John Smith <mail@smith.com>\") value in file ~/.rpmmacros" $RED
       doExit $ERROR_UNKNOWN
     fi
@@ -600,7 +604,7 @@ makeTemp() {
   tmp_dir=$(mktemp -d "${tmp:?}/$tmp_dir")
 
   if [[ ! -f "$tmp_file" || ! -d "$tmp_dir" ]] ; then
-    show "Can't start build process - temp file can't be created" $RED
+    error "Can't start build process - temp file can't be created" $RED
     doExit $ERROR_UNKNOWN
   fi
 }
@@ -616,7 +620,7 @@ downloadRemoteSources() {
   showSeparator "DOWNLOADING"
 
   if [[ ! -d "$dlcache" ]] ; then
-    show "Can't download sources - download destination directory doesn't exist" $RED
+    error "Can't download sources - download destination directory doesn't exist" $RED
     doExit $ERROR_ARGS
   fi
 
@@ -647,7 +651,7 @@ downloadRemoteSources() {
       downloadSource "$source_file" "$download"
 
       if [[ $? -ne 0 ]] ; then
-        show "Error! Can't download file ${CL_BL_RED}${source_file}${CL_RED}." $RED
+        error "Error! Can't download file ${CL_BL_RED}${source_file}${CL_RED}." $RED
         doExit $ERROR_SOURCE
       fi
 
@@ -731,7 +735,7 @@ remoteRunBuild() {
 
     if [[ $r_line -gt $tlines ]] ; then
       show ""
-      show "Error - file ${CL_BL_RED}${r_file}${CL_RED} don't contain a line with number ${CL_BL_RED}${r_line}${CL_RED}." $RED
+      error "Error - file ${CL_BL_RED}${r_file}${CL_RED} don't contain a line with number ${CL_BL_RED}${r_line}${CL_RED}." $RED
       return 1
     fi
 
@@ -775,11 +779,11 @@ remoteCheckEnv() {
 
   if isRemoteServerReachable "$host" ; then
     if ! isSSHConnectionWorks "$user" "$host" ; then
-      show "Can't connect to host ${CL_BL_RED}${host}${CL_RED}." $RED
+      error "Can't connect to host ${CL_BL_RED}${host}${CL_RED}." $RED
       doExit $ERROR_REMOTE
     fi
   else
-    show "Remote server ${CL_BL_RED}${host}${CL_RED} is not reachable!" $RED
+    error "Remote server ${CL_BL_RED}${host}${CL_RED} is not reachable!" $RED
     doExit $ERROR_REMOTE
   fi
 
@@ -806,7 +810,7 @@ remoteDepsInstall() {
 
   if [[ $? -ne 0 ]] ; then
     show ""
-    show "Can't install required dependencies" $RED
+    error "Can't install required dependencies" $RED
     doExit $ERROR_DEPS
   fi
 
@@ -829,14 +833,14 @@ remoteSpecValidate() {
 
   if [[ -n "$strict" && $(echo "$result" | grep " E: ") ]] ; then
     show ""
-    show "Build canceled because spec has errors and strict mode is enabled" $YELLOW
+    error "Build canceled because spec has errors and strict mode is enabled" $YELLOW
     doExit $ERROR_LINT
   fi
 
   if [[ -n "$pedantic" ]] ; then
     if [[ $(echo "$result" | grep " E: ") || $(echo "$result" | grep " W: ") ]] ; then
       show ""
-      show "Build canceled because spec has errors or warnings and a pedantic mode is enabled" $YELLOW
+      error "Build canceled because spec has errors or warnings and a pedantic mode is enabled" $YELLOW
       doExit $ERROR_LINT
     fi
   fi
@@ -958,13 +962,13 @@ remoteBuildProcess() {
       fi
     fi
   else
-    show "Error! Can't build a package." $RED
+    error "Error! Can't build a package." $RED
 
     if [[ -z "$verbose" ]] ; then
-      show "Last $LOG_QUOTE_SIZE lines from build log:" $RED
+      error "Last $LOG_QUOTE_SIZE lines from build log:" $RED
 
       showSeparator
-      tail -${LOG_QUOTE_SIZE} "$tmp_file"
+      tail -${LOG_QUOTE_SIZE} "$tmp_file" 1>&2
       showSeparator
     fi
 
@@ -1069,7 +1073,7 @@ localDepsInstall() {
 
   if [[ $? -ne 0 ]] ; then
     show ""
-    show "Can't install required dependencies" $RED
+    error "Can't install required dependencies" $RED
     doExit $ERROR_DEPS
   fi
 
@@ -1079,7 +1083,7 @@ localDepsInstall() {
 
 localSpecValidate() {
   if ! checkDeps "rpmlint" ; then
-    show "Can't validate spec file - rpmlint not installed!" $RED
+    error "Can't validate spec file - rpmlint not installed!" $RED
     return 1
   fi
 
@@ -1093,14 +1097,14 @@ localSpecValidate() {
 
   if [[ -n "$strict" && $(echo "$result" | grep " E: ") ]] ; then
     show ""
-    show "Build canceled because spec has errors and strict mode is enabled" $YELLOW
+    error "Build canceled because spec has errors and strict mode is enabled" $YELLOW
     doExit $ERROR_LINT
   fi
 
   if [[ -n "$pedantic" ]] ; then
     if [[ $(echo "$result" | grep " E: ") || $(echo "$result" | grep " W: ") ]] ; then
       show ""
-      show "Build canceled because spec has errors or warnings and a pedantic mode is enabled" $YELLOW
+      error "Build canceled because spec has errors or warnings and a pedantic mode is enabled" $YELLOW
       doExit $ERROR_LINT
     fi
   fi
@@ -1164,13 +1168,13 @@ localBuildProcess() {
       stopStatusObserver
       show ""
 
-      show "Error! Can't build a package." $RED
+      error "Error! Can't build a package." $RED
 
       if [[ -z "$verbose" ]] ; then
-        show "Last $LOG_QUOTE_SIZE lines from build log:" $RED
+        error "Last $LOG_QUOTE_SIZE lines from build log:" $RED
 
         showSeparator
-        tail -${LOG_QUOTE_SIZE} "$tmp_file"
+        tail -${LOG_QUOTE_SIZE} "$tmp_file" 1>&2
         showSeparator
       fi
 
@@ -1182,8 +1186,10 @@ localBuildProcess() {
 
         cp "$tmp_file" "$CWD/$lname"
 
-        show "Build log saved to current directory as ${CL_BL_YELLOW}${lname}" $YELLOW
+        error "Build log saved to current directory as ${CL_BL_YELLOW}${lname}" $YELLOW
       fi
+
+      removeLocalLock
 
       doExit $ERROR_BUILD
     else
@@ -1237,6 +1243,7 @@ localBuildProcess() {
       done
 
       if [[ -n "$has_errors" ]] ; then
+        removeLocalLock
         doExit $ERROR_VALIDATE
       fi
 
@@ -1280,15 +1287,15 @@ checkLocalBuildAvailability() {
 
   local cdt ct cdf
 
-  cdt=$(stat "$BUILD_LOCK_LOCAL" -c "%Y")
+  cdt=$(stat "$BUILD_LOCK_LOCAL" -c "%Y" 2> /dev/null)
   ct=$(now)
   cdf=$(( ct - cdt ))
 
   if [[ $cdf -gt $LOCK_TIME_MAX_DIFF ]] ; then
-    show "We found lock file created more than 3 hours ago. It's too much time for the usual build process."
-    show "If another build process doesn't occur, you must remove file $BUILD_LOCK_LOCAL manually."
-    show "We will continue to build when this file will be removed." $YELLOW
-    show ""
+    error "We found lock file created more than 3 hours ago. It's too much time for the usual build process." $YELLOW
+    error "If another build process doesn't occur, you must remove file $BUILD_LOCK_LOCAL manually." $YELLOW
+    error "We will continue to build when this file will be removed." $YELLOW
+    error ""
   fi
 
   showt "\r${CL_GREEN}Executing:${CL_NORM} ${CL_YELLOW}waiting in queue${CL_NORM}"
@@ -1304,14 +1311,15 @@ checkLocalBuildAvailability() {
 }
 
 hasLocalLock() {
-  [[ ! -f "$BUILD_LOCK_LOCAL" ]] && return 1
+  [[ ! -e "$BUILD_LOCK_LOCAL" ]] && return 1
 
   local pid
   pid=$(cat "$BUILD_LOCK_LOCAL")
 
   if [[ ! -d "/proc/$pid" ]] ; then
-    removeLocalLock
-    return $?
+    if removeLocalLock ; then
+      return 1
+    fi
   fi
 
   return 0
@@ -1368,7 +1376,7 @@ releaseBump() {
   fi
 
   if [[ $? -ne 0 ]] ; then
-    show "Can't bump release - bumpspec return error code" $YELLOW
+    error "Can't bump release - bumpspec return error code" $YELLOW
   fi
 }
 
@@ -1424,7 +1432,7 @@ uploadPackages() {
         show "All rpm packages uploaded to all remote servers" $GREEN
       fi
     else
-      show "Can't read file ${CL_BL_RED}${upload}" $RED
+      error "Can't read file ${CL_BL_RED}${upload}" $RED
       show ""
       show "All rpm packages saved to a directory ${CL_CYAN}${packages_dir}${CL_NORM}"
     fi
@@ -1475,18 +1483,18 @@ uploadPackagesToServer() {
         if [[ $? -eq 0 ]] ; then
           show "Package ${CL_CYAN}$package_name${CL_NORM} uploaded to remote host"
         else
-          show "Can't upload package ${CL_BL_RED}${package_name}${CL_RED} to a directory ${CL_BL_RED}${url_path}${CL_RED} on ${CL_BL_RED}${url_host}${CL_NORM}"
+          error "Can't upload package ${CL_BL_RED}${package_name}${CL_RED} to a directory ${CL_BL_RED}${url_path}${CL_RED} on ${CL_BL_RED}${url_host}${CL_NORM}"
           has_errors=true
         fi
       done
 
       [[ -n "$has_errors" ]] && return 1
     else
-      show "Remote server ${CL_BL_RED}${url_host}${CL_RED} not accessible!" $RED
+      error "Remote server ${CL_BL_RED}${url_host}${CL_RED} not accessible!" $RED
       return 1
     fi
   else
-    show "Remote server ${CL_BL_RED}${url_host}${CL_RED} not accessible!" $RED
+    error "Remote server ${CL_BL_RED}${url_host}${CL_RED} not accessible!" $RED
     return 1
   fi
 
@@ -1500,12 +1508,12 @@ packSources() {
 
   if [[ -n "$source_list" ]] ; then
     if [[ ! -r $source_list ]] ; then
-      show "Can't pack sources - file ${CL_BL_RED}${source_list}${CL_RED} not readable" $RED
+      error "Can't pack sources - file ${CL_BL_RED}${source_list}${CL_RED} not readable" $RED
       doExit $ERROR_SOURCE
     fi
 
     if [[ ! -s $source_list ]] ; then
-      show "Can't pack sources - file ${CL_BL_RED}${source_list}${CL_RED} is empty" $RED
+      error "Can't pack sources - file ${CL_BL_RED}${source_list}${CL_RED} is empty" $RED
       doExit $ERROR_SOURCE
     fi
 
@@ -1517,7 +1525,7 @@ packSources() {
 
   for src_target in $pack ; do
     if [[ ! -a $src_target ]] ; then
-      show "Can't pack sources - ${CL_BL_RED}${src_target}${CL_RED} not exist or not accesable" $RED
+      error "Can't pack sources - ${CL_BL_RED}${src_target}${CL_RED} not exist or not accesable" $RED
       doExit $ERROR_SOURCE
     fi
   done
@@ -1535,7 +1543,7 @@ packSources() {
   fi
 
   if [[ $? -ne 0 ]] ; then
-    show "Can't copy source files to a temporary directory" $RED
+    error "Can't copy source files to a temporary directory" $RED
     doExit 1
   fi
 
@@ -1577,13 +1585,13 @@ packSourcesFromGit() {
     [[ -n "$verbose" ]] && git clone "$git" "$dir_name" | tee -a "$git_log" || git clone "$git" "$dir_name" &> "$git_log"
 
     if [[ $? -ne 0 ]] ; then
-      show "Can't clone repo - error while cloning" $RED
+      error "Can't clone repo - error while cloning" $RED
 
       if [[ -z "$verbose" ]] ; then
-        show ""
-        show "Last ${REPO_LOG_QUOTE_SIZE} lines from log ($git_log):"
-        tail -${REPO_LOG_QUOTE_SIZE} "$git_log"
-        show ""
+        error ""
+        error "Last ${REPO_LOG_QUOTE_SIZE} lines from log ($git_log):"
+        tail -${REPO_LOG_QUOTE_SIZE} "$git_log" 1>&2
+        error ""
       fi
 
       doExit $ERROR_SOURCE
@@ -1597,13 +1605,13 @@ packSourcesFromGit() {
         [[ -n "$verbose" ]] && git checkout "$branch" | tee -a "$git_log" || git checkout "$branch" &> "$git_log"
 
         if [[ $? -ne 0 ]] ; then
-          show "Can't switch branch to ${CL_BL_RED}${branch}${CL_RED}:" $RED
+          error "Can't switch branch to ${CL_BL_RED}${branch}${CL_RED}:" $RED
 
           if [[ -z "$verbose" ]] ; then
-            show ""
-            show "Last ${REPO_LOG_QUOTE_SIZE} lines from log ($git_log):"
-            tail -${REPO_LOG_QUOTE_SIZE} "$git_log"
-            show ""
+            error ""
+            error "Last ${REPO_LOG_QUOTE_SIZE} lines from log ($git_log):"
+            tail -${REPO_LOG_QUOTE_SIZE} "$git_log" 1>&2
+            error ""
           fi
 
           doExit $ERROR_SOURCE
@@ -1614,13 +1622,13 @@ packSourcesFromGit() {
         [[ -n "$verbose" ]] && git checkout "$revision" | tee -a "$git_log" || git checkout "$revision" &> "$git_log"
 
         if [[ $? -ne 0 ]] ; then
-          show "Can't checkout revision ${CL_BL_RED}${revision}${CL_RED}:" $RED
+          error "Can't checkout revision ${CL_BL_RED}${revision}${CL_RED}:" $RED
 
           if [[ -z "$verbose" ]] ; then
-            show ""
-            show "Last ${REPO_LOG_QUOTE_SIZE} lines from log ($git_log):"
-            tail -${REPO_LOG_QUOTE_SIZE} "$git_log"
-            show ""
+            error ""
+            error "Last ${REPO_LOG_QUOTE_SIZE} lines from log ($git_log):"
+            tail -${REPO_LOG_QUOTE_SIZE} "$git_log" 1>&2
+            error ""
           fi
 
           doExit $ERROR_SOURCE
@@ -1631,13 +1639,13 @@ packSourcesFromGit() {
         [[ -n "$verbose" ]] && git checkout "$tag" | tee -a "$git_log" || git checkout "$tag" &> "$git_log"
 
         if [[ $? -ne 0 ]] ; then
-          show "Can't checkout tag ${CL_BL_RED}${tag}${CL_RED}:" $RED
+          error "Can't checkout tag ${CL_BL_RED}${tag}${CL_RED}:" $RED
 
           if [[ -z "$verbose" ]] ; then
-            show ""
-            show "Last ${REPO_LOG_QUOTE_SIZE} lines from log ($git_log):"
-            tail -${REPO_LOG_QUOTE_SIZE} "$git_log"
-            show ""
+            error ""
+            error "Last ${REPO_LOG_QUOTE_SIZE} lines from log ($git_log):"
+            tail -${REPO_LOG_QUOTE_SIZE} "$git_log" 1>&2
+            error ""
           fi
 
           doExit $ERROR_SOURCE
@@ -1654,7 +1662,7 @@ packSourcesFromGit() {
 
     if [[ -n "$path" ]] ; then
       if [[ ! -d "$dir_name/$path" ]] ; then
-        show "Can't find path ${CL_BL_RED}${path}${CL_NORM} in git repository" $RED
+        error "Can't find path ${CL_BL_RED}${path}${CL_NORM} in git repository" $RED
         doExit $ERROR_SOURCE
       else
         mv "$dir_name/$path" "$source_name"
@@ -1704,13 +1712,13 @@ packSourcesFromHg() {
     [[ -n "$verbose" ]] && hg clone "$hg" "$dir_name" | tee -a "$hg_log" || hg clone "$hg" "$dir_name" &> "$hg_log"
 
     if [[ $? -ne 0 ]] ; then
-      show "Can't clone repo - error while cloning" $RED
+      error "Can't clone repo - error while cloning" $RED
 
       if [[ -z "$verbose" ]] ; then
-        show ""
-        show "Last ${REPO_LOG_QUOTE_SIZE} lines from log ($hg_log):"
-        tail -${REPO_LOG_QUOTE_SIZE} "$hg_log"
-        show ""
+        error ""
+        error "Last ${REPO_LOG_QUOTE_SIZE} lines from log ($hg_log):"
+        tail -${REPO_LOG_QUOTE_SIZE} "$hg_log" 1>&2
+        error ""
       fi
 
       doExit $ERROR_SOURCE
@@ -1724,13 +1732,13 @@ packSourcesFromHg() {
         [[ -n "$verbose" ]] && hg checkout "$branch" | tee -a "$hg_log" || hg checkout "$branch" &> "$hg_log"
 
         if [[ $? -ne 0 ]] ; then
-          show "Can't switch branch to ${CL_BL_RED}${branch}${CL_RED}:" $RED
+          error "Can't switch branch to ${CL_BL_RED}${branch}${CL_RED}:" $RED
 
           if [[ -z "$verbose" ]] ; then
-            show ""
-            show "Last ${REPO_LOG_QUOTE_SIZE} lines from log ($hg_log):"
-            tail -${REPO_LOG_QUOTE_SIZE} "$hg_log"
-            show ""
+            error ""
+            error "Last ${REPO_LOG_QUOTE_SIZE} lines from log ($hg_log):"
+            tail -${REPO_LOG_QUOTE_SIZE} "$hg_log" 1>&2
+            error ""
           fi
 
           doExit $ERROR_SOURCE
@@ -1741,13 +1749,13 @@ packSourcesFromHg() {
         [[ -n "$verbose" ]] && hg checkout "$revision" | tee -a "$hg_log" || hg checkout "$revision" &> "$hg_log"
 
         if [[ $? -ne 0 ]] ; then
-          show "Can't checkout revision ${CL_BL_RED}${revision}${CL_RED}:" $RED
+          error "Can't checkout revision ${CL_BL_RED}${revision}${CL_RED}:" $RED
 
           if [[ -z "$verbose" ]] ; then
-            show ""
-            show "Last ${REPO_LOG_QUOTE_SIZE} lines from log ($hg_log):"
-            tail -${REPO_LOG_QUOTE_SIZE} "$hg_log"
-            show ""
+            error ""
+            error "Last ${REPO_LOG_QUOTE_SIZE} lines from log ($hg_log):"
+            tail -${REPO_LOG_QUOTE_SIZE} "$hg_log" 1>&2
+            error ""
           fi
 
           doExit $ERROR_SOURCE
@@ -1758,13 +1766,13 @@ packSourcesFromHg() {
         [[ -n "$verbose" ]] && hg checkout "$tag" | tee -a "$hg_log" || hg checkout "$tag" &> "$hg_log"
 
         if [[ $? -ne 0 ]] ; then
-          show "Can't checkout tag ${CL_BL_RED}${tag}${CL_RED}:" $RED
+          error "Can't checkout tag ${CL_BL_RED}${tag}${CL_RED}:" $RED
 
           if [[ -z "$verbose" ]] ; then
-            show ""
-            show "Last ${REPO_LOG_QUOTE_SIZE} lines from log ($hg_log):"
-            tail -${REPO_LOG_QUOTE_SIZE} "$hg_log"
-            show ""
+            error ""
+            error "Last ${REPO_LOG_QUOTE_SIZE} lines from log ($hg_log):"
+            tail -${REPO_LOG_QUOTE_SIZE} "$hg_log" 1>&2
+            error ""
           fi
 
           doExit $ERROR_SOURCE
@@ -1776,7 +1784,7 @@ packSourcesFromHg() {
 
     if [[ -n "$path" ]] ; then
       if [[ ! -d "$dir_name/$path" ]] ; then
-        show "Can't find path ${CL_BL_RED}${path}${CL_NORM} in mercurial repository" $RED
+        error "Can't find path ${CL_BL_RED}${path}${CL_NORM} in mercurial repository" $RED
         doExit $ERROR_SOURCE
       else
         mv "$dir_name/$path" "$source_name"
@@ -1828,13 +1836,13 @@ packSourcesFromBzr() {
     [[ -n "$verbose" ]] && bzr $bzr_opts branch "$bzr" "$dir_name" | tee -a "$bzr_log" || bzr $bzr_opts branch "$bzr" "$dir_name" &> "$bzr_log"
 
     if [[ $? -ne 0 ]] ; then
-      show "Can't make a copy of the branch" $RED
+      error "Can't make a copy of the branch" $RED
 
       if [[ -z "$verbose" ]] ; then
-        show ""
-        show "Last ${REPO_LOG_QUOTE_SIZE} lines from log ($bzr_log):"
-        tail -${REPO_LOG_QUOTE_SIZE} "$bzr_log"
-        show ""
+        error ""
+        error "Last ${REPO_LOG_QUOTE_SIZE} lines from log ($bzr_log):"
+        tail -${REPO_LOG_QUOTE_SIZE} "$bzr_log" 1>&2
+        error ""
       fi
 
       doExit $ERROR_SOURCE
@@ -1846,13 +1854,13 @@ packSourcesFromBzr() {
         [[ -n "$verbose" ]] && bzr revert -r${revision} | tee -a "$bzr_log" || bzr revert -r${revision} &> "$bzr_log"
 
         if [[ $? -ne 0 ]] ; then
-          show "Can't revert to revision ${CL_BL_RED}${revision}" $RED
+          error "Can't revert to revision ${CL_BL_RED}${revision}" $RED
 
           if [[ -z "$verbose" ]] ; then
-            show ""
-            show "Last ${REPO_LOG_QUOTE_SIZE} lines from log ($bzr_log):"
-            tail -${REPO_LOG_QUOTE_SIZE} "$bzr_log"
-            show ""
+            error ""
+            error "Last ${REPO_LOG_QUOTE_SIZE} lines from log ($bzr_log):"
+            tail -${REPO_LOG_QUOTE_SIZE} "$bzr_log" 1>&2
+            error ""
           fi
 
           doExit $ERROR_SOURCE
@@ -1864,7 +1872,7 @@ packSourcesFromBzr() {
 
     if [[ -n "$path" ]] ; then
       if [[ ! -d "$dir_name/$path" ]] ; then
-        show "Can't find path ${CL_BL_RED}${path}${CL_NORM} in bazaar repository" $RED
+        error "Can't find path ${CL_BL_RED}${path}${CL_NORM} in bazaar repository" $RED
         doExit $ERROR_SOURCE
       else
         mv "$dir_name/$path" "$source_name"
@@ -1945,13 +1953,13 @@ packSourcesFromSvn() {
     fi
 
     if [[ $? -ne 0 ]] ; then
-      show "Can't checkout source code from ${CL_BL_RED}${svn}" $RED
+      error "Can't checkout source code from ${CL_BL_RED}${svn}" $RED
 
       if [[ -z "$verbose" ]] ; then
-        show ""
-        show "Last ${REPO_LOG_QUOTE_SIZE} lines from log ($svn_log):"
-        tail -${REPO_LOG_QUOTE_SIZE} "$svn_log"
-        show ""
+        error ""
+        error "Last ${REPO_LOG_QUOTE_SIZE} lines from log ($svn_log):"
+        tail -${REPO_LOG_QUOTE_SIZE} "$svn_log" 1>&2
+        error ""
       fi
 
       doExit $ERROR_SOURCE
@@ -1960,7 +1968,7 @@ packSourcesFromSvn() {
 
       if [[ -n "$path" ]] ; then
         if [[ ! -d "${source_name}_tmp/$path" ]] ; then
-          show "Can't find path ${CL_BL_RED}${path}${CL_NORM} in svn repository" $RED
+          error "Can't find path ${CL_BL_RED}${path}${CL_NORM} in svn repository" $RED
           doExit $ERROR_SOURCE
         else
           mv "${source_name}_tmp/$path" "$source_name"
@@ -2053,7 +2061,7 @@ processSpec() {
           downloadSource "$source_file" "$dlcache"
 
           if [[ $? -ne 0 ]] ; then
-            show "Error! Can't download file ${CL_BL_RED}${source_file}${CL_RED}." $RED
+            error "Error! Can't download file ${CL_BL_RED}${source_file}${CL_RED}." $RED
             doExit $ERROR_SOURCE
           fi
 
@@ -2065,7 +2073,7 @@ processSpec() {
         downloadSource "$source_file" "$tmp_dir"
 
         if [[ $? -ne 0 ]] ; then
-          show "Error! Can't download file ${CL_BL_RED}${source_file}${CL_RED}." $RED
+          error "Error! Can't download file ${CL_BL_RED}${source_file}${CL_RED}." $RED
           doExit $ERROR_SOURCE
         fi
       fi
@@ -2096,7 +2104,7 @@ processSpec() {
 
         source_num=$(( source_num + 1 )) && continue
       else
-        show "Can't use file ${CL_BL_RED}${source_file}${CL_RED} for build - file not found in sources directory" $RED
+        error "Can't use file ${CL_BL_RED}${source_file}${CL_RED} for build - file not found in sources directory" $RED
         doExit $ERROR_SOURCE
       fi
     fi
@@ -2153,12 +2161,12 @@ copySourcesToBuildDir() {
 
       if [[ $? -ne 0 ]] ; then
         source_file_name=$(basename "$source_file")
-        show "Can't copy source file ${CL_BL_RED}${source_file_name}${CL_RED} to directory ${CL_BL_RED}${src_dir}${CL_RED} - error while copy process" $RED
+        error "Can't copy source file ${CL_BL_RED}${source_file_name}${CL_RED} to directory ${CL_BL_RED}${src_dir}${CL_RED} - error while copy process" $RED
         doExit $ERROR_SOURCE
       fi
     done
   else
-    show "Error! Can't copy source files - directory ${CL_BL_RED}${src_dir}${CL_RED} doesn't exist" $RED
+    error "Error! Can't copy source files - directory ${CL_BL_RED}${src_dir}${CL_RED} doesn't exist" $RED
     doExit $ERROR_SOURCE
   fi
 
@@ -2166,13 +2174,13 @@ copySourcesToBuildDir() {
     cp "$spec" "$specs_dir"
 
     if [[ $? -ne 0 ]] ; then
-      show "Can't copy spec file - error while copy process"
+      error "Can't copy spec file - error while copy process"
       doExit $ERROR_SOURCE
     fi
 
     [[ -n "$bump" ]] && releaseBump "$specs_dir/$spec"
   else
-    show "Error! Can't copy spec file - directory ${CL_BL_RED}${specs_dir}${CL_RED} doesn't exist." $RED
+    error "Error! Can't copy spec file - directory ${CL_BL_RED}${specs_dir}${CL_RED} doesn't exist." $RED
     doExit $ERROR_SOURCE
   fi
 }
@@ -2273,7 +2281,7 @@ packDir() {
     elif [[ "$ext" == "tar.xz" || "$ext" == "txz" ]] ; then
       tar cf - "$dir_name" | xz -9 -c - > "$arch_name.$ext"
     else
-      show "Error! Unknown archive type." $RED
+      error "Error! Unknown archive type." $RED
       doExit $ERROR_SOURCE
     fi
 
@@ -2289,7 +2297,7 @@ downloadSource() {
   file_name=$(basename "$url")
 
   if ! isAccessibleUrl "$url" ; then
-    show "Can't download file ${CL_BL_RED}${file_name}${CL_RED} - server return error code" $RED
+    error "Can't download file ${CL_BL_RED}${file_name}${CL_RED} - server return error code" $RED
     doExit $ERROR_SOURCE
   else
     start=$(now)
@@ -2611,20 +2619,20 @@ validatePackage() {
 
   if rpm -qp --scripts "$rpm_file" 2>&1 | egrep -q '\%\{.*\}' ; then
     has_errors=true
-    show "ERROR\n" $RED
-    show "RPM package ${CL_BL_YELLOW}${rpm_name}${CL_YELLOW} contains unexpanded macroses in scriptlets:" $YELLOW
-    show "${CL_GREY}"
-    rpm -qp --scripts "$rpm_file" 2>&1 | egrep -A1 -B1 '\%\{.*\}' | sed '/^$/d' | sed 's/^/  /g'
-    show "${CL_NORM}"
+    error "ERROR\n" $RED
+    error "RPM package ${CL_BL_YELLOW}${rpm_name}${CL_YELLOW} contains unexpanded macroses in scriptlets:" $YELLOW
+    error "${CL_GREY}"
+    rpm -qp --scripts "$rpm_file" 2>&1 | egrep -A1 -B1 '\%\{.*\}' | sed '/^$/d' | sed 's/^/  /g' 1>&2
+    error "${CL_NORM}"
   fi
 
   if rpm -qlp "$rpm_file" 2>&1 | egrep -q '\%\{.*\}' ; then
     has_errors=true
-    show "ERROR\n" $RED
-    show "RPM package ${CL_BL_YELLOW}${rpm_name}${CL_YELLOW} contains unexpanded macroses in files section:" $YELLOW
-    show "${CL_GREY}"
-    rpm -qlp "$rpm_file" 2>&1 | egrep -A1 -B1 '\%\{.*\}' | sed '/^$/d' | sed 's/^/  /g'
-    show "${CL_NORM}"
+    error "ERROR\n" $RED
+    error "RPM package ${CL_BL_YELLOW}${rpm_name}${CL_YELLOW} contains unexpanded macroses in files section:" $YELLOW
+    error "${CL_GREY}"
+    rpm -qlp "$rpm_file" 2>&1 | egrep -A1 -B1 '\%\{.*\}' | sed '/^$/d' | sed 's/^/  /g' 1>&2
+    error "${CL_NORM}"
   fi
 
   if [[ -z "$has_errors" ]] ; then
@@ -2786,6 +2794,10 @@ showt() {
   echo -e -n "${1}${spaces:0:$adds}"
 }
 
+error() {
+  show "$@" 1>&2
+}
+
 termExit() {
   clean
 
@@ -2805,7 +2817,7 @@ termExit() {
 ###############################################################################
 
 showArgWarn() {
-  show "Error! Unknown argument $1." $RED
+  error "Error! Unknown argument $1." $RED
   doExit 1
 }
 

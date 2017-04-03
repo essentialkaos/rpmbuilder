@@ -2,7 +2,7 @@
 
 Summary:         RPM package build helper
 Name:            rpmbuilder
-Version:         1.7.0
+Version:         1.7.1
 Release:         0%{?dist}
 License:         EKOL
 Group:           Development/Tools
@@ -51,6 +51,11 @@ rm -rf %{buildroot}
 ###############################################################################
 
 %changelog
+* Tue Apr 04 2017 Anton Novojilov <andy@essentialkaos.com> - 1.7.1-0
+- Fixed bug with lack of removing lock file for local build in some cases
+- Fixed bug with wrong message about existing lock file
+- Output errors to stderr
+
 * Thu Mar 23 2017 Anton Novojilov <andy@essentialkaos.com> - 1.7.0-0
 - Added error message if dependencies can't be installed
 - Improved UI
