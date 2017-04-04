@@ -12,39 +12,38 @@ Building redis rpm for CentOS6 on three remote build nodes:
 
 ### Installation
 
-<details>
-<summary><strong>From ESSENTIAL KAOS Public repo for RHEL6/CentOS6</strong></summary>
+#### From ESSENTIAL KAOS Public repo for RHEL6/CentOS6
 ```
-[sudo] yum install -y https://yum.kaos.io/6/release/i386/kaos-repo-7.2-0.el6.noarch.rpm
+[sudo] yum install -y https://yum.kaos.io/6/release/x86_64/kaos-repo-8.0-0.el6.noarch.rpm
 [sudo] yum install rpmbuilder
 ```
 
 Build node:
+
 ```
-[sudo] yum install -y https://yum.kaos.io/6/release/i386/kaos-repo-7.2-0.el6.noarch.rpm
+[sudo] yum install -y https://yum.kaos.io/6/release/x86_64/kaos-repo-8.0-0.el6.noarch.rpm
 [sudo] yum install rpmbuilder-node
 [sudo] passwd builder
 ... change builder user password here
 [sudo] service buildmon start
 ```
-</details>
 
-<details>
-<summary><strong>From ESSENTIAL KAOS Public repo for RHEL7/CentOS7</strong></summary>
+
+#### From ESSENTIAL KAOS Public repo for RHEL7/CentOS7
 ```
-[sudo] yum install -y https://yum.kaos.io/7/release/x86_64/kaos-repo-7.2-0.el7.noarch.rpm
+[sudo] yum install -y https://yum.kaos.io/7/release/x86_64/kaos-repo-8.0-0.el7.noarch.rpm
 [sudo] yum install rpmbuilder
 ```
 
 Build node:
+
 ```
-[sudo] yum install -y https://yum.kaos.io/7/release/x86_64/kaos-repo-7.2-0.el7.noarch.rpm
+[sudo] yum install -y https://yum.kaos.io/7/release/x86_64/kaos-repo-8.0-0.el7.noarch.rpm
 [sudo] yum install rpmbuilder-node
 [sudo] passwd builder
 ... change builder user password here
 [sudo] service buildmon start
 ```
-</details>
 
 Also we have superb [Terrafarm](https://github.com/essentialkaos/terrafarm) utility for starting and managing rpmbuilder-based farm on [DigitalOcean](https://www.digitalocean.com).
 
