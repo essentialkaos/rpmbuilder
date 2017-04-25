@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 
 APP="RPMBuilder"
-VER="1.7.2"
+VER="1.7.3"
 
 ####################################################################
 
@@ -2781,8 +2781,13 @@ error() {
 }
 
 clean() {
-  rm -rf "${tmp_dir:?}"
-  rm -f "$tmp_output"
+  if [[ -e "$tmp_dir" ]] ; then
+    rm -rf "$tmp_dir"
+  fi
+
+  if [[ -e "$tmp_output" ]] ; then
+    rm -f "$tmp_output"
+  fi
 }
 
 doExit() {
