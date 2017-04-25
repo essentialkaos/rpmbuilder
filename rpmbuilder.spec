@@ -2,7 +2,7 @@
 
 Summary:         RPM package build helper
 Name:            rpmbuilder
-Version:         1.7.2
+Version:         1.7.3
 Release:         0%{?dist}
 License:         EKOL
 Group:           Development/Tools
@@ -51,6 +51,9 @@ rm -rf %{buildroot}
 ###############################################################################
 
 %changelog
+* Wed Apr 26 2017 Anton Novojilov <andy@essentialkaos.com> - 1.7.3-0
+- Fixed bug with cleaning temporary data
+
 * Sun Apr 23 2017 Anton Novojilov <andy@essentialkaos.com> - 1.7.2-0
 - Improved signals handling
 - Code refactoring
