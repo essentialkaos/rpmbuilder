@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 
 APP="RPMBuilder"
-VER="1.7.3"
+VER="1.7.4"
 
 ####################################################################
 
@@ -72,6 +72,8 @@ ERROR_VALIDATE=9
 MACRO="name:Name version:Version release:Release url:URL vendor:Vendor epoch:Epoch"
 
 SEPARATOR="----------------------------------------------------------------------------------------"
+
+USER_AGENT="$APP/$VER"
 
 ###############################################################################
 
@@ -2305,7 +2307,7 @@ downloadSource() {
   else
     start=$(now)
 
-    curl -L --max-redirs 10 --progress-bar "$url" -o "$dir/$file_name"
+    curl -A "$USER_AGENT" -L --max-redirs 10 --progress-bar "$url" -o "$dir/$file_name"
 
     end=$(now)
     time_diff=$(( end - start ))
@@ -2384,7 +2386,7 @@ isAccessibleUrl() {
   local status code nosniff size
 
   if [[ "$1" =~ http:|https: ]] ; then
-    status=$(curl -LIs --max-redirs 10 -X GET "$1")
+    status=$(curl -A "$USER_AGENT" -LIs --max-redirs 10 -X GET "$1")
     code=$(echo -e "$status" | grep "HTTP" | cut -f2 -d" " | tail -1)
     nosniff=$(echo -e "$status" | grep "X-Content-Type-Options: nosniff")
 
@@ -2392,7 +2394,7 @@ isAccessibleUrl() {
     # code 404, but we can download this file
     [[ -n $nosniff || "$code" == "200" ]] && return 0 || return 1
   elif [[ "$1" =~ ftp: ]] ; then
-    status=$(curl "$1" -Is)
+    status=$(curl -A "$USER_AGENT" "$1" -Is)
     size=$(echo "$status" | grep "Content-Length" | cut -f2 -d" ")
 
     [[ -n "$size" ]] && return 0 || return 1
