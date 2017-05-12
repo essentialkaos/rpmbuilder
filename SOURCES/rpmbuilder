@@ -664,11 +664,11 @@ downloadRemoteSources() {
     fi
   done
 
-  show ""
-
   if [[ $download_count -ne 0 ]] ; then
-    show "${CL_GREEN}All source files downloaded and stored to a ${CL_BL_GREEN}${dlcache}${CL_GREEN} directory${CL_NORM}"
+    show "\n${CL_GREEN}All source files downloaded and stored to a ${CL_BL_GREEN}${dlcache}${CL_GREEN} directory${CL_NORM}"
   fi
+
+  showSeparator
 }
 
 remoteBuild() {
@@ -1572,6 +1572,10 @@ packSourcesFromGit() {
   sources=($(getSpecValue "$MACRO_SOURCE" "$spec"))
 
   if findSource "${sources[0]}" &>/dev/null ; then
+    if [[ -n "$download" ]] ; then
+      show "File ${CL_CYAN}${sources[0]}${CL_NORM} already created."
+    fi
+
     return
   fi
 
@@ -1699,6 +1703,10 @@ packSourcesFromHg() {
   sources=($(getSpecValue "$MACRO_SOURCE" "$spec"))
 
   if findSource "${sources[0]}" &>/dev/null ; then
+    if [[ -n "$download" ]] ; then
+      show "File ${CL_CYAN}${sources[0]}${CL_NORM} already created."
+    fi
+
     return
   fi
 
@@ -1821,6 +1829,10 @@ packSourcesFromBzr() {
   sources=($(getSpecValue "$MACRO_SOURCE" "$spec"))
 
   if findSource "${sources[0]}" &>/dev/null ; then
+    if [[ -n "$download" ]] ; then
+      show "File ${CL_CYAN}${sources[0]}${CL_NORM} already created."
+    fi
+
     return
   fi
 
@@ -1909,6 +1921,10 @@ packSourcesFromSvn() {
   sources=($(getSpecValue "$MACRO_SOURCE" "$spec"))
 
   if findSource "${sources[0]}" &>/dev/null ; then
+    if [[ -n "$download" ]] ; then
+      show "File ${CL_CYAN}${sources[0]}${CL_NORM} already created."
+    fi
+
     return
   fi
 
@@ -2005,7 +2021,11 @@ packGolangSources() {
 
   sources=($(getSpecValue "$MACRO_SOURCE" "$spec"))
 
-  if findSource "$output" &>/dev/null ; then
+  if findSource "${sources[0]}" &>/dev/null ; then
+    if [[ -n "$download" ]] ; then
+      show "File ${CL_CYAN}${sources[0]}${CL_NORM} already created."
+    fi
+
     return
   fi
 
@@ -2026,9 +2046,17 @@ packGolangSources() {
 
   gopack -M $args
 
-  [[ $? -ne 0 ]] && doExit 1
+  local ec=$?
 
-  echo ""
+  # Remove last new line from gopack output
+  printf "\b"
+
+  if [[ $ec -ne 0 ]] ; then
+    showSeparator
+    doExit 1
+  fi
+
+
 }
 
 processSpec() {
@@ -2737,15 +2765,21 @@ statusObserver() {
 
 showSeparator() {
   local name="$1"
-  local adds
+  local sep adds cols
+
+  cols=$(tput cols)
+
+  for i in $(seq 1 $cols) ; do
+    sep="${sep}-"
+  done
 
   show ""
 
   if [[ -n "$name" ]] ; then
-    adds=$(( ${#SEPARATOR} - ${#name} - 4 ))
-    show "${CL_GREY}--${CL_NORM} ${CL_BOLD}${name}${CL_NORM} ${CL_GREY}${SEPARATOR:0:$adds}${CL_NORM}"
+    adds=$(( ${#sep} - ${#name} - 4 ))
+    show "${CL_GREY}--${CL_NORM} ${CL_BOLD}${name}${CL_NORM} ${CL_GREY}${sep:0:$adds}${CL_NORM}"
   else
-    show "${CL_GREY}${SEPARATOR}${CL_NORM}"
+    show "${CL_GREY}${sep}${CL_NORM}"
   fi
 
   show ""

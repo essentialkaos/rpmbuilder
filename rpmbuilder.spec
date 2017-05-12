@@ -55,6 +55,7 @@ rm -rf %{buildroot}
 - Improved gopack support
 - Improved getting sources from DVCS/VCS
 - Use custom user-agent
+- Full-size separator support
 - Fixed bug with storing golang sources to defined directory
 - Fixed bug with downloading golang sources even if file already exist
 
