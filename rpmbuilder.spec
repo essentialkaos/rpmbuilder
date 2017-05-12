@@ -2,7 +2,7 @@
 
 Summary:         RPM package build helper
 Name:            rpmbuilder
-Version:         1.7.3
+Version:         1.8.0
 Release:         0%{?dist}
 License:         EKOL
 Group:           Development/Tools
@@ -51,6 +51,14 @@ rm -rf %{buildroot}
 ###############################################################################
 
 %changelog
+* Wed May 10 2017 Anton Novojilov <andy@essentialkaos.com> - 1.8.0-0
+- Improved gopack support
+- Improved getting sources from DVCS/VCS
+- Use custom user-agent
+- Full-size separator support
+- Fixed bug with storing golang sources to defined directory
+- Fixed bug with downloading golang sources even if file already exist
+
 * Wed Apr 26 2017 Anton Novojilov <andy@essentialkaos.com> - 1.7.3-0
 - Fixed bug with cleaning temporary data
 

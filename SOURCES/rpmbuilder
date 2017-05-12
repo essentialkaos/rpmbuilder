@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 
 APP="RPMBuilder"
-VER="1.7.3"
+VER="1.8.0"
 
 ####################################################################
 
@@ -72,6 +72,8 @@ ERROR_VALIDATE=9
 MACRO="name:Name version:Version release:Release url:URL vendor:Vendor epoch:Epoch"
 
 SEPARATOR="----------------------------------------------------------------------------------------"
+
+USER_AGENT="$APP/$VER"
 
 ###############################################################################
 
@@ -662,11 +664,11 @@ downloadRemoteSources() {
     fi
   done
 
-  show ""
-
   if [[ $download_count -ne 0 ]] ; then
-    show "${CL_GREEN}All source files downloaded and stored to a ${CL_BL_GREEN}${dlcache}${CL_GREEN} directory${CL_NORM}"
+    show "\n${CL_GREEN}All source files downloaded and stored to a ${CL_BL_GREEN}${dlcache}${CL_GREEN} directory${CL_NORM}"
   fi
+
+  showSeparator
 }
 
 remoteBuild() {
@@ -679,11 +681,11 @@ remoteBuild() {
     $($pre)
   fi
 
-  [[ -n "$git" ]]    && packSourcesFromGit "$spec" && show ""
-  [[ -n "$svn" ]]    && packSourcesFromSvn "$spec" && show ""
-  [[ -n "$bzr" ]]    && packSourcesFromBzr "$spec" && show ""
-  [[ -n "$hg" ]]     && packSourcesFromHg  "$spec" && show ""
-  [[ -n "$gopack" ]] && packGolangSources  "$spec" && show ""
+  [[ -n "$git" ]]    && packSourcesFromGit "$spec"
+  [[ -n "$svn" ]]    && packSourcesFromSvn "$spec"
+  [[ -n "$bzr" ]]    && packSourcesFromBzr "$spec"
+  [[ -n "$hg" ]]     && packSourcesFromHg  "$spec"
+  [[ -n "$gopack" ]] && packGolangSources  "$spec"
 
   [[ -n "$repo_spec" ]] && spec="$repo_spec"
 
@@ -1031,11 +1033,11 @@ localBuild() {
     $($pre)
   fi
 
-  [[ -n "$git" ]]    && packSourcesFromGit "$spec" && show ""
-  [[ -n "$svn" ]]    && packSourcesFromSvn "$spec" && show ""
-  [[ -n "$bzr" ]]    && packSourcesFromBzr "$spec" && show ""
-  [[ -n "$hg" ]]     && packSourcesFromHg  "$spec" && show ""
-  [[ -n "$gopack" ]] && packGolangSources  "$spec" && show ""
+  [[ -n "$git" ]]    && packSourcesFromGit "$spec"
+  [[ -n "$svn" ]]    && packSourcesFromSvn "$spec"
+  [[ -n "$bzr" ]]    && packSourcesFromBzr "$spec"
+  [[ -n "$hg" ]]     && packSourcesFromHg  "$spec"
+  [[ -n "$gopack" ]] && packGolangSources  "$spec"
 
   [[ -n "$repo_spec" ]] && spec="$repo_spec"
 
@@ -1569,7 +1571,11 @@ packSourcesFromGit() {
   spec=$(getAbsPath "$1")
   sources=($(getSpecValue "$MACRO_SOURCE" "$spec"))
 
-  if [[ -n $(findSource "${sources[0]}") ]] ; then
+  if findSource "${sources[0]}" &>/dev/null ; then
+    if [[ -n "$download" ]] ; then
+      show "File ${CL_CYAN}${sources[0]}${CL_NORM} already created."
+    fi
+
     return
   fi
 
@@ -1687,7 +1693,7 @@ packSourcesFromGit() {
 
   popd &> /dev/null
 
-  show "Source files from ${CL_BOLD}git${CL_NORM} repo packed as ${CL_CYAN}${source_name}.${source_ext}${CL_NORM}"
+  show "Source files from ${CL_BOLD}git${CL_NORM} repo packed as ${CL_CYAN}${source_name}.${source_ext}${CL_NORM}\n"
 }
 
 packSourcesFromHg() {
@@ -1696,7 +1702,11 @@ packSourcesFromHg() {
   spec=$(getAbsPath "$1")
   sources=($(getSpecValue "$MACRO_SOURCE" "$spec"))
 
-  if [[ -n $(findSource "${sources[0]}") ]] ; then
+  if findSource "${sources[0]}" &>/dev/null ; then
+    if [[ -n "$download" ]] ; then
+      show "File ${CL_CYAN}${sources[0]}${CL_NORM} already created."
+    fi
+
     return
   fi
 
@@ -1809,7 +1819,7 @@ packSourcesFromHg() {
 
   popd &> /dev/null
 
-  show "Source files from ${CL_BOLD}hg${CL_NORM} repo packed as ${CL_CYAN}${source_name}.${source_ext}${CL_NORM}"
+  show "Source files from ${CL_BOLD}hg${CL_NORM} repo packed as ${CL_CYAN}${source_name}.${source_ext}${CL_NORM}\n"
 }
 
 packSourcesFromBzr() {
@@ -1818,7 +1828,11 @@ packSourcesFromBzr() {
   spec=$(getAbsPath "$1")
   sources=($(getSpecValue "$MACRO_SOURCE" "$spec"))
 
-  if [[ -n $(findSource "${sources[0]}") ]] ; then
+  if findSource "${sources[0]}" &>/dev/null ; then
+    if [[ -n "$download" ]] ; then
+      show "File ${CL_CYAN}${sources[0]}${CL_NORM} already created."
+    fi
+
     return
   fi
 
@@ -1897,7 +1911,7 @@ packSourcesFromBzr() {
 
   popd &> /dev/null
 
-  show "Source files from ${CL_BOLD}bzr${CL_NORM} repo packed as ${CL_CYAN}${source_name}.${source_ext}${CL_NORM}"
+  show "Source files from ${CL_BOLD}bzr${CL_NORM} repo packed as ${CL_CYAN}${source_name}.${source_ext}${CL_NORM}\n"
 }
 
 packSourcesFromSvn() {
@@ -1906,7 +1920,11 @@ packSourcesFromSvn() {
   spec=$(getAbsPath "$1")
   sources=($(getSpecValue "$MACRO_SOURCE" "$spec"))
 
-  if [[ -n $(findSource "${sources[0]}") ]] ; then
+  if findSource "${sources[0]}" &>/dev/null ; then
+    if [[ -n "$download" ]] ; then
+      show "File ${CL_CYAN}${sources[0]}${CL_NORM} already created."
+    fi
+
     return
   fi
 
@@ -1994,7 +2012,7 @@ packSourcesFromSvn() {
 
   popd &> /dev/null
 
-  show "Source files from ${CL_BOLD}svn${CL_NORM} repo packed as ${CL_CYAN}${source_name}.${source_ext}${CL_NORM}"
+  show "Source files from ${CL_BOLD}svn${CL_NORM} repo packed as ${CL_CYAN}${source_name}.${source_ext}${CL_NORM}\n"
 }
 
 packGolangSources() {
@@ -2003,15 +2021,18 @@ packGolangSources() {
 
   sources=($(getSpecValue "$MACRO_SOURCE" "$spec"))
 
-  if [[ -n "$source_dir" ]] ; then
-    output="${source_dir}/${sources[0]}"
-  else
-    output="${sources[0]}"
+  if findSource "${sources[0]}" &>/dev/null ; then
+    if [[ -n "$download" ]] ; then
+      show "File ${CL_CYAN}${sources[0]}${CL_NORM} already created."
+    fi
+
+    return
   fi
 
-  if [[ -e $output ]] ; then
-    show "File ${CL_CYAN}${sources[0]}${CL_NORM} already created"
-    return
+  if [[ -n "$download" ]] ; then
+    output="${download}/${sources[0]}"
+  else
+    output="${sources[0]}"
   fi
 
   args="-o $output"
@@ -2023,9 +2044,19 @@ packGolangSources() {
 
   args="$args $gopack"
 
-  gopack $args
+  gopack -M $args
 
-  [[ $? -ne 0 ]] && doExit 1
+  local ec=$?
+
+  # Remove last new line from gopack output
+  printf "\b"
+
+  if [[ $ec -ne 0 ]] ; then
+    showSeparator
+    doExit 1
+  fi
+
+
 }
 
 processSpec() {
@@ -2305,7 +2336,7 @@ downloadSource() {
   else
     start=$(now)
 
-    curl -L --max-redirs 10 --progress-bar "$url" -o "$dir/$file_name"
+    curl -A "$USER_AGENT" -L --max-redirs 10 --progress-bar "$url" -o "$dir/$file_name"
 
     end=$(now)
     time_diff=$(( end - start ))
@@ -2384,7 +2415,7 @@ isAccessibleUrl() {
   local status code nosniff size
 
   if [[ "$1" =~ http:|https: ]] ; then
-    status=$(curl -LIs --max-redirs 10 -X GET "$1")
+    status=$(curl -A "$USER_AGENT" -LIs --max-redirs 10 -X GET "$1")
     code=$(echo -e "$status" | grep "HTTP" | cut -f2 -d" " | tail -1)
     nosniff=$(echo -e "$status" | grep "X-Content-Type-Options: nosniff")
 
@@ -2392,7 +2423,7 @@ isAccessibleUrl() {
     # code 404, but we can download this file
     [[ -n $nosniff || "$code" == "200" ]] && return 0 || return 1
   elif [[ "$1" =~ ftp: ]] ; then
-    status=$(curl "$1" -Is)
+    status=$(curl -A "$USER_AGENT" "$1" -Is)
     size=$(echo "$status" | grep "Content-Length" | cut -f2 -d" ")
 
     [[ -n "$size" ]] && return 0 || return 1
@@ -2734,15 +2765,21 @@ statusObserver() {
 
 showSeparator() {
   local name="$1"
-  local adds
+  local sep adds cols
+
+  cols=$(tput cols)
+
+  for i in $(seq 1 $cols) ; do
+    sep="${sep}-"
+  done
 
   show ""
 
   if [[ -n "$name" ]] ; then
-    adds=$(( ${#SEPARATOR} - ${#name} - 4 ))
-    show "${CL_GREY}--${CL_NORM} ${CL_BOLD}${name}${CL_NORM} ${CL_GREY}${SEPARATOR:0:$adds}${CL_NORM}"
+    adds=$(( ${#sep} - ${#name} - 4 ))
+    show "${CL_GREY}--${CL_NORM} ${CL_BOLD}${name}${CL_NORM} ${CL_GREY}${sep:0:$adds}${CL_NORM}"
   else
-    show "${CL_GREY}${SEPARATOR}${CL_NORM}"
+    show "${CL_GREY}${sep}${CL_NORM}"
   fi
 
   show ""
