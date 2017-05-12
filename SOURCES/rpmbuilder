@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 
 APP="RPMBuilder"
-VER="1.7.4"
+VER="1.8.0"
 
 ####################################################################
 
@@ -681,11 +681,11 @@ remoteBuild() {
     $($pre)
   fi
 
-  [[ -n "$git" ]]    && packSourcesFromGit "$spec" && show ""
-  [[ -n "$svn" ]]    && packSourcesFromSvn "$spec" && show ""
-  [[ -n "$bzr" ]]    && packSourcesFromBzr "$spec" && show ""
-  [[ -n "$hg" ]]     && packSourcesFromHg  "$spec" && show ""
-  [[ -n "$gopack" ]] && packGolangSources  "$spec" && show ""
+  [[ -n "$git" ]]    && packSourcesFromGit "$spec"
+  [[ -n "$svn" ]]    && packSourcesFromSvn "$spec"
+  [[ -n "$bzr" ]]    && packSourcesFromBzr "$spec"
+  [[ -n "$hg" ]]     && packSourcesFromHg  "$spec"
+  [[ -n "$gopack" ]] && packGolangSources  "$spec"
 
   [[ -n "$repo_spec" ]] && spec="$repo_spec"
 
@@ -1033,11 +1033,11 @@ localBuild() {
     $($pre)
   fi
 
-  [[ -n "$git" ]]    && packSourcesFromGit "$spec" && show ""
-  [[ -n "$svn" ]]    && packSourcesFromSvn "$spec" && show ""
-  [[ -n "$bzr" ]]    && packSourcesFromBzr "$spec" && show ""
-  [[ -n "$hg" ]]     && packSourcesFromHg  "$spec" && show ""
-  [[ -n "$gopack" ]] && packGolangSources  "$spec" && show ""
+  [[ -n "$git" ]]    && packSourcesFromGit "$spec"
+  [[ -n "$svn" ]]    && packSourcesFromSvn "$spec"
+  [[ -n "$bzr" ]]    && packSourcesFromBzr "$spec"
+  [[ -n "$hg" ]]     && packSourcesFromHg  "$spec"
+  [[ -n "$gopack" ]] && packGolangSources  "$spec"
 
   [[ -n "$repo_spec" ]] && spec="$repo_spec"
 
@@ -1571,7 +1571,7 @@ packSourcesFromGit() {
   spec=$(getAbsPath "$1")
   sources=($(getSpecValue "$MACRO_SOURCE" "$spec"))
 
-  if [[ -n $(findSource "${sources[0]}") ]] ; then
+  if findSource "${sources[0]}" &>/dev/null ; then
     return
   fi
 
@@ -1689,7 +1689,7 @@ packSourcesFromGit() {
 
   popd &> /dev/null
 
-  show "Source files from ${CL_BOLD}git${CL_NORM} repo packed as ${CL_CYAN}${source_name}.${source_ext}${CL_NORM}"
+  show "Source files from ${CL_BOLD}git${CL_NORM} repo packed as ${CL_CYAN}${source_name}.${source_ext}${CL_NORM}\n"
 }
 
 packSourcesFromHg() {
@@ -1698,7 +1698,7 @@ packSourcesFromHg() {
   spec=$(getAbsPath "$1")
   sources=($(getSpecValue "$MACRO_SOURCE" "$spec"))
 
-  if [[ -n $(findSource "${sources[0]}") ]] ; then
+  if findSource "${sources[0]}" &>/dev/null ; then
     return
   fi
 
@@ -1811,7 +1811,7 @@ packSourcesFromHg() {
 
   popd &> /dev/null
 
-  show "Source files from ${CL_BOLD}hg${CL_NORM} repo packed as ${CL_CYAN}${source_name}.${source_ext}${CL_NORM}"
+  show "Source files from ${CL_BOLD}hg${CL_NORM} repo packed as ${CL_CYAN}${source_name}.${source_ext}${CL_NORM}\n"
 }
 
 packSourcesFromBzr() {
@@ -1820,7 +1820,7 @@ packSourcesFromBzr() {
   spec=$(getAbsPath "$1")
   sources=($(getSpecValue "$MACRO_SOURCE" "$spec"))
 
-  if [[ -n $(findSource "${sources[0]}") ]] ; then
+  if findSource "${sources[0]}" &>/dev/null ; then
     return
   fi
 
@@ -1899,7 +1899,7 @@ packSourcesFromBzr() {
 
   popd &> /dev/null
 
-  show "Source files from ${CL_BOLD}bzr${CL_NORM} repo packed as ${CL_CYAN}${source_name}.${source_ext}${CL_NORM}"
+  show "Source files from ${CL_BOLD}bzr${CL_NORM} repo packed as ${CL_CYAN}${source_name}.${source_ext}${CL_NORM}\n"
 }
 
 packSourcesFromSvn() {
@@ -1908,7 +1908,7 @@ packSourcesFromSvn() {
   spec=$(getAbsPath "$1")
   sources=($(getSpecValue "$MACRO_SOURCE" "$spec"))
 
-  if [[ -n $(findSource "${sources[0]}") ]] ; then
+  if findSource "${sources[0]}" &>/dev/null ; then
     return
   fi
 
@@ -1996,7 +1996,7 @@ packSourcesFromSvn() {
 
   popd &> /dev/null
 
-  show "Source files from ${CL_BOLD}svn${CL_NORM} repo packed as ${CL_CYAN}${source_name}.${source_ext}${CL_NORM}"
+  show "Source files from ${CL_BOLD}svn${CL_NORM} repo packed as ${CL_CYAN}${source_name}.${source_ext}${CL_NORM}\n"
 }
 
 packGolangSources() {
@@ -2005,15 +2005,14 @@ packGolangSources() {
 
   sources=($(getSpecValue "$MACRO_SOURCE" "$spec"))
 
-  if [[ -n "$source_dir" ]] ; then
-    output="${source_dir}/${sources[0]}"
-  else
-    output="${sources[0]}"
+  if findSource "$output" &>/dev/null ; then
+    return
   fi
 
-  if [[ -e $output ]] ; then
-    show "File ${CL_CYAN}${sources[0]}${CL_NORM} already created"
-    return
+  if [[ -n "$download" ]] ; then
+    output="${download}/${sources[0]}"
+  else
+    output="${sources[0]}"
   fi
 
   args="-o $output"
@@ -2025,9 +2024,11 @@ packGolangSources() {
 
   args="$args $gopack"
 
-  gopack $args
+  gopack -M $args
 
   [[ $? -ne 0 ]] && doExit 1
+
+  echo ""
 }
 
 processSpec() {
