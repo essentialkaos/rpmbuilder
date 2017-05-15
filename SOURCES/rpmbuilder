@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 
 APP="RPMBuilder"
-VER="1.8.0"
+VER="1.8.1"
 
 ####################################################################
 
@@ -84,8 +84,8 @@ SUPPORTED_ARGS="remote !parallel host user pass key source_dir source_list
  pre post dest dest_dir upload git svn hg bzr branch revision tag svn_user 
  svn_pass path !bump bump_comment tmp dlcache !depinstall !dep_install github 
  bitbucket launchpad with without define output !verbose !help !usage !ver 
- !version !raw_version qa_rpaths !tmuxl !no_colors !keep_log !notify arch 
- download !relative_pack enable_repo disable_repo gopack"
+ !version !raw_version qa_rpaths !tmux_worker !no_colors !keep_log !notify 
+ arch download !relative_pack enable_repo disable_repo gopack"
 
 SHORT_ARGS="r:remote P:!parallel hh:host uu:user pp:pass kk:key sd:source_dir 
  sl:source_list nb:!no_build nc:!no_clean nd:!no_deps nr:!no_binary ns:!no_source 
@@ -276,10 +276,10 @@ parallelBuild() {
     serv_name=$(echo "$serv" | cut -f2 -d"@")
 
     if [[ -z "$sess" ]] ; then
-      tmux new-session -s "rpmbuilder" -d "$0 $args -r $serv --tmuxl" >/dev/null 2>&1
+      tmux new-session -s "rpmbuilder" -d "$0 $args -r $serv --tmux-worker" >/dev/null 2>&1
       sess=true
     else
-      tmux split-window "$0 $args -r $serv --tmuxl" >/dev/null 2>&1
+      tmux split-window "$0 $args -r $serv --tmux-worker" >/dev/null 2>&1
     fi
   done < "$remote"
 
@@ -2341,7 +2341,7 @@ downloadSource() {
     end=$(now)
     time_diff=$(( end - start ))
 
-    if [[ -z "$tmuxl" && -z "$dlcache" && $time_diff -gt $LONG_DOWNLOADING ]] ; then
+    if [[ -z "$tmux_worker" && -z "$dlcache" && $time_diff -gt $LONG_DOWNLOADING ]] ; then
       show ""
       show "HINT: Downloading took more than $LONG_DOWNLOADING seconds. We strongly recommend use download" $YELLOW
       show "cache feature in this case. Use -dc <path> or --dlcache <path>." $YELLOW
@@ -2767,7 +2767,11 @@ showSeparator() {
   local name="$1"
   local sep adds cols
 
-  cols=$(tput cols)
+  if [[ -n "$tmux_worker" ]] ; then
+    cols=$(tmux display-message -p "#{window_width}")
+  else
+    cols=$(tput cols)
+  fi
 
   for i in $(seq 1 $cols) ; do
     sep="${sep}-"
@@ -2832,7 +2836,7 @@ doExit() {
 
   stopStatusObserver
 
-  if [[ -n "$tmuxl" ]] ; then
+  if [[ -n "$tmux_worker" ]] ; then
     if [[ -z "$1" || "$1" == "0" ]] ; then
       sleep $TMUX_OK_SLEEP
     else
