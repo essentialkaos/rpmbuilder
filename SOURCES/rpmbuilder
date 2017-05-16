@@ -88,12 +88,12 @@ SUPPORTED_ARGS="remote !parallel host user pass key source_dir source_list
  arch download !relative_pack enable_repo disable_repo gopack"
 
 SHORT_ARGS="r:remote P:!parallel hh:host uu:user pp:pass kk:key sd:source_dir 
- sl:source_list nb:!no_build nc:!no_clean nd:!no_deps nr:!no_binary ns:!no_source 
+ sl:source_list NB:!no_build NC:!no_clean ND:!no_deps NR:!no_binary NS:!no_source 
  p:pack 0:!no_lint 1:!strict 2:!pedantic pr:pre ps:post d:dest u:upload 
  su:svn_user sp:svn_pass rp:path b:!bump bc:bump_comment dc:dlcache 
  di:!depinstall rb:branch rt:tag rr:revision gh:github bb:bitbucket lp:launchpad 
  w:with W:without s:!sign D:define O:output V:!verbose h:help v:!version 
- C:!no_colors kl:!keep_log n:!notify a:arch dl:download R:relative_pack 
+ nc:!no_colors kl:!keep_log n:!notify a:arch dl:download R:relative_pack 
  ER:enable_repo DR:disable_repo G:gopack"
 
 INSPEC_ARGS="git svn hg bzr branch revision tag svn_user svn_pass github 
@@ -2817,6 +2817,30 @@ showt() {
   echo -e -n "${1}${spaces:0:$adds}"
 }
 
+showo() {
+  local optn optd optp optt optf breadcrumbs
+
+  optn="$1"
+  optd="$2"
+  optp="$3"
+
+  if [[ -n "$DARK" ]] ; then
+    breadcrumbs="............................"
+  else
+    breadcrumbs="                            "
+  fi
+
+  if [[ -z "$optp" ]] ; then
+    optt="$optn"
+    optf=$(( 31 - ${#optt} ))
+    echo -e "  ${CL_GREEN}${optn}${CL_NORM} ${CL_DARK}${breadcrumbs:0:$optf}${CL_NORM} $optd"
+  else
+    optt="$optn $optp"
+    optf=$(( 31 - ${#optt} ))
+    echo -e "  ${CL_GREEN}${optn}${CL_NORM} ${CL_GREY}${optp}${CL_NORM} ${CL_DARK}${breadcrumbs:0:$optf}${CL_NORM} $optd"
+  fi
+}
+
 error() {
   show "$@" 1>&2
 }
@@ -2882,35 +2906,34 @@ usage() {
   show ""
   show "Source packaging:" $BOLD
   show ""
-  show "  ${CL_GREEN}--pack, -p${CL_NORM} ${CL_GREY}files${CL_NORM}           Pack specified files to archive with default source name ${CL_DARK}(mergeable)${CL_NORM}"
-  show "  ${CL_GREEN}--relative-pack, -R${CL_NORM}        Use relative path in source archive instead of absolute"
-  show "  ${CL_GREEN}--source-dir, -sd${CL_NORM} ${CL_GREY}path${CL_NORM}     Path to a directory which contains source files specified in spec file"
-  show "  ${CL_GREEN}--source-list, -sl${CL_NORM} ${CL_GREY}file${CL_NORM}    Path to file which contains a list of source files specified in spec file,"
-  show "                             and will be packed to archive with default source name"
-  show "  ${CL_GREEN}--dlcache, -dc${CL_NORM} ${CL_GREY}path${CL_NORM}        Path to a directory for downloads caching"
-  show "  ${CL_GREEN}--download, -dl${CL_NORM} ${CL_GREY}path${CL_NORM}       Download all remote sources to a specified directory"
+  showo "--pack, -p" "Pack specified files to archive with default source name ${CL_DARK}(mergeable)${CL_NORM}" "files"
+  showo "--relative-pack, -R" "Use relative path in source archive instead of absolute"
+  showo "--source-dir, -sd" "Path to a directory which contains source files specified in spec file" "path"
+  showo "--source-list, -sl" "Path to file which contains a list of source files specified in spec file" "file"
+  showo "--dlcache, -dc" "Path to a directory for downloads caching" "dir"
+  showo "--download, -dl" "Download all remote sources to a specified directory" "dir"
   show ""
-  show "  ${CL_GREEN}--git${CL_NORM} ${CL_GREY}url${CL_NORM}                   Fetch sources from Git repository ${CL_DARK}(macro supported)${CL_NORM}"
-  show "  ${CL_GREEN}--svn${CL_NORM} ${CL_GREY}url${CL_NORM}                   Fetch sources from SVN repository ${CL_DARK}(macro supported)${CL_NORM}"
-  show "  ${CL_GREEN}--hg${CL_NORM} ${CL_GREY}url${CL_NORM}                    Fetch sources from Mercurial repository ${CL_DARK}(macro supported)${CL_NORM}"
-  show "  ${CL_GREEN}--bzr${CL_NORM} ${CL_GREY}url${CL_NORM}                   Fetch sources from Bazar repository ${CL_DARK}(macro supported)${CL_NORM}"
-  show "  ${CL_GREEN}--path, -rp${CL_NORM} ${CL_GREY}path${CL_NORM}            Path to a directory with sources in repository"
-  show "  ${CL_GREEN}--branch, -rb${CL_NORM} ${CL_GREY}name${CL_NORM}          Use specified repository branch ${CL_DARK}(macro supported)${CL_NORM}"
-  show "  ${CL_GREEN}--revision, -rr${CL_NORM} ${CL_GREY}name${CL_NORM}        Use specified revision"
-  show "  ${CL_GREEN}--tag, -rt${CL_NORM} ${CL_GREY}name${CL_NORM}             Use specified tag ${CL_DARK}(macro supported)${CL_NORM}"
-  show "  ${CL_GREEN}--svn-user, -su${CL_NORM} ${CL_GREY}username${CL_NORM}    Username for access to svn repository"
-  show "  ${CL_GREEN}--svn-pass, -sp${CL_NORM} ${CL_GREY}password${CL_NORM}    Password for access to svn repository"
+  showo "--git" "Fetch sources from Git repository ${CL_DARK}(macro supported)${CL_NORM}" "url"
+  showo "--svn" "Fetch sources from SVN repository ${CL_DARK}(macro supported)${CL_NORM}" "url"
+  showo "--hg" "Fetch sources from Mercurial repository ${CL_DARK}(macro supported)${CL_NORM}" "url"
+  showo "--bzr" "Fetch sources from Bazar repository ${CL_DARK}(macro supported)${CL_NORM}" "url"
+  showo "--path, -rp" "Path to a directory with sources in repository" "path"
+  showo "--branch, -rb" "Use specified repository branch ${CL_DARK}(macro supported)${CL_NORM}" "branch"
+  showo "--revision, -rr" "Use specified revision" "rev"
+  showo "--tag, -rt" "Use specified tag ${CL_DARK}(macro supported)${CL_NORM}" "tag"
+  showo "--svn-user, -su" "Username for access to SVN repository" "username"
+  showo "--svn-pass, -sp" "Password for access to SVN repository" "password"
   show ""
-  show "  ${CL_GREEN}--github, -gh${CL_NORM} ${CL_GREY}url${CL_NORM}                  Fetch sources from github.com repository by url ${CL_DARK}(macro supported)${CL_NORM}"
-  show "  ${CL_GREEN}--github, -gh${CL_NORM} ${CL_GREY}user:project${CL_NORM}         Fetch sources from github.com repository by user and project"
-  show "  ${CL_GREEN}--github, -gh${CL_NORM} ${CL_GREY}user/project${CL_NORM}         Fetch sources from github.com repository by user and project"
-  show "  ${CL_GREEN}--bitbucket, -bb${CL_NORM} ${CL_GREY}url${CL_NORM}               Fetch sources from bitbucket.org repository by url ${CL_DARK}(macro supported)${CL_NORM}"
-  show "  ${CL_GREEN}--bitbucket, -bb${CL_NORM} ${CL_GREY}user:project${CL_NORM}      Fetch sources from bitbucket.org repository by user and project"
-  show "  ${CL_GREEN}--bitbucket, -bb${CL_NORM} ${CL_GREY}user/project${CL_NORM}      Fetch sources from bitbucket.org repository by user and project"
-  show "  ${CL_GREEN}--launchpad, -lp${CL_NORM} ${CL_GREY}url${CL_NORM}               Fetch sources from launchpad.net repository by url ${CL_DARK}(macro supported)${CL_NORM}"
-  show "  ${CL_GREEN}--launchpad, -lp${CL_NORM} ${CL_GREY}project-name${CL_NORM}      Fetch sources from launchpad.net repository by project name"
+  showo "--github, -gh" "Fetch sources from github.com repository by url ${CL_DARK}(macro supported)${CL_NORM}" "url"
+  showo "--github, -gh" "Fetch sources from github.com repository by user and project" "user:project"
+  showo "--github, -gh" "Fetch sources from github.com repository by user and project" "user/project"
+  showo "--bitbucket, -bb" "Fetch sources from bitbucket.org repository by url ${CL_DARK}(macro supported)${CL_NORM}" "url"
+  showo "--bitbucket, -bb" "Fetch sources from bitbucket.org repository by user and project" "user:project"
+  showo "--bitbucket, -bb" "Fetch sources from bitbucket.org repository by user and project" "user/project"
+  showo "--launchpad, -lp" "Fetch sources from launchpad.net repository by url ${CL_DARK}(macro supported)${CL_NORM}" "url"
+  showo "--launchpad, -lp" "Fetch sources from launchpad.net repository by project name" "project-name"
   show ""
-  show "  ${CL_GREEN}--gopack, -G${CL_NORM} ${CL_GREY}url${CL_NORM}  Fetch and pack golang sources using gopack"
+  showo "--gopack, -G" "Fetch and pack golang sources using gopack" "url"
   show ""
   show "  Examples:" $BOLD
   show ""
@@ -2928,20 +2951,20 @@ usage() {
   show ""
   show "Dependencies install:" $BOLD
   show ""
-  show "  ${CL_GREEN}--dep-install, --depinstall, -di${CL_NORM}     Automatically install build dependencies before build process"
-  show "  ${CL_GREEN}--enable-repo, -ER${CL_NORM} ${CL_GREY}repo-name${CL_NORM}         Enable repositories ${CL_DARK}(mergeable)${CL_NORM}"
-  show "  ${CL_GREEN}--disable-repo, -DR${CL_NORM} ${CL_GREY}repo-name${CL_NORM}        Disable repositories ${CL_DARK}(mergeable)${CL_NORM}"
+  showo "--dep-install, -di" "Automatically install build dependencies before build process"
+  showo "--enable-repo, -ER" "Enable repositories ${CL_DARK}(mergeable)${CL_NORM}" "repo-name"
+  showo "--disable-repo, -DR" "Disable repositories ${CL_DARK}(mergeable)${CL_NORM}" "repo-name"
   show ""
   show "Remote build:" $BOLD
   show ""
-  show "  ${CL_GREEN}--parallel, -P${CL_NORM}                 Parallel build on all build servers in same time"
-  show "  ${CL_GREEN}--remote, -r${CL_NORM}                   Build rpm package on remote server"
-  show "  ${CL_GREEN}--remote, -r${CL_NORM} ${CL_GREY}user:pass@host${CL_NORM}    Build rpm package on the remote server with specified host, username and password"
-  show "  ${CL_GREEN}--remote, -r${CL_NORM} ${CL_GREY}file${CL_NORM}              Build rpm package on the remote servers listed in specified file"
-  show "  ${CL_GREEN}--host, -hh${CL_NORM} ${CL_GREY}host${CL_NORM}               Remote host IP or domain name"
-  show "  ${CL_GREEN}--user, -uu${CL_NORM} ${CL_GREY}user${CL_NORM}               Remote host user"
-  show "  ${CL_GREEN}--pass, -pp${CL_NORM} ${CL_GREY}password${CL_NORM}           Password for specified user"
-  show "  ${CL_GREEN}--key, -kk${CL_NORM} ${CL_GREY}file${CL_NORM}                Path to the private key for specified user"
+  showo "--parallel, -P" "Parallel build on all build servers in same time"
+  showo "--remote, -r" "Build rpm package on remote server"
+  showo "--remote, -r" "Build rpm package on the remote server with specified host, username and password" "user:pass@host"
+  showo "--remote, -r" "Build rpm package on the remote servers listed in specified file" "file"
+  showo "--host, -hh" "Remote host IP or domain name" "host"
+  showo "--user, -uu" "Remote host user" "username"
+  showo "--pass, -pp" "Password for specified user" "password"
+  showo "--key, -kk" "Path to the private key for specified user" "file"
   show ""
   show "  Examples:" $BOLD
   show ""
@@ -2951,19 +2974,19 @@ usage() {
   show ""
   show "Build options:" $BOLD
   show ""
-  show "  ${CL_GREEN}--no-build, -nb${CL_NORM}                      Don't execute any build stages"
-  show "  ${CL_GREEN}--no-clean, -nc${CL_NORM}                      Don't remove source files and spec file after build"
-  show "  ${CL_GREEN}--no-deps, -nd${CL_NORM}                       Don't verify build dependencies"
-  show "  ${CL_GREEN}--no-binary, -nr${CL_NORM}                     Don't build binary packages"
-  show "  ${CL_GREEN}--no-source, -ns${CL_NORM}                     Don't build source package"
-  show "  ${CL_GREEN}--arch, -a${CL_NORM} ${CL_GREY}arch${CL_NORM}                      Override target arch for a build"
-  show "  ${CL_GREEN}--qa-rpaths${CL_NORM}${CL_GREY}=\"<value>,<value>,...\"${CL_NORM}    Ignoring rpaths check"
+  showo "--no-build, -NB" "Don't execute any build stages"
+  showo "--no-clean, -NC" "Don't remove source files and spec file after build"
+  showo "--no-deps, -ND" "Don't verify build dependencies"
+  showo "--no-binary, -NR" "Don't build binary packages"
+  showo "--no-source, -NS" "Don't build source package"
+  showo "--arch, -a" "Override target arch for a build" "arch"
+  showo "--qa-rpaths" "Ignoring rpaths check" "\"<value>,...\""
   show ""
   show "Arguments passing:" $BOLD
   show ""
-  show "  ${CL_GREEN}--with, -w${CL_NORM} ${CL_GREY}params${CL_NORM}             Pass conditional parameters into a rpmbuild ${CL_DARK}(mergeable)${CL_NORM}"
-  show "  ${CL_GREEN}--without, -W${CL_NORM} ${CL_GREY}params${CL_NORM}          Pass conditional parameters into a rpmbuild ${CL_DARK}(mergeable)${CL_NORM}"
-  show "  ${CL_GREEN}--define, -D${CL_NORM} ${CL_GREY}\"macro=value\"${CL_NORM}    Define MACRO with value (exist macro will be not redefined) ${CL_DARK}(mergeable)${CL_NORM}"
+  showo "--with, -w" "Pass conditional parameters into a rpmbuild ${CL_DARK}(mergeable)${CL_NORM}" "param"
+  showo "--without, -W" "Pass conditional parameters into a rpmbuild ${CL_DARK}(mergeable)${CL_NORM}" "param"
+  showo "--define, -D" "Define MACRO with value (exist macro will be not redefined) ${CL_DARK}(mergeable)${CL_NORM}" "\"macro=value\""
   show ""
   show "  Examples:" $BOLD
   show ""
@@ -2976,22 +2999,22 @@ usage() {
   show ""
   show "Spec validation:" $BOLD
   show ""
-  show "  ${CL_GREEN}--no-lint, -0${CL_NORM}     Don't check spec file before package build"
-  show "  ${CL_GREEN}--strict, -1${CL_NORM}      Don't build package if linter found errors in spec file"
-  show "  ${CL_GREEN}--pedantic, -2${CL_NORM}    Don't build package if linter found errors or warnings in spec file"
+  showo "--no-lint, -0" "Don't check spec file before package build"
+  showo "--strict, -1" "Don't build package if linter found errors in spec file"
+  showo "--pedantic, -2" "Don't build package if linter found errors or warnings in spec file"
   show ""
   show "Other:" $BOLD
   show ""
-  show "  ${CL_GREEN}--sign, -s${CL_NORM}                     Sign package after build"
-  show "  ${CL_GREEN}--dest, --dest-dir, -d${CL_NORM} ${CL_GREY}path${CL_NORM}    Save built packages to a specified directory"
-  show "  ${CL_GREEN}--keep-log, -kl${CL_NORM}                Save build log after an unsuccessful build"
-  show "  ${CL_GREEN}--bump, -b${CL_NORM}                     Bump release in spec file after a successful build"
-  show "  ${CL_GREEN}--bump-comment, -bc${CL_NORM} ${CL_GREY}comment${CL_NORM}    Comment which will be added while release bump"
-  show "  ${CL_GREEN}--tmp${CL_NORM} ${CL_GREY}path${CL_NORM}                     Path to a temporary directory"
-  show "  ${CL_GREEN}--verbose, -V${CL_NORM}                  Verbose output"
-  show "  ${CL_GREEN}--no-color, -C${CL_NORM}                 Disable colors in output"
-  show "  ${CL_GREEN}--help, --usage, -h${CL_NORM}            Show this help message"
-  show "  ${CL_GREEN}--ver, --version, -v${CL_NORM}           Show information about version"
+  showo "--sign, -s" "Sign package after build"
+  showo "--dest, -d" "Save built packages to a specified directory" "dir"
+  showo "--keep-log, -kl" "Save build log after an unsuccessful build"
+  showo "--bump, -b" "Bump release in spec file after a successful build"
+  showo "--bump-comment, -bc" "Comment which will be added while release bump" "comment"
+  showo "--tmp" "Path to a temporary directory" "dir"
+  showo "--verbose, -V" "Verbose output"
+  showo "--no-color, -C" "Disable colors in output"
+  showo "--help, -h" "Show this help message"
+  showo "--version, -v" "Show information about version"
   show ""
 }
 

@@ -53,6 +53,7 @@ rm -rf %{buildroot}
 %changelog
 * Mon May 15 2017 Anton Novojilov <andy@essentialkaos.com> - 1.8.1-0
 - Improved separator output in tmux
+- Improved help output
 
 * Wed May 10 2017 Anton Novojilov <andy@essentialkaos.com> - 1.8.0-0
 - Improved gopack support
