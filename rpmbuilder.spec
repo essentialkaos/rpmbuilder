@@ -2,7 +2,7 @@
 
 Summary:         RPM package build helper
 Name:            rpmbuilder
-Version:         1.8.1
+Version:         1.8.2
 Release:         0%{?dist}
 License:         EKOL
 Group:           Development/Tools
@@ -51,6 +51,9 @@ rm -rf %{buildroot}
 ###############################################################################
 
 %changelog
+* Wed May 17 2017 Anton Novojilov <andy@essentialkaos.com> - 1.8.2-0
+- Fixed compatibility with latest version of gopack
+
 * Mon May 15 2017 Anton Novojilov <andy@essentialkaos.com> - 1.8.1-0
 - Improved separator output in tmux
 - Improved help output

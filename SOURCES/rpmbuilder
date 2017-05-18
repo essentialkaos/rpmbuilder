@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 
 APP="RPMBuilder"
-VER="1.8.1"
+VER="1.8.2"
 
 ####################################################################
 
@@ -2046,17 +2046,10 @@ packGolangSources() {
 
   gopack -M $args
 
-  local ec=$?
-
-  # Remove last new line from gopack output
-  printf "\b"
-
-  if [[ $ec -ne 0 ]] ; then
+  if [[ $? -ne 0 ]] ; then
     showSeparator
     doExit 1
   fi
-
-
 }
 
 processSpec() {
