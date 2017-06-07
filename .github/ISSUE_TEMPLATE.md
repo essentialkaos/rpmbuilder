@@ -5,13 +5,13 @@ _Before opening an issue, search for similar bug reports or feature requests on 
 **System info:**
 
 * **Version used (`rpmbuilder --version`):** 
-* **OS (`cat /etc/*-release`):** 
+* **OS (e.g. from `/etc/*-release`):** 
 * **Kernel (`uname -a`):** 
 * **Bash version (`bash --version`):** 
 * **RPM version (`rpm --version`):** 
 * **Install tools:** 
 
-**System info:**
+**Steps to reproduce:**
 
 1. [First Step]
 2. [Second Step]
