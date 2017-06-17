@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 
 APP="RPMBuilder"
-VER="1.8.2"
+VER="1.9.0"
 
 ####################################################################
 
@@ -270,20 +270,29 @@ parallelBuild() {
 
   createParalellLock
 
-  local serv serv_name sess
+  local serv serv_name session_exist
 
   while read serv ; do
     serv_name=$(echo "$serv" | cut -f2 -d"@")
 
-    if [[ -z "$sess" ]] ; then
-      tmux new-session -s "rpmbuilder" -d "$0 $args -r $serv --tmux-worker" >/dev/null 2>&1
-      sess=true
+    if [[ -z "$session_exist" ]] ; then
+      if [[ -z "$TMUX" ]] ; then
+        tmux new-session -s "rpmbuilder" -d "$0 $args -r $serv --tmux-worker" >/dev/null 2>&1
+      else
+        tmux new-window "$0 $args -r $serv --tmux-worker"
+      fi
+
+      tmux rename-window "$APP"
+      session_exist=true
     else
       tmux split-window "$0 $args -r $serv --tmux-worker" >/dev/null 2>&1
     fi
   done < "$remote"
 
-  tmux attach-session -t "rpmbuilder" >/dev/null 2>&1
+  # If we not in tmux, attach to session
+  if [[ -z "$TMUX" ]] ; then
+    tmux attach-session -t "rpmbuilder" >/dev/null 2>&1
+  fi
 
   removeParalellLock
 

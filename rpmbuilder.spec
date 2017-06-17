@@ -2,7 +2,7 @@
 
 Summary:         RPM package build helper
 Name:            rpmbuilder
-Version:         1.8.2
+Version:         1.9.0
 Release:         0%{?dist}
 License:         EKOL
 Group:           Development/Tools
@@ -51,6 +51,9 @@ rm -rf %{buildroot}
 ###############################################################################
 
 %changelog
+* Sat Jun 17 2017 Anton Novojilov <andy@essentialkaos.com> - 1.9.0-0
+- Improved tmux support
+
 * Wed May 17 2017 Anton Novojilov <andy@essentialkaos.com> - 1.8.2-0
 - Fixed compatibility with latest version of gopack
 
