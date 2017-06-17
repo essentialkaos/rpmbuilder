@@ -6,9 +6,9 @@
 
 ### Usage demo
 
-Building redis rpm for CentOS6 on three remote build nodes:
+Building Redis rpm package for CentOS6 and CentOS7:
 
-[![demo](https://gh.kaos.io/rpmbuilder-140.gif)](#usage-demo)
+[![demo](https://gh.kaos.io/rpmbuilder-190.gif)](#usage-demo)
 
 ### Installation
 
