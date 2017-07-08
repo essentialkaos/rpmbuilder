@@ -2362,7 +2362,7 @@ getSpecValue() {
   result=$(grep -v "^#" "$spec" | head "-$spec_header" | egrep "$value*.*:" | sed 's/[\t]/ /g' | tr -s " " | cut -f2-99 -d" " | sed 's/,/ /g')
 
   result=$(renderMacros "$spec" "$result")
-  result=$(echo "$result" | sed 's/ = /=/g' | sed 's/ >= />=/g' | sed 's/ > />/g')
+  result=$(echo "$result" | sed 's/ = /=/g' | sed 's/ >= />=/g' | sed 's/ > />/g' | sed 's/ *$//')
 
   [[ "$value" == "$MACRO_SOURCE" || "$value" == "$MACRO_PATCH" ]] && echo "${result// /%20}" || echo "$result"
 }
