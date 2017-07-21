@@ -2,7 +2,7 @@
 
 Summary:         RPM package build helper
 Name:            rpmbuilder
-Version:         1.9.0
+Version:         1.10.0
 Release:         0%{?dist}
 License:         EKOL
 Group:           Development/Tools
@@ -51,6 +51,10 @@ rm -rf %{buildroot}
 ###############################################################################
 
 %changelog
+* Fri Jul 07 2017 Anton Novojilov <andy@essentialkaos.com> - 1.10.0-0
+- Added option '--exclude-package/-EX' for excluding some packages
+  from installation
+
 * Sat Jun 17 2017 Anton Novojilov <andy@essentialkaos.com> - 1.9.0-0
 - Improved tmux support
 

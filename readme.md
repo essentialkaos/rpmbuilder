@@ -108,6 +108,7 @@ Dependencies install:
   --dep-install, -di               Automatically install build dependencies before build process
   --enable-repo, -ER repo-name     Enable repositories (mergeable)
   --disable-repo, -DR repo-name    Disable repositories (mergeable)
+  --exclude-package, -EX package   Exclude package by name or glob (mergeable)
 
 Remote build:
 

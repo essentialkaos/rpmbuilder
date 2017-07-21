@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 
 APP="RPMBuilder"
-VER="1.9.0"
+VER="1.10.0"
 
 ####################################################################
 
@@ -85,7 +85,7 @@ SUPPORTED_ARGS="remote !parallel host user pass key source_dir source_list
  svn_pass path !bump bump_comment tmp dlcache !depinstall !dep_install github 
  bitbucket launchpad with without define output !verbose !help !usage !ver 
  !version !raw_version qa_rpaths !tmux_worker !no_colors !keep_log !notify 
- arch download !relative_pack enable_repo disable_repo gopack"
+ arch download !relative_pack enable_repo disable_repo exclude_package gopack"
 
 SHORT_ARGS="r:remote P:!parallel hh:host uu:user pp:pass kk:key sd:source_dir 
  sl:source_list NB:!no_build NC:!no_clean ND:!no_deps NR:!no_binary NS:!no_source 
@@ -94,12 +94,12 @@ SHORT_ARGS="r:remote P:!parallel hh:host uu:user pp:pass kk:key sd:source_dir
  di:!depinstall rb:branch rt:tag rr:revision gh:github bb:bitbucket lp:launchpad 
  w:with W:without s:!sign D:define O:output V:!verbose h:help v:!version 
  nc:!no_colors kl:!keep_log n:!notify a:arch dl:download R:relative_pack 
- ER:enable_repo DR:disable_repo G:gopack"
+ ER:enable_repo DR:disable_repo EX:exclude_package G:gopack"
 
 INSPEC_ARGS="git svn hg bzr branch revision tag svn_user svn_pass github 
  bitbucket launchpad qa_rpaths pedantic strict no_lint relative_pack gopack"
 
-MERGEABLE_ARGS="pack with without enable_repo disable_repo define"
+MERGEABLE_ARGS="pack with without enable_repo disable_repo exclude_package define"
 
 KEEP_ARGS=true
 
@@ -2362,7 +2362,7 @@ getSpecValue() {
   result=$(grep -v "^#" "$spec" | head "-$spec_header" | egrep "$value*.*:" | sed 's/[\t]/ /g' | tr -s " " | cut -f2-99 -d" " | sed 's/,/ /g')
 
   result=$(renderMacros "$spec" "$result")
-  result=$(echo "$result" | sed 's/ = /=/g' | sed 's/ >= />=/g' | sed 's/ > />/g')
+  result=$(echo "$result" | sed 's/ = /=/g' | sed 's/ >= />=/g' | sed 's/ > />/g' | sed 's/ *$//')
 
   [[ "$value" == "$MACRO_SOURCE" || "$value" == "$MACRO_PATCH" ]] && echo "${result// /%20}" || echo "$result"
 }
@@ -2556,7 +2556,7 @@ getSSHOpts() {
 getYumOpts() {
   local verb="$1"
 
-  local opts repo
+  local opts repo pkg
 
   [[ -z "$verb" ]] && opts="-q"
 
@@ -2569,6 +2569,12 @@ getYumOpts() {
   if [[ -n "$disable_repo" ]] ; then
     for repo in $disable_repo ; do
       opts="$opts --disablerepo=$repo"
+    done
+  fi
+
+  if [[ -n "$exclude_package" ]] ; then
+    for pkg in $exclude_package ; do
+      opts="$opts --exclude=$pkg"
     done
   fi
 
@@ -2956,6 +2962,7 @@ usage() {
   showo "--dep-install, -di" "Automatically install build dependencies before build process"
   showo "--enable-repo, -ER" "Enable repositories ${CL_DARK}(mergeable)${CL_NORM}" "repo-name"
   showo "--disable-repo, -DR" "Disable repositories ${CL_DARK}(mergeable)${CL_NORM}" "repo-name"
+  showo "--exclude-package, -EX" "Exclude package by name or glob ${CL_DARK}(mergeable)${CL_NORM}" "package"
   show ""
   show "Remote build:" $BOLD
   show ""
