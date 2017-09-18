@@ -2,7 +2,7 @@
 
 Summary:         RPM package build helper
 Name:            rpmbuilder
-Version:         1.10.0
+Version:         1.10.1
 Release:         0%{?dist}
 License:         EKOL
 Group:           Development/Tools
@@ -51,6 +51,9 @@ rm -rf %{buildroot}
 ###############################################################################
 
 %changelog
+* Mon Sep 18 2017 Anton Novojilov <andy@essentialkaos.com> - 1.10.1-0
+- Fixed compatibility with latest version of gopack
+
 * Fri Jul 07 2017 Anton Novojilov <andy@essentialkaos.com> - 1.10.0-0
 - Added option '--exclude-package/-EX' for excluding some packages
   from installation
