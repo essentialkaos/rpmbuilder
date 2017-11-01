@@ -1,7 +1,10 @@
 #!/usr/bin/env bash
 
+# Utility name (String)
 APP="RPMBuilder"
-VER="1.10.1"
+
+# Utility version (String)
+VER="1.11.0"
 
 ####################################################################
 
@@ -57,8 +60,6 @@ MACRO_REQS_POST="Requires(post)"
 MACRO_REQS_POSTUN="Requires(postun)"
 MACRO_PROVS="Provides"
 
-INSPEC_ARG_PREFIX="rpmbuilder:"
-
 ERROR_UNKNOWN=1
 ERROR_ARGS=2
 ERROR_SPEC=3
@@ -69,14 +70,20 @@ ERROR_REMOTE=7
 ERROR_DEPS=8
 ERROR_VALIDATE=9
 
+# Prefix for in spec arguments
+INSPEC_ARG_PREFIX="rpmbuilder:"
+
+# List of supported macroses (String)
 MACRO="name:Name version:Version release:Release url:URL vendor:Vendor epoch:Epoch"
+
+# User Agent used for all HTTP requests (String)
+USER_AGENT="$APP/$VER"
 
 SEPARATOR="----------------------------------------------------------------------------------------"
 
-USER_AGENT="$APP/$VER"
-
 ###############################################################################
 
+# Path to preferencies file
 PREFS_FILE="$HOME/.rpmbuilder"
 
 SUPPORTED_ARGS="remote !parallel host user pass key source_dir source_list 
@@ -84,7 +91,7 @@ SUPPORTED_ARGS="remote !parallel host user pass key source_dir source_list
  pre post dest dest_dir upload git svn hg bzr branch revision tag svn_user 
  svn_pass path !bump bump_comment tmp dlcache !depinstall !dep_install github 
  bitbucket launchpad with without define output !verbose !help !usage !ver 
- !version !raw_version qa_rpaths !tmux_worker !no_colors !keep_log !notify 
+ !version !raw_version qa_rpaths tmux_worker !no_colors !keep_log !notify 
  arch download !relative_pack enable_repo disable_repo exclude_package gopack"
 
 SHORT_ARGS="r:remote P:!parallel hh:host uu:user pp:pass kk:key sd:source_dir 
@@ -105,46 +112,81 @@ KEEP_ARGS=true
 
 ###############################################################################
 
+# List of supported archive types (String)
 SUPPORTED_ARCH_TYPES="tbz2 tar.bz2 tgz tar.gz tbz tar.bz txz tar.xz"
 
+# Wait delay after successful build in seconds (Number)
 TMUX_OK_SLEEP=5
+
+# Wait delay after errored build in seconds (Number)
 TMUX_ERROR_SLEEP=1800
 
+# Wait delay after spec linting in seconds (Number)
 LINT_WAIT=3
 
+# Maximum duration for "normal" download in seconds (Number)
 LONG_DOWNLOADING=60
+
+# Maximum duration for "normal" build in seconds (Number)
 LONG_BUILD=300
 
+# Name of build lock file (String)
 BUILD_LOCK=".buildlock"
 
+# Default builder home directory (String)
 BUILDER_HOME="/home/builder"
 
+# Path to local build lock file (String)
 BUILD_LOCK_LOCAL="/tmp/rpmbuilder-local-lock"
+
+# Path to parallel local build lock file (String)
 BUILD_LOCK_PARALLEL="/tmp/rpmbuilder-parallel-lock"
+
+# Max lock file lifetime in seconds (Number)
 LOCK_TIME_MAX_DIFF=10800 # 3 Hours
 
+# Base SSH options (String)
 SSH_BASE_OPTS="-o UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no -o LogLevel=quiet"
 
+# Local build queue check delay in seconds (Number)
 CHECK_LOCAL_QUEUE_DELAY=2
+
+# Remote build queue check delay in seconds (Number)
 CHECK_REMOTE_QUEUE_DELAY=15
 
+# Max log quote size in lunes (Number)
 LOG_QUOTE_SIZE=50
+
+# Max repository (git/svn/hg/bzr) log quote size in lunes (Number)
 REPO_LOG_QUOTE_SIZE=25
 
+# List of possible used directory names for sources (String)
 SOURCE_PATHS=". SOURCES SOURCE sources source src"
 
+# Current working dir (String)
 CWD=$(pwd)
 
+# Template used for temporary directory name generation (String)
 TMP_DIR_TEMPLATE="rpmbuilder-XXXXXXXX"
+
+# Template used for temporary output file name generation (String)
 TMP_OUT_TEMPLATE="rpmbuilder-XXXXXXXX.out"
 
 ###############################################################################
 
+# Path to directory with temporary data (String)
 tmp="/tmp"
+
+# Path to temporary directory for current build (String)
 tmp_dir=""
+
+# Path to temporary output file for current build (String)
 tmp_output=""
 
+# Current user name (String)
 user=$(whoami)
+
+# Packager name (String)
 packager=""
 
 verb_output=/dev/null
@@ -154,6 +196,10 @@ build_end=0
 
 ###############################################################################
 
+# Main function
+#
+# Code: No
+# Echo: No
 main() {
   if [[ ! -t 1 || -n "$no_colors" ]] ; then
     unset NORM BOLD UNLN RED GREEN YELLOW BLUE MAG CYAN GREY DARK
@@ -180,56 +226,21 @@ main() {
 
   checkArgs
 
+  trap termExit SIGINT SIGQUIT SIGTERM
+
   if [[ -n "$parallel" && $(wc -l "$remote" | cut -f1 -d" ") -gt 1 ]] ; then
     parallelBuild "$@"
   else
-    local start_ts
-    start_ts=$(now)
-
-    [[ -n "$dest" ]]     && dest_dir="$dest"
-    [[ -n "$dest_dir" ]] && dest_dir=$(getAbsPath "$dest_dir")
-    [[ -n "$dlcache" ]]  && dlcache=$(getAbsPath "$dlcache")
-    [[ -n "$download" ]] && dlcache=$(getAbsPath "$download")
-
-    [[ -n "$key" && -r "$HOME/.ssh/$key" ]] && key="$HOME/.ssh/$key"
-
-    makeTemp
-
-    trap termExit SIGINT SIGQUIT SIGTERM
-
-    if [[ -n "$verbose" ]] ; then
-      verbose=true
-      verb_output=/dev/stdout
-    fi
-
-    readInspecArgs "$spec"
-
-    [[ -n "${github}${bitbucket}${launchpad}" ]] && parseSourceURL "$spec"
-
-    [[ -n "$github" ]]    && processGithubSource
-    [[ -n "$bitbucket" ]] && processBitbucketSource
-    [[ -n "$launchpad" ]] && processLaunchpadSource
-
-    if [[ -n "$download" ]] ; then
-      downloadRemoteSources "$spec"
-    else
-      if [[ -n "$remote" ]] ; then
-        remoteBuild "$spec"
-      else
-        localBuild "$spec"
-      fi
-    fi
-
-    notify "$start_ts"
+    sequentialBuild "$@"
   fi
 
   doExit
 }
 
-# Use sound notification if build longer than 5 minutes
+# Ring the bell
 #
-# Return: none
-# Echo: none
+# Code: No
+# Echo: No
 notify() {
   [[ -n "$notify" ]] && bell && return
 
@@ -242,6 +253,61 @@ notify() {
   [[ $time_diff -ge $LONG_BUILD ]] && bell
 }
 
+# Start sequential build
+#
+# *: All options passed to utility 
+#
+# Code: No
+# Echo: No
+sequentialBuild() {
+  local start_ts
+  start_ts=$(now)
+
+  [[ -n "$tmux_worker" ]] && createWorkerLock
+
+  [[ -n "$dest" ]]     && dest_dir="$dest"
+  [[ -n "$dest_dir" ]] && dest_dir=$(getAbsPath "$dest_dir")
+  [[ -n "$dlcache" ]]  && dlcache=$(getAbsPath "$dlcache")
+  [[ -n "$download" ]] && dlcache=$(getAbsPath "$download")
+
+  [[ -n "$key" && -r "$HOME/.ssh/$key" ]] && key="$HOME/.ssh/$key"
+
+  makeTemp
+
+  if [[ -n "$verbose" ]] ; then
+    verbose=true
+    verb_output=/dev/stdout
+  fi
+
+  readInspecArgs "$spec"
+
+  [[ -n "${github}${bitbucket}${launchpad}" ]] && parseSourceURL "$spec"
+
+  [[ -n "$github" ]]    && processGithubSource
+  [[ -n "$bitbucket" ]] && processBitbucketSource
+  [[ -n "$launchpad" ]] && processLaunchpadSource
+
+  if [[ -n "$download" ]] ; then
+    downloadRemoteSources "$spec"
+  else
+    if [[ -n "$remote" ]] ; then
+      remoteBuild "$spec"
+    else
+      localBuild "$spec"
+    fi
+  fi
+
+  [[ -n "$tmux_worker" ]] && removeWorkerLock
+
+  notify "$start_ts"
+}
+
+# Start parallel build in tmux
+#
+# *: All options passed to utility 
+#
+# Code: No
+# Echo: No
 parallelBuild() {
   if [[ ! -r $remote ]] ; then
     error "Error! Can't start parallel build process - builder list not readable." $RED
@@ -267,25 +333,28 @@ parallelBuild() {
   done
 
   checkParalellBuildAvailability
-
   createParalellLock
 
-  local serv serv_name session_exist
+  local serv serv_name session_exist wid
+  local wids=()
 
   while read serv ; do
     serv_name=$(echo "$serv" | cut -f2 -d"@")
+    wid=$(mktemp -u XXXXXXXXXXXX)
+
+    wids+=($wid)
 
     if [[ -z "$session_exist" ]] ; then
       if [[ -z "$TMUX" ]] ; then
-        tmux new-session -s "rpmbuilder" -d "$0 $args -r $serv --tmux-worker" >/dev/null 2>&1
+        tmux new-session -s "rpmbuilder" -d "$0 $args -r $serv --tmux-worker $wid" >/dev/null 2>&1
       else
-        tmux new-window "$0 $args -r $serv --tmux-worker"
+        tmux new-window "$0 $args -r $serv --tmux-worker $wid"
       fi
 
       tmux rename-window "$APP"
       session_exist=true
     else
-      tmux split-window "$0 $args -r $serv --tmux-worker" >/dev/null 2>&1
+      tmux split-window "$0 $args -r $serv --tmux-worker $wid" >/dev/null 2>&1
     fi
   done < "$remote"
 
@@ -294,6 +363,7 @@ parallelBuild() {
     tmux attach-session -t "rpmbuilder" >/dev/null 2>&1
   fi
 
+  waitTillWorkersComplete "${wids[*]}"
   removeParalellLock
 
   show "Parallel build complete" $GREEN
@@ -344,8 +414,8 @@ hasParalellLock() {
 }
 
 createParalellLock() {
-  echo "$$" > $BUILD_LOCK_PARALLEL
-  chmod 666 "$BUILD_LOCK_PARALLEL"
+  echo "$$" 1> "$BUILD_LOCK_PARALLEL" 2> /dev/null
+  chmod 666 "$BUILD_LOCK_PARALLEL" &> /dev/null
 }
 
 removeParalellLock() {
@@ -359,6 +429,75 @@ removeParalellLock() {
       rm -f "$BUILD_LOCK_PARALLEL" &> /dev/null
     fi
   fi
+}
+
+createWorkerLock() {
+  local wid="$tmux_worker"
+  local lock_file
+
+  if ! hasWorkerLock "$wid" ; then
+    lock_file=$(getPathToWorkerLock "$wid")
+    echo "$$" 1> "$lock_file" 2> /dev/null
+    chmod 666 "$lock_file" &> /dev/null
+  fi
+}
+
+removeWorkerLock() {
+  local wid="$tmux_worker"
+  local lock_file
+
+  if hasWorkerLock "$wid" ; then
+    lock_file=$(getPathToWorkerLock "$wid")
+    rm -f "$lock_file" &> /dev/null
+  fi
+}
+
+hasWorkerLock() {
+  local wid="$1"
+  local lock_file pid
+
+  lock_file=$(getPathToWorkerLock "$wid")
+
+  if [[ ! -e "$lock_file" ]] ; then
+    return 1
+  fi
+
+  pid=$(cat "$lock_file")
+
+  if [[ ! -e "/proc/$pid" ]] ; then
+    rm -f "$lock_file" &> /dev/null
+    return 1
+  fi
+
+  return 0
+}
+
+getPathToWorkerLock() {
+  echo "${tmp:?}/.rpmbuilder-worker-$wid"
+}
+
+waitTillWorkersComplete() {
+  local wid has_lock lock_file
+
+  show "Waiting till remote builds complete..." $DARK
+
+  while : ; do
+    sleep 1
+
+    has_lock=""
+
+    for wid in $@ ; do
+      if hasWorkerLock "$wid" ; then
+        has_lock=true
+      fi
+    done
+
+    if [[ -z "$has_lock" ]] ; then
+      break
+    fi
+  done
+
+  sleep $TMUX_OK_SLEEP
 }
 
 checkArgs() {
@@ -1341,7 +1480,7 @@ hasLocalLock() {
 
 createLocalLock() {
   if ! hasLocalLock ; then
-    echo "$$" > $BUILD_LOCK_LOCAL 2> /dev/null
+    echo "$$" 1> $BUILD_LOCK_LOCAL 2> /dev/null
     chmod 666 "$BUILD_LOCK_LOCAL" &> /dev/null
   fi
 }
@@ -2886,8 +3025,12 @@ termExit() {
     removeLocalLock
   fi
 
-  if hasParalellLock ; then
-    removeParalellLock
+  if [[ -z "$tmux_worker" ]] ; then
+    if hasParalellLock ; then
+      removeParalellLock
+    fi
+  else
+    removeWorkerLock
   fi
 
   [[ -n "$observer_pid" ]] && stopStatusObserver
