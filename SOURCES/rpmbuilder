@@ -496,8 +496,6 @@ waitTillWorkersComplete() {
       break
     fi
   done
-
-  sleep $TMUX_OK_SLEEP
 }
 
 checkArgs() {
