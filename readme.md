@@ -1,6 +1,6 @@
 <p align="center"><a href="#usage-demo">Usage demo</a> • <a href="#installation">Installation</a> • <a href="#usage">Usage</a> • <a href="#contributing">Contributing</a> • <a href="#license">License</a></p>
 
-## RPMBuilder [![License](https://gh.kaos.io/ekol.svg)](https://essentialkaos.com/ekol)
+<p align="center"><a href="#readme"><img src="https://gh.kaos.io/rpmbuilder.svg"/></a></p>
 
 `rpmbuilder` is RPM package build helper.
 
