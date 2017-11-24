@@ -1,6 +1,6 @@
 <p align="center"><a href="#usage-demo">Usage demo</a> • <a href="#installation">Installation</a> • <a href="#usage">Usage</a> • <a href="#contributing">Contributing</a> • <a href="#license">License</a></p>
 
-## RPMBuilder [![Code Climate](https://codeclimate.com/github/essentialkaos/rpmbuilder/badges/gpa.svg)](https://codeclimate.com/github/essentialkaos/rpmbuilder) [![License](https://gh.kaos.io/ekol.svg)](https://essentialkaos.com/ekol)
+## RPMBuilder [![License](https://gh.kaos.io/ekol.svg)](https://essentialkaos.com/ekol)
 
 `rpmbuilder` is RPM package build helper.
 
