@@ -1,0 +1,51 @@
+# Start status observer
+#
+# Code: No
+# Echo: No
+startStatusObserver() {
+  [[ -n "$verbose" ]] && return 0
+
+  showt "\r${CL_GREEN}Executing:${CL_NORM} ${CL_CYAN}~${CL_NORM}"
+
+  statusObserver &
+  observer_pid=$!
+}
+
+# Stop status observer
+#
+# Code: No
+# Echo: No
+stopStatusObserver() {
+  [[ -n "$verbose" || -z "$observer_pid" ]] && return 0
+
+  kill "$observer_pid" &> /dev/null
+  wait "$observer_pid" &> /dev/null
+
+  showm "\r${CL_GREEN}Executing:${CL_NORM} ${CL_CYAN}clean${CL_NORM}                                                               "
+  show ""
+
+  unset observer_pid
+}
+
+# Show status observer animation
+#
+# Code: No
+# Echo: No
+statusObserver() {
+  local prev_status status
+
+  while : ; do
+    status=$(grep "Executing" "$tmp_output" | tail -1 | perl -ne '/Executing\(%(\w*)\)/ && print "$1\n"')
+
+    if [[ "$status" == "doc" ]] ; then
+      [[ $(grep "Checking for unpackaged" "$tmp_output") ]] && status="packaging"
+    fi
+
+    if [[ "$status" != "$prev_status" ]] ; then
+      showt "\r${CL_GREEN}Executing:${CL_NORM} ${CL_CYAN}$status${CL_NORM}"
+      prev_status="$status"
+    fi
+
+    sleep 0.1
+  done
+}

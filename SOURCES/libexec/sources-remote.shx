@@ -1,0 +1,103 @@
+################################################################################
+
+require "spec"
+
+################################################################################
+
+# Download file from remote host
+#
+# 1: Path to spec file (String)
+#
+# Code: No
+# Echo: No
+downloadRemoteSources() {
+  local spec="$1"
+  local download_count=0
+
+  if [[ "$download" == "true" ]] ; then
+    dlcache="."
+  fi
+
+  showSeparator "DOWNLOADING"
+
+  if [[ ! -d "$dlcache" ]] ; then
+    error "Can't download sources - download destination directory doesn't exist" $RED
+    doExit $ERROR_ARGS
+  fi
+
+  [[ -n "$git" ]]    && packSourcesFromGit "$spec"
+  [[ -n "$svn" ]]    && packSourcesFromSvn "$spec"
+  [[ -n "$bzr" ]]    && packSourcesFromBzr "$spec"
+  [[ -n "$hg" ]]     && packSourcesFromHg  "$spec"
+  [[ -n "$gopack" ]] && packGolangSources  "$spec"
+
+  local source_file sources_list source_file_name patches_list files
+
+  sources_list=$(getSpecValue "$MACROS_SOURCE" "$spec")
+  patches_list=$(getSpecValue "$MACROS_PATCH" "$spec")
+
+  files="$sources_list $patches_list"
+
+  for source_file in $files ; do
+    if [[ "$source_file" =~ ^(http|https|ftp) ]] ; then
+      source_file_name=$(basename "$source_file")
+
+      if [[ -f "$dlcache/$source_file_name" ]] ; then
+        show "File ${CL_CYAN}${source_file_name}${CL_NORM} already downloaded."
+        continue
+      fi
+
+      show "Downloading source file ${CL_CYAN}${source_file}${CL_NORM}..."
+
+      downloadSource "$source_file" "$download"
+
+      if [[ $? -ne 0 ]] ; then
+        error "Error! Can't download file ${CL_BL_RED}${source_file}${CL_RED}." $RED
+        doExit $ERROR_SOURCE
+      fi
+
+      ((download_count++))
+    fi
+  done
+
+  if [[ $download_count -ne 0 ]] ; then
+    show "\n${CL_GREEN}All source files downloaded and stored to a ${CL_BL_GREEN}${dlcache}${CL_GREEN} directory${CL_NORM}"
+  fi
+
+  showSeparator
+}
+
+# Download file sources
+#
+# 1: URL (String)
+# 2: Target dir (String)
+#
+# Code: No
+# Echo: No
+downloadSource() {
+  local url="$1"
+  local dir="$2"
+
+  local file_name start end time_diff
+
+  file_name=$(basename "$url")
+
+  if ! isAccessibleUrl "$url" ; then
+    error "Can't download file ${CL_BL_RED}${file_name}${CL_RED} - server return error code" $RED
+    doExit $ERROR_SOURCE
+  else
+    start=$(now)
+
+    curl -A "$USER_AGENT" -L --max-redirs 10 --progress-bar "$url" -o "$dir/$file_name"
+
+    end=$(now)
+    time_diff=$(( end - start ))
+
+    if [[ -z "$tmux_worker" && -z "$dlcache" && $time_diff -gt $LONG_DOWNLOADING ]] ; then
+      show ""
+      show "HINT: Downloading took more than $LONG_DOWNLOADING seconds. We strongly recommend use download" $YELLOW
+      show "cache feature in this case. Use -dc <path> or --dlcache <path>." $YELLOW
+      show ""
+    fi
+  fi
+}

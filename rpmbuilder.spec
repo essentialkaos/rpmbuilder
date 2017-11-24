@@ -2,7 +2,7 @@
 
 Summary:         RPM package build helper
 Name:            rpmbuilder
-Version:         1.10.1
+Version:         2.0.0
 Release:         0%{?dist}
 License:         EKOL
 Group:           Development/Tools
@@ -33,9 +33,11 @@ RPM package build helper.
 rm -rf %{buildroot}
 
 install -dm 755 %{buildroot}%{_bindir}
+install -dm 755 %{buildroot}%{_libexecdir}/%{name}
 
 install -pm 755 rpmbuilder %{buildroot}%{_bindir}/rpmbuilder
 install -pm 755 rpmunbuilder %{buildroot}%{_bindir}/rpmunbuilder
+install -pm 644 libexec/* %{buildroot}%{_libexecdir}/%{name}/
 
 %clean
 rm -rf %{buildroot}
@@ -44,7 +46,8 @@ rm -rf %{buildroot}
 
 %files
 %defattr(-,root,root,-)
-%doc LICENSE.EN LICENSE.RU
+%doc LICENSE LICENSE.RU
+%{_libexecdir}/%{name}
 %{_bindir}/%{name}
 %{_bindir}/rpmunbuilder
 

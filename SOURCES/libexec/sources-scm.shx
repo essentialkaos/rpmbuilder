@@ -1,0 +1,649 @@
+# Try to extract SCM service from URL
+#
+# 1: Path to spec file (String)
+#
+# Code: Yes
+# Echo: No
+parseSourceURL() {
+  local spec="$1"
+
+  local url
+  url=$(getSpecValue "$MACROS_URL" "$spec")
+
+  if [[ "$url" =~ github ]] ; then
+    github="$url"
+    return 0
+  elif [[ "$url" =~ bitbucket ]] ; then
+    bitbucket="$url"
+    return 0
+  elif [[ "$url" =~ launchpad ]] ; then
+    launchpad="$url"
+    return 0
+  else
+    return 1
+  fi
+}
+
+# Configure utility for downloading sources from github.com
+#
+# Code: No
+# Echo: No
+fetchSourcesFromGithub() {
+  local github_user github_repo github_tag github_branch github_act
+  local delim is_branch is_tag
+
+  if [[ -n "$branch" ]] ; then
+    is_branch=true
+  else
+    is_tag=true
+  fi
+
+  if [[ "$github" =~ (http|https) ]] ; then
+    github_user=$(echo "$github" | cut -f4 -d"/")
+    github_repo=$(echo "$github" | cut -f5 -d"/")
+    github_act=$(echo "$github" | cut -f6 -d"/")
+
+    if [[ "$github_act" =~ (zip|tar)ball ]] ; then
+      github_tag=$(echo "$github" | cut -f7 -d"/")
+
+      [[ -n "$is_tag" ]] && tag="$github_tag"
+      [[ -n "$is_branch" ]] && branch="$github_tag"
+    elif [[ "$github_act" == "tree" ]] ; then
+      github_branch=$(echo "$github" | cut -f7 -d"/")
+      branch="$github_branch"
+    fi
+  else
+    if [[ "$github" =~ \: ]] ; then
+      delim=":"
+    elif [[ "$github" =~ \/ ]] ; then
+      delim="/"
+    else
+      return 1
+    fi
+
+    github_user=$(echo "$github" | cut -f1 -d"$delim")
+    github_repo=$(echo "$github" | cut -f2 -d"$delim")
+
+    [[ -z "$github_user" || -z "$github_repo" ]] && return
+  fi
+
+  git="git://github.com/${github_user}/${github_repo}.git"
+}
+
+# Configure utility for downloading sources from bitbucket.org
+#
+# Code: No
+# Echo: No
+fetchSourcesFromBitbucket() {
+  local bitbucket_user bitbucket_repo bitbucket_tag bitbucket_branch bitbucket_act
+  local delim is_branch is_tag is_git is_hg
+
+  if [[ -n "$hg" ]] ; then
+    is_hg=true
+  else
+    is_git=true
+  fi
+
+  if [[ "$bitbucket" =~ (http|https) ]] ; then
+    bitbucket_user=$(echo "$bitbucket" | cut -f4 -d"/")
+    bitbucket_repo=$(echo "$bitbucket" | cut -f5 -d"/")
+    bitbucket_act=$(echo "$bitbucket" | cut -f6 -d"/")
+
+    if [[ "$bitbucket_act" == "get" ]] ; then
+      bitbucket_tag=$(echo "$bitbucket" | cut -f7 -d"/" | sed 's/.zip\|.tar.gz\|.tar.bz2//g')
+
+      if [[ -n "$branch" ]] ; then
+        is_branch=true
+      else
+        is_tag=true
+      fi
+
+      [[ -n "$is_tag" ]] && tag="$bitbucket_tag"
+      [[ -n "$is_branch" ]] && branch="$bitbucket_tag"
+    elif [[ "$bitbucket" =~ \?at= ]] ; then
+      bitbucket_branch=$(echo "$bitbucket" | cut -f2 -d"=")
+
+      if [[ -n "$tag" ]] ; then
+        is_tag=true
+      else
+        is_branch=true
+      fi
+
+      [[ -n "$is_tag" ]] && tag="$bitbucket_branch"
+      [[ -n "$is_branch" ]] && branch="$bitbucket_branch"
+    fi
+  else
+    if [[ "$bitbucket" =~ \: ]] ; then
+      delim=":"
+    elif [[ "$bitbucket" =~ \/ ]] ; then
+      delim="/"
+    else
+      return 1
+    fi
+
+    bitbucket_user=$(echo "$bitbucket" | cut -f1 -d"$delim")
+    bitbucket_repo=$(echo "$bitbucket" | cut -f2 -d"$delim")
+
+    [[ -z "$bitbucket_user" || -z "$bitbucket_repo" ]] && return
+  fi
+
+  if [[ -n "$is_git" ]] ; then
+    git="git@bitbucket.org:${bitbucket_user}/${bitbucket_repo}.git"
+  else
+    hg="ssh://hg@bitbucket.org/${bitbucket_user}/${bitbucket_repo}"
+  fi
+}
+
+# Configure utility for downloading sources from launchpad.net
+#
+# Code: No
+# Echo: No
+fetchSourcesFromLaunchpad() {
+  local launchpad_repo
+
+  if [[ "$launchpad" =~ (http|https) ]] ; then
+    launchpad_repo=$(echo "$launchpad" | cut -d"/" -f4-99)
+
+    if [[ "$launchpad_repo" =~ revision/ ]] ; then
+      bzr=$(echo "$launchpad_repo" | cut -f1-3 -d"/")
+      revision=$(echo "$launchpad_repo" | cut -f5 -d"/")
+    else
+      bzr="lp:$launchpad_repo"
+    fi
+  else
+    bzr="$launchpad"
+  fi
+}
+
+# Fetch and pack sources from git repo
+#
+# 1: Path to spec file (String)
+#
+# Code: No
+# Echo: No
+packSourcesFromGit() {
+  local spec sources source_name source_ext dir_name git_log abs_dir_path
+
+  spec=$(getAbsPath "$1")
+  sources=($(getSpecValue "$MACROS_SOURCE" "$spec"))
+
+  if findSource "${sources[0]}" &>/dev/null ; then
+    if [[ -n "$download" ]] ; then
+      show "File ${CL_CYAN}${sources[0]}${CL_NORM} already created"
+    fi
+
+    return
+  fi
+
+  source_name=$(getArchName "${sources[0]}")
+  source_ext=$(getArchExt "${sources[0]}")
+
+  show "Fetching sources from git repo ${CL_CYAN}$git${CL_NORM}..."
+
+  dir_name=$(mktemp -u "$source_name-XXXX")
+
+  git_log="$tmp_dir/git.log"
+
+  pushd "$tmp_dir" &> /dev/null
+    git=$(evalMacros "$git" "$spec")
+
+    [[ -n "$verbose" ]] && git clone "$git" "$dir_name" | tee -a "$git_log" || git clone "$git" "$dir_name" &> "$git_log"
+
+    if [[ $? -ne 0 ]] ; then
+      error "Can't clone repo - error while cloning" $RED
+
+      if [[ -z "$verbose" ]] ; then
+        error ""
+        error "Last ${REPO_LOG_QUOTE_SIZE} lines from log ($git_log):"
+        tail -${REPO_LOG_QUOTE_SIZE} "$git_log" 1>&2
+        error ""
+      fi
+
+      doExit $ERROR_SOURCE
+    fi
+
+    pushd "$tmp_dir/$dir_name" &> /dev/null
+
+      if [[ -n "$branch" ]] ; then
+        branch=$(evalMacros "$branch" "$spec")
+
+        [[ -n "$verbose" ]] && git checkout "$branch" | tee -a "$git_log" || git checkout "$branch" &> "$git_log"
+
+        if [[ $? -ne 0 ]] ; then
+          error "Can't switch branch to ${CL_BL_RED}${branch}${CL_RED}:" $RED
+
+          if [[ -z "$verbose" ]] ; then
+            error ""
+            error "Last ${REPO_LOG_QUOTE_SIZE} lines from log ($git_log):"
+            tail -${REPO_LOG_QUOTE_SIZE} "$git_log" 1>&2
+            error ""
+          fi
+
+          doExit $ERROR_SOURCE
+        fi
+      fi
+
+      if [[ -n "$revision" ]] ; then
+        [[ -n "$verbose" ]] && git checkout "$revision" | tee -a "$git_log" || git checkout "$revision" &> "$git_log"
+
+        if [[ $? -ne 0 ]] ; then
+          error "Can't checkout revision ${CL_BL_RED}${revision}${CL_RED}:" $RED
+
+          if [[ -z "$verbose" ]] ; then
+            error ""
+            error "Last ${REPO_LOG_QUOTE_SIZE} lines from log ($git_log):"
+            tail -${REPO_LOG_QUOTE_SIZE} "$git_log" 1>&2
+            error ""
+          fi
+
+          doExit $ERROR_SOURCE
+        fi
+      elif [[ -n "$tag" ]] ; then
+        tag=$(evalMacros "$tag" "$spec")
+
+        [[ -n "$verbose" ]] && git checkout "$tag" | tee -a "$git_log" || git checkout "$tag" &> "$git_log"
+
+        if [[ $? -ne 0 ]] ; then
+          error "Can't checkout tag ${CL_BL_RED}${tag}${CL_RED}:" $RED
+
+          if [[ -z "$verbose" ]] ; then
+            error ""
+            error "Last ${REPO_LOG_QUOTE_SIZE} lines from log ($git_log):"
+            tail -${REPO_LOG_QUOTE_SIZE} "$git_log" 1>&2
+            error ""
+          fi
+
+          doExit $ERROR_SOURCE
+        fi
+      fi
+
+      # Fetch submodules if exist
+      if [[ -f .gitmodules ]] ; then
+        git submodule update --init --recursive
+      fi
+
+      rm -rf .git .gitignore .gitmodules "$git_log" &> /dev/null
+    popd &> /dev/null
+
+    if [[ -n "$path" ]] ; then
+      if [[ ! -d "$dir_name/$path" ]] ; then
+        error "Can't find path ${CL_BL_RED}${path}${CL_NORM} in git repository" $RED
+        doExit $ERROR_SOURCE
+      else
+        mv "$dir_name/$path" "$source_name"
+        rm -rf "$dir_name"
+      fi
+    else
+      mv "$dir_name" "$source_name"
+    fi
+
+    abs_dir_path=$(getAbsPath "$tmp_dir/$source_name")
+
+    packDir "$abs_dir_path" "$source_ext"
+
+    rm -rf "$source_name"
+
+    if [[ -n "$dlcache" ]] ; then
+      cp "${source_name}.${source_ext}" "$dlcache/"
+    fi
+
+  popd &> /dev/null
+
+  show "Source files from ${CL_BOLD}git${CL_NORM} repo packed as ${CL_CYAN}${source_name}.${source_ext}${CL_NORM}\n"
+}
+
+# Fetch and pack sources from mercurial repo
+#
+# 1: Path to spec file (String)
+#
+# Code: No
+# Echo: No
+packSourcesFromHg() {
+  local spec sources source_name source_ext dir_name hg_log abs_dir_path
+
+  spec=$(getAbsPath "$1")
+  sources=($(getSpecValue "$MACROS_SOURCE" "$spec"))
+
+  if findSource "${sources[0]}" &>/dev/null ; then
+    if [[ -n "$download" ]] ; then
+      show "File ${CL_CYAN}${sources[0]}${CL_NORM} already created."
+    fi
+
+    return
+  fi
+
+  source_name=$(getArchName "${sources[0]}")
+  source_ext=$(getArchExt "${sources[0]}")
+
+  show "Fetching sources from hg repo ${CL_CYAN}$hg${CL_NORM}..."
+
+  dir_name=$(mktemp -u "$source_name-XXXX")
+
+  hg_log="$tmp_dir/hg.log"
+
+  pushd "$tmp_dir" &> /dev/null
+    hg=$(evalMacros "$hg" "$spec")
+
+    [[ -n "$verbose" ]] && hg clone "$hg" "$dir_name" | tee -a "$hg_log" || hg clone "$hg" "$dir_name" &> "$hg_log"
+
+    if [[ $? -ne 0 ]] ; then
+      error "Can't clone repo - error while cloning" $RED
+
+      if [[ -z "$verbose" ]] ; then
+        error ""
+        error "Last ${REPO_LOG_QUOTE_SIZE} lines from log ($hg_log):"
+        tail -${REPO_LOG_QUOTE_SIZE} "$hg_log" 1>&2
+        error ""
+      fi
+
+      doExit $ERROR_SOURCE
+    fi
+
+    pushd "$tmp_dir/$dir_name" &> /dev/null
+
+      if [[ -n "$branch" ]] ; then
+        branch=$(evalMacros "$branch" "$spec")
+
+        [[ -n "$verbose" ]] && hg checkout "$branch" | tee -a "$hg_log" || hg checkout "$branch" &> "$hg_log"
+
+        if [[ $? -ne 0 ]] ; then
+          error "Can't switch branch to ${CL_BL_RED}${branch}${CL_RED}:" $RED
+
+          if [[ -z "$verbose" ]] ; then
+            error ""
+            error "Last ${REPO_LOG_QUOTE_SIZE} lines from log ($hg_log):"
+            tail -${REPO_LOG_QUOTE_SIZE} "$hg_log" 1>&2
+            error ""
+          fi
+
+          doExit $ERROR_SOURCE
+        fi
+      fi
+
+      if [[ -n "$revision" ]] ; then
+        [[ -n "$verbose" ]] && hg checkout "$revision" | tee -a "$hg_log" || hg checkout "$revision" &> "$hg_log"
+
+        if [[ $? -ne 0 ]] ; then
+          error "Can't checkout revision ${CL_BL_RED}${revision}${CL_RED}:" $RED
+
+          if [[ -z "$verbose" ]] ; then
+            error ""
+            error "Last ${REPO_LOG_QUOTE_SIZE} lines from log ($hg_log):"
+            tail -${REPO_LOG_QUOTE_SIZE} "$hg_log" 1>&2
+            error ""
+          fi
+
+          doExit $ERROR_SOURCE
+        fi
+      elif [[ -n "$tag" ]] ; then
+        tag=$(evalMacros "$tag" "$spec")
+
+        [[ -n "$verbose" ]] && hg checkout "$tag" | tee -a "$hg_log" || hg checkout "$tag" &> "$hg_log"
+
+        if [[ $? -ne 0 ]] ; then
+          error "Can't checkout tag ${CL_BL_RED}${tag}${CL_RED}:" $RED
+
+          if [[ -z "$verbose" ]] ; then
+            error ""
+            error "Last ${REPO_LOG_QUOTE_SIZE} lines from log ($hg_log):"
+            tail -${REPO_LOG_QUOTE_SIZE} "$hg_log" 1>&2
+            error ""
+          fi
+
+          doExit $ERROR_SOURCE
+        fi
+      fi
+
+      rm -rf .hg .hgignore "$hg_log" &> /dev/null
+    popd &> /dev/null
+
+    if [[ -n "$path" ]] ; then
+      if [[ ! -d "$dir_name/$path" ]] ; then
+        error "Can't find path ${CL_BL_RED}${path}${CL_NORM} in mercurial repository" $RED
+        doExit $ERROR_SOURCE
+      else
+        mv "$dir_name/$path" "$source_name"
+        rm -rf "$dir_name"
+      fi
+    else
+      mv "$dir_name" "$source_name"
+    fi
+
+    abs_dir_path=$(getAbsPath "$tmp_dir/$source_name")
+
+    packDir "$abs_dir_path" "$source_ext"
+
+    rm -rf "$source_name"
+
+    if [[ -n "$dlcache" ]] ; then
+      cp "${source_name}.${source_ext}" "$dlcache/"
+    fi
+
+  popd &> /dev/null
+
+  show "Source files from ${CL_BOLD}hg${CL_NORM} repo packed as ${CL_CYAN}${source_name}.${source_ext}${CL_NORM}\n"
+}
+
+# Fetch and pack sources from bazaar repo
+#
+# 1: Path to spec file (String)
+#
+# Code: No
+# Echo: No
+packSourcesFromBzr() {
+  local spec sources source_name source_ext dir_name bzr_log bzr_opts abs_dir_path
+
+  spec=$(getAbsPath "$1")
+  sources=($(getSpecValue "$MACROS_SOURCE" "$spec"))
+
+  if findSource "${sources[0]}" &>/dev/null ; then
+    if [[ -n "$download" ]] ; then
+      show "File ${CL_CYAN}${sources[0]}${CL_NORM} already created"
+    fi
+
+    return
+  fi
+
+  source_name=$(getArchName "${sources[0]}")
+  source_ext=$(getArchExt "${sources[0]}")
+
+  show "Fetching sources from bzr repo ${CL_CYAN}${bzr}${CL_NORM}..."
+
+  bzr=$(evalMacros "$bzr" "$spec")
+
+  dir_name=$(mktemp -u "$source_name-XXXX")
+  bzr_log="$tmp_dir/bzr.log"
+
+  pushd "$tmp_dir" &> /dev/null
+
+    [[ -n "$tag" ]] && bzr_opts="-r tag:$tag"
+
+    [[ -n "$verbose" ]] && bzr $bzr_opts branch "$bzr" "$dir_name" | tee -a "$bzr_log" || bzr $bzr_opts branch "$bzr" "$dir_name" &> "$bzr_log"
+
+    if [[ $? -ne 0 ]] ; then
+      error "Can't make a copy of the branch" $RED
+
+      if [[ -z "$verbose" ]] ; then
+        error ""
+        error "Last ${REPO_LOG_QUOTE_SIZE} lines from log ($bzr_log):"
+        tail -${REPO_LOG_QUOTE_SIZE} "$bzr_log" 1>&2
+        error ""
+      fi
+
+      doExit $ERROR_SOURCE
+    fi
+
+    pushd "$tmp_dir/$dir_name" &> /dev/null
+
+      if [[ -n "$revision" ]] ; then
+        [[ -n "$verbose" ]] && bzr revert -r${revision} | tee -a "$bzr_log" || bzr revert -r${revision} &> "$bzr_log"
+
+        if [[ $? -ne 0 ]] ; then
+          error "Can't revert to revision ${CL_BL_RED}${revision}" $RED
+
+          if [[ -z "$verbose" ]] ; then
+            error ""
+            error "Last ${REPO_LOG_QUOTE_SIZE} lines from log ($bzr_log):"
+            tail -${REPO_LOG_QUOTE_SIZE} "$bzr_log" 1>&2
+            error ""
+          fi
+
+          doExit $ERROR_SOURCE
+        fi
+      fi
+
+      rm -rf .bzr .bzrignore "$bzr_log" &> /dev/null
+    popd &> /dev/null
+
+    if [[ -n "$path" ]] ; then
+      if [[ ! -d "$dir_name/$path" ]] ; then
+        error "Can't find path ${CL_BL_RED}${path}${CL_NORM} in bazaar repository" $RED
+        doExit $ERROR_SOURCE
+      else
+        mv "$dir_name/$path" "$source_name"
+        rm -rf "$dir_name"
+      fi
+    else
+      mv "$dir_name" "$source_name"
+    fi
+
+    abs_dir_path=$(getAbsPath "$tmp_dir/$source_name")
+
+    packDir "$abs_dir_path" "$source_ext"
+
+    rm -rf "$source_name"
+
+    if [[ -n "$dlcache" ]] ; then
+      cp "${source_name}.${source_ext}" "$dlcache/"
+    fi
+
+  popd &> /dev/null
+
+  show "Source files from ${CL_BOLD}bzr${CL_NORM} repo packed as ${CL_CYAN}${source_name}.${source_ext}${CL_NORM}\n"
+}
+
+# Fetch and pack sources from SVN repo
+#
+# 1: Path to spec file (String)
+#
+# Code: No
+# Echo: No
+packSourcesFromSvn() {
+  local spec sources source_name source_ext svn_opts svn_log abs_dir_path
+
+  spec=$(getAbsPath "$1")
+  sources=($(getSpecValue "$MACROS_SOURCE" "$spec"))
+
+  if findSource "${sources[0]}" &>/dev/null ; then
+    if [[ -n "$download" ]] ; then
+      show "File ${CL_CYAN}${sources[0]}${CL_NORM} already created"
+    fi
+
+    return
+  fi
+
+  source_name=$(getArchName "${sources[0]}")
+  source_ext=$(getArchExt "${sources[0]}")
+
+  show "Fetching sources from svn repo ${CL_CYAN}$svn${CL_NORM}..."
+
+  svn=$(evalMacros "$svn" "$spec")
+
+  svn_log="$tmp_dir/svn.log"
+  svn_opts="--non-interactive --no-auth-cache"
+
+  [[ -n "$svn_user" ]] && svn_opts="$svn_opts --username $svn_user"
+  [[ -n "$svn_pass" ]] && svn_opts="$svn_opts --password $svn_pass"
+  [[ -n "$revision" ]] && svn_opts="$svn_opts --revision $revision"
+
+  local svn_url
+
+  if [[ "$svn" =~ (branches|tags|trunk) ]] ; then
+    svn_url="$svn"
+  else
+    if [[ -n "$branch" ]] ; then
+      branch=$(evalMacros "$branch" "$spec")
+      svn_url="$svn/branches/$branch"
+    elif [[ -n "$tag" ]] ; then
+      tag=$(evalMacros "$tag" "$spec")
+      svn_url="$svn/tags/$tag"
+    else
+      svn_url="$svn/trunk"
+    fi
+  fi
+
+  pushd "$tmp_dir" &> /dev/null
+    if [[ -n "$path" ]] ; then
+      if [[ -n "$verbose" ]] ; then
+        svn checkout "$svn_url" "${source_name}_tmp" $svn_opts | tee -a "$svn_log"
+      else
+        svn checkout "$svn_url" "${source_name}_tmp" "$svn_opts" &> "$svn_log"
+      fi
+    else
+      if [[ -n "$verbose" ]] ; then
+        svn checkout "$svn_url" "${source_name}" $svn_opts | tee -a "$svn_log"
+      else
+        svn checkout "$svn_url" "${source_name}" $svn_opts &> "$svn_log"
+      fi
+    fi
+
+    if [[ $? -ne 0 ]] ; then
+      error "Can't checkout source code from ${CL_BL_RED}${svn}" $RED
+
+      if [[ -z "$verbose" ]] ; then
+        error ""
+        error "Last ${REPO_LOG_QUOTE_SIZE} lines from log ($svn_log):"
+        tail -${REPO_LOG_QUOTE_SIZE} "$svn_log" 1>&2
+        error ""
+      fi
+
+      doExit $ERROR_SOURCE
+    else
+      rm -f "$svn_log" &> /dev/null
+
+      if [[ -n "$path" ]] ; then
+        if [[ ! -d "${source_name}_tmp/$path" ]] ; then
+          error "Can't find path ${CL_BL_RED}${path}${CL_NORM} in svn repository" $RED
+          doExit $ERROR_SOURCE
+        else
+          mv "${source_name}_tmp/$path" "$source_name"
+          rm -rf "${source_name}_tmp"
+        fi
+      fi
+
+      find "$source_name" -type d -name ".svn" -exec rm -rf {} \; &> /dev/null
+
+      abs_dir_path=$(getAbsPath "$tmp_dir/$source_name")
+
+      packDir "$abs_dir_path" "$source_ext"
+
+      rm -rf "$source_name"
+    fi
+
+    if [[ -n "$dlcache" ]] ; then
+      cp "${source_name}.${source_ext}" "$dlcache/"
+    fi
+
+  popd &> /dev/null
+
+  show "Source files from ${CL_BOLD}svn${CL_NORM} repo packed as ${CL_CYAN}${source_name}.${source_ext}${CL_NORM}\n"
+}
+
+# Remove SCM data from directory with data
+#
+# 1: Path to dir with sources (String)
+#
+# Code: No
+# Echo: No
+cleanPackDir() {
+  local dir="$1"
+
+  find "$dir" -type d -name ".git" -exec rm -rf {} \; 2> /dev/null
+  find "$dir" -type d -name ".hg" -exec rm -rf {} \; 2> /dev/null
+  find "$dir" -type d -name ".svn" -exec rm -rf {} \; 2> /dev/null
+  find "$dir" -type d -name ".bzr" -exec rm -rf {} \; 2> /dev/null
+
+  find "$dir" -type f -name ".gitignore" -exec rm -f {} \; 2> /dev/null
+  find "$dir" -type f -name ".hgignore" -exec rm -f {} \; 2> /dev/null
+  find "$dir" -type f -name ".bzrignore" -exec rm -f {} \; 2> /dev/null
+}

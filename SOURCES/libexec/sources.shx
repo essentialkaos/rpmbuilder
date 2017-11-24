@@ -1,0 +1,213 @@
+################################################################################
+
+require "sources-golang"
+require "sources-remote"
+require "sources-scm"
+
+################################################################################
+
+# Pack sources to archive file
+#
+# 1: Path to spec file (String)
+#
+# Code: No
+# Echo: No
+packSources() {
+  show "Packing source files to archive..."
+
+  local spec="$1"
+
+  if [[ -n "$source_list" ]] ; then
+    if [[ ! -r $source_list ]] ; then
+      error "Can't pack sources - file ${CL_BL_RED}${source_list}${CL_RED} not readable" $RED
+      doExit $ERROR_SOURCE
+    fi
+
+    if [[ ! -s $source_list ]] ; then
+      error "Can't pack sources - file ${CL_BL_RED}${source_list}${CL_RED} is empty" $RED
+      doExit $ERROR_SOURCE
+    fi
+
+    pack=$(cat "$source_list")
+    pack=$(evalMacros "$pack" "$spec")
+  fi
+
+  local src_target sources arch_name arch_ext
+
+  for src_target in $pack ; do
+    if [[ ! -a $src_target ]] ; then
+      error "Can't pack sources - ${CL_BL_RED}${src_target}${CL_RED} not exist or not accesable" $RED
+      doExit $ERROR_SOURCE
+    fi
+  done
+
+  sources=($(getSpecValue "$MACROS_SOURCE" "$spec"))
+  arch_name=$(getArchName "${sources[0]}")
+  arch_ext=$(getArchExt "${sources[0]}")
+
+  mkdir -p "$tmp_dir/$arch_name"
+
+  if [[ -z "$relative_pack" ]] ; then
+    cp -r $pack "$tmp_dir/$arch_name" &> /dev/null
+  else
+    cp -r --parents $pack "$tmp_dir/$arch_name" &> /dev/null
+  fi
+
+  if [[ $? -ne 0 ]] ; then
+    error "Can't copy source files to a temporary directory" $RED
+    doExit 1
+  fi
+
+  cleanPackDir "$tmp_dir/$arch_name"
+
+  pushd "$tmp_dir" &> /dev/null
+
+    packDir "$tmp_dir/$arch_name" "$arch_ext"
+
+  popd &> /dev/null
+
+  rm -rf "${tmp_dir:?}/$arch_name"
+
+  show "All files packed to ${CL_BL_GREEN}${arch_name}.${arch_ext}" $GREEN
+}
+
+# Pack directory with source files to archive
+#
+# 1: Path to directory (String)
+# 2: Archive extension (String)
+#
+# Code: No
+# Echo: No
+packDir() {
+  local dir="$1"
+  local ext="$2"
+
+  local dir_name parent_dir arch_name
+
+  dir_name=$(basename "$dir")
+  parent_dir=$(dirname "$dir")
+
+  if [[ -n "$3" ]] ; then
+    arch_name="$3"
+  else
+    arch_name="$dir_name"
+  fi
+
+  pushd "$parent_dir" &> /dev/null
+
+    if [[ "$ext" == "tar.gz" || "$ext" == "tgz" ]] ; then
+      tar czfv "$arch_name.$ext" "$dir_name" &> $verb_output
+    elif [[ "$ext" == "tar.bz2" || "$ext" == "tbz2" ]]; then
+      tar cjfv "$arch_name.$ext" "$dir_name" &> $verb_output
+    elif [[ "$ext" == "tar.bz" || "$ext" == "tbz" ]]; then
+      tar cjfv "$arch_name.$ext" "$dir_name" &> $verb_output
+    elif [[ "$ext" == "tar.xz" || "$ext" == "txz" ]] ; then
+      tar cf - "$dir_name" | xz -9 -c - > "$arch_name.$ext"
+    else
+      error "Error! Unknown archive type." $RED
+      doExit $ERROR_SOURCE
+    fi
+
+  popd &> /dev/null
+}
+
+# Download sources from remote storage
+#
+# 1: Path to spec file (String)
+#
+# Code: No
+# Echo: No
+downloadRemoteSources() {
+  local spec="$1"
+  local download_count=0
+
+  if [[ "$download" == "true" ]] ; then
+    dlcache="."
+  fi
+
+  showSeparator "DOWNLOADING"
+
+  if [[ ! -d "$dlcache" ]] ; then
+    error "Can't download sources - download destination directory doesn't exist" $RED
+    doExit $ERROR_ARGS
+  fi
+
+  [[ -n "$git" ]]    && packSourcesFromGit "$spec"
+  [[ -n "$svn" ]]    && packSourcesFromSvn "$spec"
+  [[ -n "$bzr" ]]    && packSourcesFromBzr "$spec"
+  [[ -n "$hg" ]]     && packSourcesFromHg  "$spec"
+  [[ -n "$gopack" ]] && packGolangSources  "$spec"
+
+  local source_file sources_list source_file_name patches_list files
+
+  sources_list=$(getSpecValue "$MACROS_SOURCE" "$spec")
+  patches_list=$(getSpecValue "$MACROS_PATCH" "$spec")
+
+  files="$sources_list $patches_list"
+
+  for source_file in $files ; do
+    if [[ "$source_file" =~ ^(http|https|ftp) ]] ; then
+      source_file_name=$(basename "$source_file")
+
+      if [[ -f "$dlcache/$source_file_name" ]] ; then
+        show "File ${CL_CYAN}${source_file_name}${CL_NORM} already downloaded"
+        continue
+      fi
+
+      show "Downloading source file ${CL_CYAN}${source_file}${CL_NORM}..."
+
+      downloadSource "$source_file" "$download"
+
+      if [[ $? -ne 0 ]] ; then
+        error "Error! Can't download file ${CL_BL_RED}${source_file}${CL_RED}." $RED
+        doExit $ERROR_SOURCE
+      fi
+
+      ((download_count++))
+    fi
+  done
+
+  if [[ $download_count -ne 0 ]] ; then
+    show "\n${CL_GREEN}All source files downloaded and stored to a ${CL_BL_GREEN}${dlcache}${CL_GREEN} directory${CL_NORM}"
+  fi
+
+  showSeparator
+}
+
+# Try to find sources
+#
+# 1: Source file name (String)
+# 2: Find only dir flag (Boolean) [Optional]
+#
+# Code: No
+# Echo: Path to file or dir with sources (String)
+findSource() {
+  local name="$1"
+  local get_dir="$2"
+
+  local dir abs_dir
+
+  if [[ -n "$source_dir" ]] ; then
+    if [[ -r "$source_dir/$name" ]] ; then
+      if [[ -n "$get_dir" ]] ; then
+        echo "$source_dir" && return 0
+      else
+        echo "$source_dir/$name" && return 0
+      fi
+    fi
+  else
+    for dir in $SOURCE_PATHS ; do
+      abs_dir=$(getAbsPath "$dir")
+
+      if [[ -r "$abs_dir/$name" ]] ; then
+        if [[ -n "$get_dir" ]] ; then
+          echo "$abs_dir" && return 0
+        else
+          echo "$abs_dir/$name" && return 0
+        fi
+      fi
+    done
+  fi
+
+  echo "" && return 1
+}

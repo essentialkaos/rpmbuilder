@@ -1,0 +1,154 @@
+# Check if command is supported on this system
+#
+# *: Commands (String)
+#
+# Code: Yes
+# Echo: No
+checkDeps() {
+  local app
+
+  for app in "$@" ; do
+    if ! type -P "$app" &> /dev/null ; then
+      return 1
+    fi
+  done
+
+  return 0
+}
+
+# Get absolute path to target
+#
+# 1: Obsolute path (String)
+#
+# Code: No
+# Echo: Absolute path (String)
+getAbsPath() {
+  readlink -f "$1"
+}
+
+# Get current timestamp
+#
+# Code: No
+# Echo: Timestamp (Number)
+now() {
+  date +'%s'
+}
+
+# Get current date and time for log 
+#
+# Code: No
+# Echo: Date and time (String)
+getLogDate() {
+  date +'%Y-%m-%d-%H%M'
+}
+
+# Print duration in pretty format
+#
+# 1: Duration in seconds (Number)
+#
+# Code: No
+# Echo: Duration (String)
+getGraceDuration() {
+  local dur="$1"
+  local sec min
+
+  if [[ -z "$dur" || "$dur" == "0" ]] ; then
+    echo "< 1 sec"
+    return 0
+  fi
+
+  sec=$(( dur % 60 ))
+  min=$(( ( dur - sec ) / 60 ))
+
+  if [[ $min -eq 0 ]] ; then
+    echo "$sec sec"
+  else
+    echo "$min min $sec sec"
+  fi
+}
+
+# Show separator
+#
+# 1: Separator name (String) [Optional]
+#
+# Code: No
+# Echo: No
+showSeparator() {
+  local name="$1"
+  local sep adds cols
+
+  if [[ -n "$tmux_worker" ]] ; then
+    cols=$(tmux display-message -p "#{window_width}")
+  else
+    cols=$(tput cols)
+  fi
+
+  for i in $(seq 1 $cols) ; do
+    sep="${sep}-"
+  done
+
+  show ""
+
+  if [[ -n "$name" ]] ; then
+    adds=$(( ${#sep} - ${#name} - 4 ))
+    show "${CL_GREY}--${CL_NORM} ${CL_BOLD}${name}${CL_NORM} ${CL_GREY}${sep:0:$adds}${CL_NORM}"
+  else
+    show "${CL_GREY}${sep}${CL_NORM}"
+  fi
+
+  show ""
+}
+
+# Create temporary directory for files and temporary file for output
+#
+# Code: No
+# Echo: No
+makeTemp() {
+  tmp_output=$(mktemp "${tmp:?}/$TMP_OUT_TEMPLATE")
+  tmp_dir=$(mktemp -d "${tmp:?}/$TMP_DIR_TEMPLATE")
+
+  if [[ ! -f "$tmp_output" || ! -d "$tmp_dir" ]] ; then
+    error "Can't start build process - temp file can't be created" $RED
+    doExit $ERROR_UNKNOWN
+  fi
+}
+
+# Get archive file name without extension
+#
+# 1: File (String)
+#
+# Code: No
+# Echo: Name (String)
+getArchName() {
+  local file_name arch_type
+
+  file_name=$(basename "$1")
+
+  for arch_type in $SUPPORTED_ARCH_TYPES ; do
+    file_name="${file_name/.${arch_type}/}"
+  done
+
+  echo "$file_name"
+}
+
+# Get archive file extension
+#
+# 1: File (String)
+#
+# Code: No
+# Echo: Extension (String)
+getArchExt() {
+  local file_name arch_type
+
+  file_name=$(basename "$1")
+
+  for arch_type in $SUPPORTED_ARCH_TYPES ; do
+    if [[ $file_name =~ $arch_type ]] ; then
+      echo "$arch_type"
+      return 0
+    fi
+  done
+
+  echo ""
+  return 1
+}
