@@ -7,8 +7,9 @@
 parseSourceURL() {
   local spec="$1"
 
-  local url
-  url=$(getSpecValue "$MACROS_URL" "$spec")
+  local url sources
+  sources=($(getSources "$spec"))
+  url="${sources[0]}"
 
   if [[ "$url" =~ github ]] ; then
     github="$url"
@@ -165,7 +166,7 @@ packSourcesFromGit() {
   local spec sources source_name source_ext dir_name git_log abs_dir_path
 
   spec=$(getAbsPath "$1")
-  sources=($(getSpecValue "$MACROS_SOURCE" "$spec"))
+  sources=($(getSources "$spec"))
 
   if findSource "${sources[0]}" &>/dev/null ; then
     if [[ -n "$download" ]] ; then
@@ -185,8 +186,6 @@ packSourcesFromGit() {
   git_log="$tmp_dir/git.log"
 
   pushd "$tmp_dir" &> /dev/null
-    git=$(evalMacros "$git" "$spec")
-
     [[ -n "$verbose" ]] && git clone "$git" "$dir_name" | tee -a "$git_log" || git clone "$git" "$dir_name" &> "$git_log"
 
     if [[ $? -ne 0 ]] ; then
@@ -205,8 +204,6 @@ packSourcesFromGit() {
     pushd "$tmp_dir/$dir_name" &> /dev/null
 
       if [[ -n "$branch" ]] ; then
-        branch=$(evalMacros "$branch" "$spec")
-
         [[ -n "$verbose" ]] && git checkout "$branch" | tee -a "$git_log" || git checkout "$branch" &> "$git_log"
 
         if [[ $? -ne 0 ]] ; then
@@ -239,8 +236,6 @@ packSourcesFromGit() {
           doExit $ERROR_SOURCE
         fi
       elif [[ -n "$tag" ]] ; then
-        tag=$(evalMacros "$tag" "$spec")
-
         [[ -n "$verbose" ]] && git checkout "$tag" | tee -a "$git_log" || git checkout "$tag" &> "$git_log"
 
         if [[ $? -ne 0 ]] ; then
@@ -302,7 +297,7 @@ packSourcesFromHg() {
   local spec sources source_name source_ext dir_name hg_log abs_dir_path
 
   spec=$(getAbsPath "$1")
-  sources=($(getSpecValue "$MACROS_SOURCE" "$spec"))
+  sources=($(getSources "$spec"))
 
   if findSource "${sources[0]}" &>/dev/null ; then
     if [[ -n "$download" ]] ; then
@@ -322,8 +317,6 @@ packSourcesFromHg() {
   hg_log="$tmp_dir/hg.log"
 
   pushd "$tmp_dir" &> /dev/null
-    hg=$(evalMacros "$hg" "$spec")
-
     [[ -n "$verbose" ]] && hg clone "$hg" "$dir_name" | tee -a "$hg_log" || hg clone "$hg" "$dir_name" &> "$hg_log"
 
     if [[ $? -ne 0 ]] ; then
@@ -340,9 +333,7 @@ packSourcesFromHg() {
     fi
 
     pushd "$tmp_dir/$dir_name" &> /dev/null
-
       if [[ -n "$branch" ]] ; then
-        branch=$(evalMacros "$branch" "$spec")
 
         [[ -n "$verbose" ]] && hg checkout "$branch" | tee -a "$hg_log" || hg checkout "$branch" &> "$hg_log"
 
@@ -376,8 +367,6 @@ packSourcesFromHg() {
           doExit $ERROR_SOURCE
         fi
       elif [[ -n "$tag" ]] ; then
-        tag=$(evalMacros "$tag" "$spec")
-
         [[ -n "$verbose" ]] && hg checkout "$tag" | tee -a "$hg_log" || hg checkout "$tag" &> "$hg_log"
 
         if [[ $? -ne 0 ]] ; then
@@ -434,7 +423,7 @@ packSourcesFromBzr() {
   local spec sources source_name source_ext dir_name bzr_log bzr_opts abs_dir_path
 
   spec=$(getAbsPath "$1")
-  sources=($(getSpecValue "$MACROS_SOURCE" "$spec"))
+  sources=($(getSources "$spec"))
 
   if findSource "${sources[0]}" &>/dev/null ; then
     if [[ -n "$download" ]] ; then
@@ -448,8 +437,6 @@ packSourcesFromBzr() {
   source_ext=$(getArchExt "${sources[0]}")
 
   show "Fetching sources from bzr repo ${CL_CYAN}${bzr}${CL_NORM}..."
-
-  bzr=$(evalMacros "$bzr" "$spec")
 
   dir_name=$(mktemp -u "$source_name-XXXX")
   bzr_log="$tmp_dir/bzr.log"
@@ -532,7 +519,7 @@ packSourcesFromSvn() {
   local spec sources source_name source_ext svn_opts svn_log abs_dir_path
 
   spec=$(getAbsPath "$1")
-  sources=($(getSpecValue "$MACROS_SOURCE" "$spec"))
+  sources=($(getSources "$spec"))
 
   if findSource "${sources[0]}" &>/dev/null ; then
     if [[ -n "$download" ]] ; then
@@ -547,8 +534,6 @@ packSourcesFromSvn() {
 
   show "Fetching sources from svn repo ${CL_CYAN}$svn${CL_NORM}..."
 
-  svn=$(evalMacros "$svn" "$spec")
-
   svn_log="$tmp_dir/svn.log"
   svn_opts="--non-interactive --no-auth-cache"
 
@@ -562,10 +547,8 @@ packSourcesFromSvn() {
     svn_url="$svn"
   else
     if [[ -n "$branch" ]] ; then
-      branch=$(evalMacros "$branch" "$spec")
       svn_url="$svn/branches/$branch"
     elif [[ -n "$tag" ]] ; then
-      tag=$(evalMacros "$tag" "$spec")
       svn_url="$svn/tags/$tag"
     else
       svn_url="$svn/trunk"

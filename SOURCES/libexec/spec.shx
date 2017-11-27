@@ -41,84 +41,24 @@ readInspecOptions() {
   done < <(grep "$INSPEC_ARG_PREFIX" "$spec" | sed "s/# \?$INSPEC_ARG_PREFIX//g" | tr -s " ")
 }
 
-# Get macros value from spec
+# Get sources
 #
-# 1: Macros name (String)
-# 2: Path to spec file (String)
+# 1: Path to spec file (String)
 #
 # Code: No
-# Echo: Macros value (String)
-getSpecValue() {
-  local macros="$1"
-  local spec="$2"
-
-  local spec_header result
-
-  spec_header=$(grep -v "^#" "$spec" | grep -n "%prep" | head -1 | cut -f1 -d":")
-  result=$(grep -v "^#" "$spec" | head "-$spec_header" | egrep "$macros*.*:" | sed 's/[\t]/ /g' | tr -s " " | cut -f2-99 -d" " | sed 's/,/ /g')
-
-  result=$(evalMacros "$result" "$spec")
-  result=$(echo "$result" | sed 's/ = /=/g' | sed 's/ >= />=/g' | sed 's/ > />/g' | sed 's/ *$//')
-
-  [[ "$macros" == "$MACROS_SOURCE" || "$macros" == "$MACROS_PATCH" ]] && echo "${result// /%20}" || echo "$result"
+# Echo: Sources list (String)
+getSources() {
+  spectool -n -S "$1" 2>/dev/null | cut -f2 -d" "
 }
 
-# Eval macros
+# Get patches
 #
-# 1: Macros name (String)
-# 2: Path to spec file (String)
-#
-# Code: No
-# Echo: Macros value (String)
-evalMacros() {
-  local macros="$1"
-  local spec="$2"
-
-  if [[ "$macros" =~ \% ]] ; then
-    while : ; do
-      local macros_name macros_value
-
-      [[ "$macros" =~ \%\{([A-Za-z0-9_?]{3,})\} ]] && macros_name="${BASH_REMATCH[1]}" || break
-
-      macros_value=$(getMacrosValue "$macros_name" "$spec")
-
-      macros=${macros/"%{$macros_name}"/"$macros_value"} #"
-    done
-  fi
-
-  echo "$macros"
-}
-
-# Read macros value
-#
-# 1: Macros name (String)
-# 2: Path to spec file (String)
+# 1: Path to spec file (String)
 #
 # Code: No
-# Echo: Macros value (String)
-getMacrosValue() {
-  local macros="$1"
-  local spec="$2"
-
-  local result sys_macros inner_macros
-
-  if [[ "$MACROSES" =~ $macros:([A-Za-z]*) ]] ; then
-    inner_macros="${BASH_REMATCH[1]}"
-
-    result=$(grep -v "^#" "$spec" | egrep "$inner_macros*.:" | sed 's/[\t]/ /g' | tr -s " " | cut -f2-99 -d" " | sed 's/,/ /g' | sed 's/ $//g' | head -1)
-  fi
-
-  if [[ -z "$result" ]] ; then
-    sys_macros=$(rpm --eval "%{$macros}")
-
-    [[ ! $sys_macros =~ \% ]] && result="$sys_macros"
-  fi
-
-  if [[ -z "$result" ]] ; then
-    result=$(grep -v "^#" "$spec" | egrep "(^%define|^%global)" | sed 's/[\t]/ /g' | tr -s " " | egrep "(^%define|^%global) $macro " | cut -f3-99 -d" ")
-  fi
-
-  echo "$result"
+# Echo: Patches list (String)
+getPatches() {
+  spectool -n -P "$1" 2>/dev/null | cut -f2 -d" "
 }
 
 # Bump version in spec after successful build

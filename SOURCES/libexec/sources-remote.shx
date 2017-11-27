@@ -33,8 +33,8 @@ downloadRemoteSources() {
 
   local source_file sources_list source_file_name patches_list files
 
-  sources_list=$(getSpecValue "$MACROS_SOURCE" "$spec")
-  patches_list=$(getSpecValue "$MACROS_PATCH" "$spec")
+  sources_list=$(getSources "$spec")
+  patches_list=$(getPatches "$spec")
 
   files="$sources_list $patches_list"
 
@@ -43,7 +43,7 @@ downloadRemoteSources() {
       source_file_name=$(basename "$source_file")
 
       if [[ -f "$dlcache/$source_file_name" ]] ; then
-        show "File ${CL_CYAN}${source_file_name}${CL_NORM} already downloaded."
+        show "File ${CL_CYAN}${source_file_name}${CL_NORM} already downloaded"
         continue
       fi
 
@@ -82,7 +82,7 @@ downloadSource() {
 
   file_name=$(basename "$url")
 
-  if ! isAccessibleUrl "$url" ; then
+  if ! isAccessibleURL "$url" ; then
     error "Can't download file ${CL_BL_RED}${file_name}${CL_RED} - server return error code" $RED
     doExit $ERROR_SOURCE
   else
@@ -99,5 +99,32 @@ downloadSource() {
       show "cache feature in this case. Use -dc <path> or --dlcache <path>." $YELLOW
       show ""
     fi
+  fi
+}
+
+# Checks if URL is accessible
+#
+# 1: URL (String)
+#
+# Code: Yes
+# Echo: No
+isAccessibleURL() {
+  local status code nosniff size
+
+  if [[ "$1" =~ http:|https: ]] ; then
+    status=$(curl -A "$USER_AGENT" -LIs --max-redirs 10 -X GET "$1")
+    code=$(echo -e "$status" | grep "HTTP" | cut -f2 -d" " | tail -1)
+    nosniff=$(echo -e "$status" | grep "X-Content-Type-Options: nosniff")
+
+    # Nosniff mode works on Google Code, if we simple try check status server return
+    # code 404, but we can download this file
+    [[ -n $nosniff || "$code" == "200" ]] && return 0 || return 1
+  elif [[ "$1" =~ ftp: ]] ; then
+    status=$(curl -A "$USER_AGENT" "$1" -Is)
+    size=$(echo "$status" | grep "Content-Length" | cut -f2 -d" ")
+
+    [[ -n "$size" ]] && return 0 || return 1
+  else
+    return 1
   fi
 }

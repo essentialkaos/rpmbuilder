@@ -8,7 +8,7 @@ packGolangSources() {
   local spec="$1"
   local args sources output status
 
-  sources=($(getSpecValue "$MACROS_SOURCE" "$spec"))
+  sources=($(getSources "$spec"))
 
   if findSource "${sources[0]}" &>/dev/null ; then
     if [[ -n "$download" ]] ; then

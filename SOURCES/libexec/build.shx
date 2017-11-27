@@ -102,8 +102,8 @@ processSpec() {
 
   local source_list patch_list files source_file source_num file_name found_source
 
-  source_list=$(getSpecValue "$MACROS_SOURCE" "$spec")
-  patch_list=$(getSpecValue "$MACROS_PATCH" "$spec")
+  source_list=$(getSources "$spec")
+  patch_list=$(getPatches "$spec")
 
   files="$source_list $patch_list"
 
@@ -254,6 +254,11 @@ checkOptions() {
 
   if ! checkDeps "rpm" && [[ -n "$sign" && -z "$remote" ]] ; then
     error "Can't start local build process - for signing packages you must install rpm first." $RED
+    doExit $ERROR_DEPS
+  fi
+
+  if ! checkDeps "spectool" ; then
+    error "Can't start local build process - spectool (part of rpmdevtools) is required." $RED
     doExit $ERROR_DEPS
   fi
 
