@@ -67,24 +67,24 @@ Source packaging:
   --dlcache, -dc dir               Path to a directory for downloads caching
   --download, -dl dir              Download all remote sources to a specified directory
 
-  --git url                        Fetch sources from Git repository (macro supported)
-  --svn url                        Fetch sources from SVN repository (macro supported)
-  --hg url                         Fetch sources from Mercurial repository (macro supported)
-  --bzr url                        Fetch sources from Bazar repository (macro supported)
+  --git url                        Fetch sources from Git repository
+  --svn url                        Fetch sources from SVN repository
+  --hg url                         Fetch sources from Mercurial repository
+  --bzr url                        Fetch sources from Bazar repository
   --path, -rp path                 Path to a directory with sources in repository
-  --branch, -rb branch             Use specified repository branch (macro supported)
+  --branch, -rb branch             Use specified repository branch
   --revision, -rr rev              Use specified revision
-  --tag, -rt tag                   Use specified tag (macro supported)
+  --tag, -rt tag                   Use specified tag
   --svn-user, -su username         Username for access to SVN repository
   --svn-pass, -sp password         Password for access to SVN repository
 
-  --github, -gh url                Fetch sources from github.com repository by url (macro supported)
+  --github, -gh url                Fetch sources from github.com repository by url
   --github, -gh user:project       Fetch sources from github.com repository by user and project
   --github, -gh user/project       Fetch sources from github.com repository by user and project
-  --bitbucket, -bb url             Fetch sources from bitbucket.org repository by url (macro supported)
+  --bitbucket, -bb url             Fetch sources from bitbucket.org repository by url
   --bitbucket, -bb user:project    Fetch sources from bitbucket.org repository by user and project
   --bitbucket, -bb user/project    Fetch sources from bitbucket.org repository by user and project
-  --launchpad, -lp url             Fetch sources from launchpad.net repository by url (macro supported)
+  --launchpad, -lp url             Fetch sources from launchpad.net repository by url
   --launchpad, -lp project-name    Fetch sources from launchpad.net repository by project name
 
   --gopack, -G url                 Fetch and pack golang sources using gopack
@@ -96,7 +96,6 @@ Source packaging:
     rpmbuilder package.spec --pack "file1 file2 dir1 dir2 file3"
     rpmbuilder package.spec -p "file1 file2" -p "dir1 dir2 file3" -p file4
     rpmbuilder package.spec --git git://github.com/user/project.git --tag 1.3-12
-    rpmbuilder package.spec --git git://github.com/%{vendor}/%{name}.git --tag "v%{version}-%{release}"
     rpmbuilder package.spec --git git://github.com/user/project.git -rb develop
     rpmbuilder package.spec --git git://github.com/user/project.git -rr f8debbfdbebb97f5d0ee2218edf1425ac219cff5
     rpmbuilder package.spec -bb user:project

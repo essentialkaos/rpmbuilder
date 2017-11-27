@@ -387,7 +387,6 @@ usage() {
   show "    rpmbuilder package.spec --pack \"file1 file2 dir1 dir2 file3\"" $GREY
   show "    rpmbuilder package.spec -p \"file1 file2\" -p \"dir1 dir2 file3\" -p file4" $GREY
   show "    rpmbuilder package.spec --git git://github.com/user/project.git --tag 1.3-12" $GREY
-  show "    rpmbuilder package.spec --git git://github.com/%{vendor}/%{name}.git --tag \"v%{version}-%{release}\"" $GREY
   show "    rpmbuilder package.spec --git git://github.com/user/project.git -rb develop" $GREY
   show "    rpmbuilder package.spec --git git://github.com/user/project.git -rr f8debbfdbebb97f5d0ee2218edf1425ac219cff5" $GREY
   show "    rpmbuilder package.spec -bb user:project" $GREY
