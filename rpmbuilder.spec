@@ -54,6 +54,17 @@ rm -rf %{buildroot}
 ###############################################################################
 
 %changelog
+* Wed Nov 29 2017 Anton Novojilov <andy@essentialkaos.com> - 2.0.0-0
+- Source code divided to separate files
+- Code refactoring
+- Using 'spectool' instead of manual spec parsing for macro evaluation
+- Improved UI
+- Fixed bug with processing build options when '--with' or '--without'
+  options is defined
+- Fixed minor bug with processing spec values
+- Fixed minor bug with processing sources
+- Fixed bug with uploading packages to remote host
+
 * Mon Sep 18 2017 Anton Novojilov <andy@essentialkaos.com> - 1.10.1-0
 - Fixed compatibility with latest version of gopack
 
