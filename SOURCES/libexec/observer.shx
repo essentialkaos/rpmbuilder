@@ -32,20 +32,21 @@ stopStatusObserver() {
 # Code: No
 # Echo: No
 statusObserver() {
-  local prev_status status
+  local status cur_time bld_time grc_time
 
   while : ; do
+    cur_time=$(now)
+    bld_time=$(( cur_time - build_start ))
+    grc_time=$(getGraceDuration "$bld_time")
+
     status=$(grep "Executing" "$tmp_output" | tail -1 | perl -ne '/Executing\(%(\w*)\)/ && print "$1\n"')
 
     if [[ "$status" == "doc" ]] ; then
       [[ $(grep "Checking for unpackaged" "$tmp_output") ]] && status="packaging"
     fi
 
-    if [[ "$status" != "$prev_status" ]] ; then
-      showt "\r${CL_GREEN}Executing:${CL_NORM} ${CL_CYAN}$status${CL_NORM}"
-      prev_status="$status"
-    fi
+    showt "\r${CL_GREEN}Executing:${CL_NORM} ${CL_CYAN}$status${CL_NORM} ${CL_DARK}($grc_time)${CL_NORM}"
 
-    sleep 0.1
+    sleep 0.3
   done
 }
