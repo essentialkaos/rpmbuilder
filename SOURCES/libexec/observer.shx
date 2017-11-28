@@ -37,17 +37,19 @@ statusObserver() {
   while : ; do
     cur_time=$(now)
     bld_time=$(( cur_time - build_start ))
-    grc_time=$(getGraceDuration "$bld_time")
 
     status=$(grep "Executing" "$tmp_output" | tail -1 | perl -ne '/Executing\(%(\w*)\)/ && print "$1\n"')
 
     if [[ "$status" == "doc" ]] ; then
-      [[ $(grep "Checking for unpackaged" "$tmp_output") ]] && status="packaging"
+      if grep -q "Checking for unpackaged" "$tmp_output" ; then
+        status="packaging"
+      fi
     fi
 
-    if [[ "$status+$bld_time" != "$prev_status+$bld_time" ]] ; then
+    if [[ "$status" != "$prev_status+$bld_time" ]] ; then
+      grc_time=$(getGraceDuration "$bld_time")
       showt "\r${CL_GREEN}Executing:${CL_NORM} ${CL_CYAN}$status${CL_NORM} ${CL_DARK}($grc_time)${CL_NORM}"
-      prev_status="$status"
+      prev_status="$status+$bld_time"
     fi
 
     sleep 0.2
