@@ -45,8 +45,6 @@ Build node:
 [sudo] service buildmon start
 ```
 
-Also we have superb [Terrafarm](https://github.com/essentialkaos/terrafarm) utility for starting and managing rpmbuilder-based farm on [DigitalOcean](https://www.digitalocean.com).
-
 ### Usage
 
 ```
