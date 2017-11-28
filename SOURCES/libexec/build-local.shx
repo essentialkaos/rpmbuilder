@@ -452,7 +452,7 @@ localSign() {
 # Code: No
 # Echo: No
 setupBuildTree() {
-  if [[ $(ls -1 $HOME/rpmbuild | wc -l) == "6" ]] ; then
+  if [[ $(ls -1 $HOME/rpmbuild 2>/dev/null | wc -l) == "6" ]] ; then
     return
   fi
 

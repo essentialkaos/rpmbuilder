@@ -32,7 +32,7 @@ stopStatusObserver() {
 # Code: No
 # Echo: No
 statusObserver() {
-  local status cur_time bld_time grc_time
+  local prev_status status cur_time bld_time grc_time
 
   while : ; do
     cur_time=$(now)
@@ -45,8 +45,11 @@ statusObserver() {
       [[ $(grep "Checking for unpackaged" "$tmp_output") ]] && status="packaging"
     fi
 
-    showt "\r${CL_GREEN}Executing:${CL_NORM} ${CL_CYAN}$status${CL_NORM} ${CL_DARK}($grc_time)${CL_NORM}"
+    if [[ "$status+$bld_time" != "$prev_status+$bld_time" ]] ; then
+      showt "\r${CL_GREEN}Executing:${CL_NORM} ${CL_CYAN}$status${CL_NORM} ${CL_DARK}($grc_time)${CL_NORM}"
+      prev_status="$status"
+    fi
 
-    sleep 0.3
+    sleep 0.2
   done
 }
