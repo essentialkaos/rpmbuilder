@@ -4,6 +4,51 @@ require "upload"
 
 ################################################################################
 
+# Process sources and run build on local host
+#
+# 1: Path to spec file (String)
+#
+# Code: No
+# Echo: No
+localBuild() {
+  local spec="$1"
+
+  showSeparator "PREPARATION"
+
+  setupBuildTree
+
+  if [[ -n "$pre" ]] ; then
+    show "Executing pre-build script..."
+    $($pre)
+  fi
+
+  [[ -n "$git" ]]    && packSourcesFromGit "$spec"
+  [[ -n "$svn" ]]    && packSourcesFromSvn "$spec"
+  [[ -n "$bzr" ]]    && packSourcesFromBzr "$spec"
+  [[ -n "$hg" ]]     && packSourcesFromHg  "$spec"
+  [[ -n "$gopack" ]] && packGolangSources  "$spec"
+
+  [[ -n "$repo_spec" ]] && spec="$repo_spec"
+
+  [[ -n "$pack" || -n "$source_list" ]] && packSources "$spec" && show ""
+
+  processSpec "$spec"
+
+  show ""
+  show "All source files are ready for build" $GREEN
+
+  copySourcesToBuildDir "$spec"
+
+  if [[ -n "$depinstall" || -n "$dep_install" ]] ; then
+    showSeparator "DEPENDENCIES INSTALL"
+    localDepsInstall "$spec"
+  fi
+
+  [[ -n "$no_build" ]] && show "" && return
+
+  localBuildProcess "$spec"
+}
+
 # Copy sources to build dir
 #
 # 1: Path to spec file (String)
@@ -49,49 +94,6 @@ copySourcesToBuildDir() {
     error "Error! Can't copy spec file - directory ${CL_BL_RED}${specs_dir}${CL_RED} doesn't exist." $RED
     doExit $ERROR_SOURCE
   fi
-}
-
-# Process sources and run build on local host
-#
-# 1: Path to spec file (String)
-#
-# Code: No
-# Echo: No
-localBuild() {
-  local spec="$1"
-
-  showSeparator "PREPARATION"
-
-  if [[ -n "$pre" ]] ; then
-    show "Executing pre-build script..."
-    $($pre)
-  fi
-
-  [[ -n "$git" ]]    && packSourcesFromGit "$spec"
-  [[ -n "$svn" ]]    && packSourcesFromSvn "$spec"
-  [[ -n "$bzr" ]]    && packSourcesFromBzr "$spec"
-  [[ -n "$hg" ]]     && packSourcesFromHg  "$spec"
-  [[ -n "$gopack" ]] && packGolangSources  "$spec"
-
-  [[ -n "$repo_spec" ]] && spec="$repo_spec"
-
-  [[ -n "$pack" || -n "$source_list" ]] && packSources "$spec" && show ""
-
-  processSpec "$spec"
-
-  show ""
-  show "All source files are ready for build" $GREEN
-
-  copySourcesToBuildDir "$spec"
-
-  if [[ -n "$depinstall" || -n "$dep_install" ]] ; then
-    showSeparator "DEPENDENCIES INSTALL"
-    localDepsInstall "$spec"
-  fi
-
-  [[ -n "$no_build" ]] && show "" && return
-
-  localBuildProcess "$spec"
 }
 
 # Install build dependencies on local host
@@ -443,4 +445,16 @@ localSign() {
   if [[ $? -ne 0 ]] ; then
     show "Can't sign package" $YELLOW
   fi
+}
+
+# Setup build tree before build
+#
+# Code: No
+# Echo: No
+setupBuildTree() {
+  if [[ $(ls -1 $HOME/rpmbuild | wc -l) == "6" ]] ; then
+    return
+  fi
+
+  rpmdev-setuptree
 }

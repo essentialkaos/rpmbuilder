@@ -193,6 +193,11 @@ main() {
   [[ -n "$ver" || -n "$version" ]] && about && exit 0
   [[ $# -eq 0 || -n "$help" || -n "$usage" ]] && usage && exit 0
 
+  if [[ $(id -u) == "0" ]] ; then
+    show "You should not be building packages as the superuser!" $YELLOW
+    exit 1
+  fi
+
   require "build"
 
   startBuild $*
@@ -207,7 +212,7 @@ main() {
 require() {
   local script="${1}.shx"
 
-  # File already loaded
+  # File already loaded, skip it
   if [[ "${_requires[$script]}" -eq 1 ]] ; then
     return
   fi
