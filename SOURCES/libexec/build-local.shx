@@ -1,0 +1,460 @@
+################################################################################
+
+require "upload"
+
+################################################################################
+
+# Process sources and run build on local host
+#
+# 1: Path to spec file (String)
+#
+# Code: No
+# Echo: No
+localBuild() {
+  local spec="$1"
+
+  showSeparator "PREPARATION"
+
+  setupBuildTree
+
+  if [[ -n "$pre" ]] ; then
+    show "Executing pre-build script..."
+    $($pre)
+  fi
+
+  [[ -n "$git" ]]    && packSourcesFromGit "$spec"
+  [[ -n "$svn" ]]    && packSourcesFromSvn "$spec"
+  [[ -n "$bzr" ]]    && packSourcesFromBzr "$spec"
+  [[ -n "$hg" ]]     && packSourcesFromHg  "$spec"
+  [[ -n "$gopack" ]] && packGolangSources  "$spec"
+
+  [[ -n "$repo_spec" ]] && spec="$repo_spec"
+
+  [[ -n "$pack" || -n "$source_list" ]] && packSources "$spec" && show ""
+
+  processSpec "$spec"
+
+  show ""
+  show "All source files are ready for build" $GREEN
+
+  copySourcesToBuildDir "$spec"
+
+  if [[ -n "$depinstall" || -n "$dep_install" ]] ; then
+    showSeparator "DEPENDENCIES INSTALL"
+    localDepsInstall "$spec"
+  fi
+
+  [[ -n "$no_build" ]] && show "" && return
+
+  localBuildProcess "$spec"
+}
+
+# Copy sources to build dir
+#
+# 1: Path to spec file (String)
+#
+# Code: No
+# Echo: No
+copySourcesToBuildDir() {
+  local spec="$1"
+
+  local rpmbuild_dir src_dir specs_dir source_file source_files source_file_name has_errors
+
+  rpmbuild_dir=$(getRPMBuildDir)
+  src_dir="$rpmbuild_dir/SOURCES"
+  specs_dir="$rpmbuild_dir/SPECS"
+
+  if [[ -d "$src_dir" ]] ; then
+    source_files=$(find "$tmp_dir" -maxdepth 1 -type f)
+
+    for source_file in $source_files ; do
+      cp "$source_file" "$src_dir" &> /dev/null
+
+      if [[ $? -ne 0 ]] ; then
+        source_file_name=$(basename "$source_file")
+        error "Can't copy source file ${CL_BL_RED}${source_file_name}${CL_RED} to directory ${CL_BL_RED}${src_dir}${CL_RED} - error while copy process" $RED
+        doExit $ERROR_SOURCE
+      fi
+    done
+  else
+    error "Error! Can't copy source files - directory ${CL_BL_RED}${src_dir}${CL_RED} doesn't exist" $RED
+    doExit $ERROR_SOURCE
+  fi
+
+  if [[ -d $specs_dir ]] ; then
+    cp "$spec" "$specs_dir"
+
+    if [[ $? -ne 0 ]] ; then
+      error "Can't copy spec file - error while copy process"
+      doExit $ERROR_SOURCE
+    fi
+
+    [[ -n "$bump" ]] && releaseBump "$specs_dir/$spec"
+  else
+    error "Error! Can't copy spec file - directory ${CL_BL_RED}${specs_dir}${CL_RED} doesn't exist." $RED
+    doExit $ERROR_SOURCE
+  fi
+}
+
+# Install build dependencies on local host
+#
+# 1: Path to spec file (String)
+#
+# Code: No
+# Echo: No
+localDepsInstall() {
+  local spec="$1"
+
+  show "Installing required packages for build...\n"
+
+  local yum_opts
+  yum_opts=$(getYumOpts "$verbose")
+
+  if [[ "$user" == "root" ]] ; then
+    yum $yum_opts clean expire-cache
+    yum-builddep $yum_opts -y "$spec"
+  else
+    sudo yum $yum_opts clean expire-cache
+    sudo yum-builddep $yum_opts -y "$spec"
+  fi
+
+  if [[ $? -ne 0 ]] ; then
+    show ""
+    error "Can't install required dependencies" $RED
+    doExit $ERROR_DEPS
+  fi
+
+  show ""
+  show "All required packages installed" $GREEN
+}
+
+# Validate spec on local host
+#
+# 1: Path to spec file (String)
+#
+# Code: No
+# Echo: No
+localSpecValidate() {
+  if ! checkDeps "rpmlint" ; then
+    error "Can't validate spec file - rpmlint not installed!" $RED
+    return 1
+  fi
+
+  local spec="$1"
+
+  local result
+  result=$(rpmlint "$spec")
+
+  show "Spec file check result:" $CYAN
+  show "$result"
+
+  if [[ -n "$strict" && $(echo "$result" | grep " E: ") ]] ; then
+    show ""
+    error "Build canceled because spec has errors and strict mode is enabled" $YELLOW
+    doExit $ERROR_LINT
+  fi
+
+  if [[ -n "$pedantic" ]] ; then
+    if [[ $(echo "$result" | grep " E: ") || $(echo "$result" | grep " W: ") ]] ; then
+      show ""
+      error "Build canceled because spec has errors or warnings and a pedantic mode is enabled" $YELLOW
+      doExit $ERROR_LINT
+    fi
+  fi
+
+  [[ -n "$verbose" ]] && sleep $LINT_WAIT
+}
+
+# Execute build commands on local host
+#
+# 1: Path to spec file (String)
+#
+# Code: No
+# Echo: No
+localBuildProcess() {
+  local spec="$1"
+
+  local spec_name build_args build_prfx rpmbuild_dir specs_dir
+
+  spec_name=$(basename "$spec")
+  build_args=$(getBuildOpts)
+  build_prfx=$(getBuildPrefix)
+  rpmbuild_dir=$(getRPMBuildDir)
+  specs_dir="$rpmbuild_dir/SPECS"
+
+  local has_errors
+
+  pushd "$specs_dir" &> /dev/null
+    if [[ -z "$no_lint" ]] ; then
+      showSeparator "VALIDATION"
+      localSpecValidate "$spec_name"
+    fi
+
+    showSeparator "BUILD"
+
+    checkLocalBuildAvailability
+
+    build_start=$(now)
+
+    createLocalLock
+
+    startStatusObserver
+
+    # We use eval in this case because using --define, contains quotes
+    # and if we simply run command, we will get error
+
+    local exit_status pipe_status
+
+    if [[ -n "$verbose" ]] ; then
+      export $build_prfx
+      eval "rpmbuild $build_args $spec_name" | tee "$tmp_output" &> $verb_output
+      pipe_status=${PIPESTATUS[0]}
+    else
+      export $build_prfx
+      eval "rpmbuild $build_args $spec_name" &> "$tmp_output"
+      exit_status=$?
+    fi
+
+    if [[ -n "$verbose" ]] ; then
+      [[ $pipe_status -ne 0 ]] && has_errors=true
+    else
+      [[ $exit_status -ne 0 ]] && has_errors=true
+    fi
+
+    unset exit_status pipe_status
+
+    if [[ -n "$has_errors" ]] ; then
+      stopStatusObserver
+      show ""
+
+      error "Error! Can't build a package." $RED
+
+      if [[ -z "$verbose" ]] ; then
+        error "Last $LOG_QUOTE_SIZE lines from build log:" $RED
+
+        showSeparator
+        tail -${LOG_QUOTE_SIZE} "$tmp_output" 1>&2
+        showSeparator
+      fi
+
+      if [[ -n "$keep_log" ]] ; then
+        local ldate lname
+
+        ldate=$(getLogDate)
+        lname="${spec_name/.spec/}+$ldate.log"
+
+        cp "$tmp_output" "$CWD/$lname"
+
+        error "Build log saved to current directory as ${CL_BL_YELLOW}${lname}" $YELLOW
+      fi
+
+      removeLocalLock
+
+      doExit $ERROR_BUILD
+    else
+      stopStatusObserver
+
+      show ""
+
+      local bld_time grc_time package packages package_name package_file
+
+      build_end=$(now)
+      bld_time=$(( build_end - build_start ))
+      grc_time=$(getGraceDuration "$bld_time")
+
+      show "Build complete! The build took $grc_time." $GREEN
+
+      showSeparator "PACKAGE PROCESSING"
+
+      packages=$(egrep "rpmbuild/(S|)RPMS" "$tmp_output" | cut -f2 -d" ")
+
+      rm -f "$tmp_output"
+
+      for package in $packages ; do
+        package_name=$(basename "$package")
+
+        if [[ -n "$sign" ]] ; then
+          localSign "$package"
+        else
+          show "Result: ${CL_CYAN}$package_name${CL_NORM}"
+        fi
+
+        if [[ -n "$dest_dir" ]] ; then
+          mv "$package" "$dest_dir"
+        else
+          mv "$package" "$CWD"
+        fi
+      done
+
+      showSeparator "PACKAGE VALIDATION"
+
+      has_errors=""
+
+      for package in $packages ; do
+        package_name=$(basename "$package")
+        package_file="$CWD/$package_name"
+
+        [[ -n "$dest_dir" ]] && package_file="$dest_dir/$package_name"
+
+        if ! validatePackage "$package_file" ; then
+          has_errors=true
+        fi
+      done
+
+      if [[ -n "$has_errors" ]] ; then
+        removeLocalLock
+        doExit $ERROR_VALIDATE
+      fi
+
+      pushd "$CWD" &> /dev/null
+
+      if [[ -n "$post" ]] ; then
+        show "Executing post-build script..."
+        $($post)
+      fi
+
+      popd &> /dev/null
+
+      [[ -n "$bump" ]] && releaseBump "$CWD/$spec"
+
+      if [[ -n "$dest_dir" ]] ; then
+        if [[ -n "$upload" ]] ; then
+          uploadPackages "$dest_dir" "$packages"
+        else
+          show ""
+          show "All rpm packages saved to a directory $dest_dir"
+        fi
+      else
+        if [[ -n "$upload" ]] ; then
+          uploadPackages "$CWD" "$packages"
+        else
+          show ""
+          show "All rpm packages saved to a current directory" $GREEN
+        fi
+      fi
+    fi
+
+    removeLocalLock
+
+  popd &> /dev/null
+}
+
+# Checks if local build is accessible
+#
+# Code: No
+# Echo: No
+checkLocalBuildAvailability() {
+  if ! hasLocalLock ; then
+    return
+  fi
+
+  local cdt ct cdf
+
+  cdt=$(stat "$BUILD_LOCK_LOCAL" -c "%Y" 2> /dev/null)
+  ct=$(now)
+  cdf=$(( ct - cdt ))
+
+  if [[ $cdf -gt $LOCK_TIME_MAX_DIFF ]] ; then
+    error "We found lock file created more than 3 hours ago. It's too much time for the usual build process." $YELLOW
+    error "If another build process doesn't occur, you must remove file $BUILD_LOCK_LOCAL manually." $YELLOW
+    error "We will continue to build when this file will be removed." $YELLOW
+    error ""
+  fi
+
+  showt "\r${CL_GREEN}Executing:${CL_NORM} ${CL_YELLOW}waiting in queue${CL_NORM}"
+
+  while : ; do
+    sleep $CHECK_LOCAL_QUEUE_DELAY
+
+    if ! hasLocalLock ; then
+      showt "\r${CL_GREEN}Executing:${CL_NORM} ${CL_YELLOW}~${CL_NORM}"
+      break
+    fi
+  done
+}
+
+# Checks if local build lock file exists
+#
+# Code: No
+# Echo: No
+hasLocalLock() {
+  [[ ! -e "$BUILD_LOCK_LOCAL" ]] && return 1
+
+  local pid
+  pid=$(cat "$BUILD_LOCK_LOCAL")
+
+  if [[ ! -d "/proc/$pid" ]] ; then
+    if removeLocalLock ; then
+      return 1
+    fi
+  fi
+
+  return 0
+}
+
+# Create local build lock file
+#
+# Code: No
+# Echo: No
+createLocalLock() {
+  if ! hasLocalLock ; then
+    echo "$$" 1> $BUILD_LOCK_LOCAL 2> /dev/null
+    chmod 666 "$BUILD_LOCK_LOCAL" &> /dev/null
+  fi
+}
+
+# Remove local build lock file
+#
+# Code: No
+# Echo: No
+removeLocalLock() {
+  local cur_user lock_owner
+
+  if [[ -f $BUILD_LOCK_LOCAL ]] ; then
+    cur_user=$(whoami)
+    lock_owner=$(stat "$BUILD_LOCK_LOCAL" -c "%U")
+
+    if [[ "$cur_user" == "$lock_owner" ]] ; then
+      rm -f "$BUILD_LOCK_LOCAL" &> /dev/null
+      return 0
+    else
+      return 1
+    fi
+  fi
+
+  return 0
+}
+
+# Sign packages on local host
+#
+# *: Packages (String)
+#
+# Code: No
+# Echo: No
+localSign() {
+  local package="$1"
+
+  show "Signing package ${CL_CYAN}${package_name}${CL_NORM}..."
+
+  if [[ -n "$verbose" ]] ; then
+    rpm --addsign "$package" | tee "$tmp_output" &> $verb_output
+  else
+    rpm --addsign "$package" &> "$tmp_output"
+  fi
+
+  if [[ $? -ne 0 ]] ; then
+    show "Can't sign package" $YELLOW
+  fi
+}
+
+# Setup build tree before build
+#
+# Code: No
+# Echo: No
+setupBuildTree() {
+  if [[ $(ls -1 $HOME/rpmbuild 2>/dev/null | wc -l) == "6" ]] ; then
+    return
+  fi
+
+  rpmdev-setuptree
+}

@@ -1,0 +1,9 @@
+SOURCES/conf/builder.sudoers
+SOURCES/conf/rpmmacros_centos6
+SOURCES/conf/rpmmacros_centos7
+SOURCES/nodeinfo
+SOURCES/initenv
+SOURCES/buildmon
+SOURCES/buildmon.init
+LICENSE
+LICENSE.RU

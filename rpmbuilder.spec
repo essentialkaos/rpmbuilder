@@ -2,7 +2,7 @@
 
 Summary:         RPM package build helper
 Name:            rpmbuilder
-Version:         1.10.1
+Version:         2.0.0
 Release:         0%{?dist}
 License:         EKOL
 Group:           Development/Tools
@@ -33,9 +33,11 @@ RPM package build helper.
 rm -rf %{buildroot}
 
 install -dm 755 %{buildroot}%{_bindir}
+install -dm 755 %{buildroot}%{_libexecdir}/%{name}
 
 install -pm 755 rpmbuilder %{buildroot}%{_bindir}/rpmbuilder
 install -pm 755 rpmunbuilder %{buildroot}%{_bindir}/rpmunbuilder
+install -pm 644 libexec/* %{buildroot}%{_libexecdir}/%{name}/
 
 %clean
 rm -rf %{buildroot}
@@ -44,13 +46,25 @@ rm -rf %{buildroot}
 
 %files
 %defattr(-,root,root,-)
-%doc LICENSE.EN LICENSE.RU
+%doc LICENSE LICENSE.RU
+%{_libexecdir}/%{name}
 %{_bindir}/%{name}
 %{_bindir}/rpmunbuilder
 
 ###############################################################################
 
 %changelog
+* Wed Nov 29 2017 Anton Novojilov <andy@essentialkaos.com> - 2.0.0-0
+- Source code divided to separate files
+- Code refactoring
+- Using 'spectool' instead of manual spec parsing for macro evaluation
+- Improved UI
+- Fixed bug with processing build options when '--with' or '--without'
+  options is defined
+- Fixed minor bug with processing spec values
+- Fixed minor bug with processing sources
+- Fixed bug with uploading packages to remote host
+
 * Mon Sep 18 2017 Anton Novojilov <andy@essentialkaos.com> - 1.10.1-0
 - Fixed compatibility with latest version of gopack
 

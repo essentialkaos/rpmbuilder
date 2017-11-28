@@ -1,0 +1,94 @@
+# Create lock file for worker
+#
+# 1: Worker UID (String)
+#
+# Code: No
+# Echo: No
+createWorkerLock() {
+  local wid="$tmux_worker"
+  local lock_file
+
+  if ! hasWorkerLock "$wid" ; then
+    lock_file=$(getPathToWorkerLock "$wid")
+    echo "$$" 1> "$lock_file" 2> /dev/null
+    chmod 666 "$lock_file" &> /dev/null
+  fi
+}
+
+# Remove worker lock
+#
+# 1: Worker UID (String)
+#
+# Code: No
+# Echo: No
+removeWorkerLock() {
+  local wid="$tmux_worker"
+  local lock_file
+
+  if hasWorkerLock "$wid" ; then
+    lock_file=$(getPathToWorkerLock "$wid")
+    rm -f "$lock_file" &> /dev/null
+  fi
+}
+
+# Checks if worker lock exists
+#
+# 1: Worker UID (String)
+#
+# Code: Yes
+# Echo: No
+hasWorkerLock() {
+  local wid="$1"
+  local lock_file pid
+
+  lock_file=$(getPathToWorkerLock "$wid")
+
+  if [[ ! -e "$lock_file" ]] ; then
+    return 1
+  fi
+
+  pid=$(cat "$lock_file")
+
+  if [[ ! -e "/proc/$pid" ]] ; then
+    rm -f "$lock_file" &> /dev/null
+    return 1
+  fi
+
+  return 0
+}
+
+# Get path to lock file with worker PID
+#
+# 1: Worker UID (String)
+#
+# Code: No
+# Echo: Path to lock file (String)
+getPathToWorkerLock() {
+  echo "${tmp:?}/.rpmbuilder-worker-$wid"
+}
+
+# Block script execution till all workers complete build
+#
+# Code: No
+# Echo: No
+waitTillWorkersComplete() {
+  local wid has_lock lock_file
+
+  show "Waiting till remote builds complete..." $DARK
+
+  while : ; do
+    sleep 1
+
+    has_lock=""
+
+    for wid in $@ ; do
+      if hasWorkerLock "$wid" ; then
+        has_lock=true
+      fi
+    done
+
+    if [[ -z "$has_lock" ]] ; then
+      break
+    fi
+  done
+}

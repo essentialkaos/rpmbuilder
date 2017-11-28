@@ -1,0 +1,482 @@
+################################################################################
+
+require "build-local"
+require "build-remote"
+require "observer"
+require "package"
+require "sources"
+require "spec"
+require "utils"
+
+################################################################################
+
+# Start build process
+#
+# *: All arguments passed to script
+#
+# Code: No
+# Echo: No
+startBuild() {
+  local spec="$1"
+
+  if ! isSpecFile "$spec" ; then
+    if isSpecFile "${spec}.spec" ; then
+      [[ -r "${spec}.source" && -z "$source_list" ]] && source_list="$spec.source"
+      spec="${spec}.spec"
+    else
+      error "${CL_BL_RED}${spec}${CL_RED} is not a spec file!${CL_NORM}"
+      doExit $ERROR_SPEC
+    fi
+  fi
+
+  checkOptions
+
+  trap termExit SIGINT SIGQUIT SIGTERM
+
+  if [[ -n "$parallel" && $(wc -l "$remote" | cut -f1 -d" ") -gt 1 ]] ; then
+    parallelBuild "$@"
+  else
+    basicBuild "$@"
+  fi
+
+  doExit
+}
+
+# Start basic build
+#
+# *: All options passed to utility 
+#
+# Code: No
+# Echo: No
+basicBuild() {
+  local start_ts
+  start_ts=$(now)
+
+  [[ -n "$tmux_worker" ]] && createWorkerLock
+
+  [[ -n "$dest" ]]     && dest_dir="$dest"
+  [[ -n "$dest_dir" ]] && dest_dir=$(getAbsPath "$dest_dir")
+  [[ -n "$dlcache" ]]  && dlcache=$(getAbsPath "$dlcache")
+  [[ -n "$download" ]] && dlcache=$(getAbsPath "$download")
+
+  [[ -n "$key" && -r "$HOME/.ssh/$key" ]] && key="$HOME/.ssh/$key"
+
+  makeTemp
+
+  if [[ -n "$verbose" ]] ; then
+    verbose=true
+    verb_output=/dev/stdout
+  fi
+
+  readInspecOptions "$spec"
+
+  [[ -n "${github}${bitbucket}${launchpad}" ]] && parseSourceURL "$spec"
+
+  [[ -n "$github" ]]    && fetchSourcesFromGithub
+  [[ -n "$bitbucket" ]] && fetchSourcesFromBitbucket
+  [[ -n "$launchpad" ]] && fetchSourcesFromLaunchpad
+
+  if [[ -n "$download" ]] ; then
+    downloadRemoteSources "$spec"
+  else
+    if [[ -n "$remote" ]] ; then
+      remoteBuild "$spec"
+    else
+      localBuild "$spec"
+    fi
+  fi
+
+  [[ -n "$tmux_worker" ]] && removeWorkerLock
+
+  notify "$start_ts"
+}
+
+# Process spec file
+#
+# 1: Path to spec file (String)
+#
+# Code: No
+# Echo: No
+processSpec() {
+  local spec="$1"
+
+  local source_list patch_list files source_file source_num file_name found_source
+
+  source_list=$(getSources "$spec")
+  patch_list=$(getPatches "$spec")
+
+  files="$source_list $patch_list"
+
+  source_num=0
+
+  for source_file in $files ; do
+    if [[ -n "${svn}${git}${hg}${bzr}" ]] ; then
+      [[ $source_num -eq 0 ]] && ((source_num++)) && continue
+    fi
+
+    if [[ "$source_file" =~ (http|https|ftp) ]] ; then
+      file_name=$(basename "$source_file")
+      found_source=$(findSource "$file_name")
+
+      if [[ -n "$found_source" ]] ; then
+        show "File ${CL_CYAN}$file_name${CL_NORM} listed in spec and will be used for the build"
+        cp "$found_source" "$tmp_dir"
+      elif [[ -f "$tmp_dir/$file_name" ]] ; then
+        show "File ${CL_CYAN}$file_name${CL_NORM} listed in spec and will be used for the build"
+      elif [[ -n "$dlcache" ]] ; then
+        if [[ -f "$dlcache/$file_name" ]] ; then
+          show "File ${CL_CYAN}$file_name${CL_NORM} listed in spec and will be used for the build"
+          cp "$dlcache/$file_name" "$tmp_dir"
+        else
+          show "Downloading source file ${CL_CYAN}${source_file}${CL_NORM}..."
+
+          downloadSource "$source_file" "$dlcache"
+
+          if [[ $? -ne 0 ]] ; then
+            error "Error! Can't download file ${CL_BL_RED}${source_file}${CL_RED}." $RED
+            doExit $ERROR_SOURCE
+          fi
+
+          cp "$dlcache/$file_name" "$tmp_dir"
+        fi
+      else
+        show "Downloading source file ${CL_CYAN}${source_file}${CL_NORM}..."
+
+        downloadSource "$source_file" "$tmp_dir"
+
+        if [[ $? -ne 0 ]] ; then
+          error "Error! Can't download file ${CL_BL_RED}${source_file}${CL_RED}." $RED
+          doExit $ERROR_SOURCE
+        fi
+      fi
+    else
+      if [[ -f "$tmp_dir/$source_file" ]] ; then
+        show "File ${CL_CYAN}${source_file}${CL_NORM} listed in spec and will be used for the build"
+        source_num=$(( source_num + 1 )) && continue
+      fi
+
+      local source_ext source_name found_dir found_source
+
+      source_ext=$(getArchExt "$source_file")
+      source_name=$(getArchName "$source_file")
+      found_dir=$(findSource "$source_name" true)
+      found_source=$(findSource "$source_file")
+
+      if [[ -n "$source_ext" && -n "$found_dir" ]] ; then
+        show "File ${CL_CYAN}${source_file}${CL_NORM} listed in spec and will be created from sources directory"
+
+        packDir "$found_dir/$source_name" "$source_ext"
+        mv "$found_dir/$source_file" "$tmp_dir"
+
+        source_num=$(( source_num + 1 )) && continue
+      elif [[ -n "$found_source" ]] ; then
+        show "File ${CL_CYAN}${source_file}${CL_NORM} listed in spec and will be used for build"
+
+        cp "$found_source" "$tmp_dir"
+
+        source_num=$(( source_num + 1 )) && continue
+      else
+        error "Can't use file ${CL_BL_RED}${source_file}${CL_RED} for build - file not found in sources directory" $RED
+        doExit $ERROR_SOURCE
+      fi
+    fi
+
+    source_num=$(( source_num + 1 ))
+  done
+}
+
+# Check given command-line options
+#
+# Code: No
+# Echo: No
+checkOptions() {
+  if [[ -n "$key" ]] ; then
+    if [[ ! -r "$key" && ! -r "$HOME/.ssh/$key" ]] ; then
+      error "Can't start build process - key file is not readable." $RED
+      doExit $ERROR_ARGS
+    fi
+  fi
+
+  if [[ -n "$parallel" && -z "$remote" ]] ; then
+    error "Can't start build process - remote build server not defined." $RED
+    doExit $ERROR_ARGS
+  fi
+
+  if [[ -n "$dest_dir" && ! -d $dest_dir ]] ; then
+    error "Can't start build process - destination directory doesn't exist." $RED
+    doExit $ERROR_ARGS
+  fi
+
+  if [[ -n "$dlcache" && ! -d $dlcache ]] ; then
+    error "Can't start build process - download cached directory doesn't exist." $RED
+    doExit $ERROR_ARGS
+  fi
+
+  if [[ -n "$remote" && -z "$host" && ! -r $remote && ! "$remote" =~ \@|\~ && ! "$remote" =~ :[0-9]{1,}$ ]] ; then
+    error "Can't start remote build process - you must define the remote host." $RED
+    doExit $ERROR_ARGS
+  fi
+
+  if ! checkDeps "git" && [[ -n "$git" ]] ; then
+    error "Can't start build process - for using --git argument, you must install git first." $RED
+    doExit $ERROR_DEPS
+  fi
+
+  if ! checkDeps "svn" && [[ -n "$svn" ]] ; then
+    error "Can't start build process - for using --svn argument, you must install svn first." $RED
+    doExit $ERROR_DEPS
+  fi
+
+  if ! checkDeps "hg" && [[ -n "$hg" ]] ; then
+    error "Can't start build process - for using --hg argument, you must install hg first." $RED
+    doExit $ERROR_DEPS
+  fi
+
+  if ! checkDeps "bzr" && [[ -n "$bzr" ]] ; then
+    error "Can't start build process - for using --bzr argument, you must install bzr first." $RED
+    doExit $ERROR_DEPS
+  fi
+
+  if ! checkDeps "gopack" && [[ -n "$gopack" ]] ; then
+    error "Can't start build process - for using --gopack argument, you must install gopack first." $RED
+    doExit $ERROR_DEPS
+  fi
+
+  if ! checkDeps "sshpass" && [[ -n "$pass" ]] ; then
+    error "Can't start build process - for using --pass argument, you must install sshpass first." $RED
+    doExit $ERROR_DEPS
+  fi
+
+  if ! checkDeps "rpmbuild" "rpmlint" && [[ -z "$remote" ]] ; then
+    error "Can't start local build process -  you must install rpmbuild and rpmlint first." $RED
+    doExit $ERROR_DEPS
+  fi
+
+  if ! checkDeps "rpm" && [[ -n "$sign" && -z "$remote" ]] ; then
+    error "Can't start local build process - for signing packages you must install rpm first." $RED
+    doExit $ERROR_DEPS
+  fi
+
+  if ! checkDeps "spectool" ; then
+    error "Can't start local build process - spectool (part of rpmdevtools) is required." $RED
+    doExit $ERROR_DEPS
+  fi
+
+  if [[ ! -d $tmp ]] ; then
+    error "Can't start build process - temp directory doesn't exist." $RED
+    doExit $ERROR_UNKNOWN
+  fi
+
+  if [[ -n "$dlcache" && ! -d $dlcache ]] ; then
+    error "Can't start build process - download cache directory doesn't exist." $RED
+    doExit $ERROR_UNKNOWN
+  fi
+
+  if [[ -n "$bump" ]] ; then
+    if ! checkDeps "rpmdev-packager" "rpmdev-bumpspec" ; then
+      error "Can't start build process - for automatic release bumping you must install
+      rpmdev-bumpspec and rpmdev-packager (from rpmdevtools package) first." $RED
+      doExit $ERROR_DEPS
+    fi
+
+    packager=$(rpmdev-packager)
+
+    if [[ -z "$packager" ]] ; then
+      error "Can't start build process - for automatic release bumping you must define %packager
+      (name + email e.g. \"%packager John Smith <mail@smith.com>\") value in file ~/.rpmmacros" $RED
+      doExit $ERROR_UNKNOWN
+    fi
+  fi
+}
+
+# Ring the bell
+#
+# Code: No
+# Echo: No
+notify() {
+  [[ -n "$notify" ]] && printf "\a" && return
+
+  local start_ts end_ts time_diff
+
+  start_ts=$1
+  end_ts=$(now)
+  time_diff=$(( end_ts - start_ts ))
+
+  [[ $time_diff -ge $LONG_BUILD ]] && printf "\a"
+}
+
+# Clean temporary data
+#
+# Code: No
+# Echo: No
+clean() {
+  if [[ -e "$tmp_dir" ]] ; then
+    rm -rf "$tmp_dir"
+  fi
+
+  if [[ -e "$tmp_output" ]] ; then
+    rm -f "$tmp_output"
+  fi
+}
+
+# Exit from script
+#
+# 1: Exit code (Number)
+#
+# Code: No
+# Echo: No
+doExit() {
+  clean
+
+  stopStatusObserver
+
+  if [[ -n "$tmux_worker" ]] ; then
+    if [[ -z "$1" || "$1" == "0" ]] ; then
+      sleep $TMUX_OK_SLEEP
+    else
+      [[ -z "$keep_log" || $1 -eq $ERROR_VALIDATE ]] && sleep $TMUX_ERROR_SLEEP
+    fi
+  fi
+
+  exit "${1:-0}"
+}
+
+# TERM/INT signal handler
+#
+# Code: No
+# Echo: No
+termExit() {
+  clean
+
+  if hasLocalLock ; then
+    removeLocalLock
+  fi
+
+  if [[ -z "$tmux_worker" ]] ; then
+    if hasParalellLock ; then
+      removeParalellLock
+    fi
+  else
+    removeWorkerLock
+  fi
+
+  [[ -n "$observer_pid" ]] && stopStatusObserver
+
+  exit $ERROR_UNKNOWN
+}
+
+# Get path to build dir
+#
+# Code: No
+# Echo: Path to build dir (String)
+getRPMBuildDir() {
+  if [[ "$user" == "root" ]] ; then
+    echo "/root/rpmbuild"
+  else
+    echo "/home/$user/rpmbuild"
+  fi
+}
+
+# Convert utility options to yum options
+#
+# 1: Verbose mode (Boolean) [Options] 
+#
+# Code: No
+# Echo: Options (String)
+getYumOpts() {
+  local verb="$1"
+  local opts repo pkg
+
+  [[ -z "$verb" ]] && opts="-q"
+
+  if [[ -n "$enable_repo" ]] ; then
+    for repo in $enable_repo ; do
+      opts="$opts --enablerepo=$repo"
+    done
+  fi
+
+  if [[ -n "$disable_repo" ]] ; then
+    for repo in $disable_repo ; do
+      opts="$opts --disablerepo=$repo"
+    done
+  fi
+
+  if [[ -n "$exclude_package" ]] ; then
+    for pkg in $exclude_package ; do
+      opts="$opts --exclude=$pkg"
+    done
+  fi
+
+  echo "$opts"
+}
+
+# Convert utility options to rpmbuild options
+#
+# Code: No
+# Echo: No
+getBuildOpts() {
+  local opts=""
+  local macros_def
+
+  if [[ -n "$no_source" ]] ; then
+    opts="-bb"
+  elif [[ -n "$no_binary" ]] ; then
+    opts="-bs"
+  else
+    opts="-ba"
+  fi
+
+  [[ -n "$no_build" ]] && opts="$opts --nobuild"
+  [[ -n "$no_deps" ]] && opts="$opts --nodeps"
+  [[ -z "$no_clean" ]] && opts="$opts --rmspec --rmsource --clean"
+  [[ -n "$arch" ]] && opts="$opts --target=$arch"
+  [[ -n "$with" ]] && opts="$opts $(getBuildOptsWith)"
+  [[ -n "$without" ]] && opts="$opts $(getBuildOptsWithout)"
+  [[ -n "$verbose" ]] && opts="$opts --verbose"
+
+  if [[ -n "$define" ]] ; then
+    for macros_def in $define ; do
+      opts="$opts --define=\"${macros_def/=/ }\""
+    done
+  fi
+
+  echo "$opts"
+}
+
+# Get build prefix
+#
+# Code: No
+# Echo: Prefix (String)
+getBuildPrefix() {
+  local prfx="LC_ALL=C"
+
+  [[ -n "$qa_rpaths" ]] && prfx="$prfx QA_RPATHS=$[ ${qa_rpaths//,/|} ]"
+
+  echo "$prfx"
+}
+
+# Convert utility 'with' options to rpmbuilder --with option
+#
+# 1: 
+#
+# Code: No
+# Echo: No
+getBuildOptsWith() {
+  local opts wopt
+
+  for wopt in $with ; do
+    opts="$opts --with $wopt"
+  done
+
+  echo "$opts"
+}
+
+getBuildOptsWithout() {
+  local opts wopt
+
+  for wopt in $with ; do
+    opts="$opts --without $wopt"
+  done
+
+  echo "$opts"
+}

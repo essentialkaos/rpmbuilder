@@ -57,14 +57,7 @@ License:         EKOL
 Group:           Development/Tools
 URL:             https://github.com/essentialkaos/rpmbuilder
 
-Source0:         %{service_name}
-Source1:         %{service_name}.init
-Source2:         %{user_name}.sudoers
-Source3:         nodeinfo
-Source4:         initenv
-
-Source10:        rpmmacros_centos6
-Source11:        rpmmacros_centos7
+Source0:         %{name}-%{version}.tar.bz2
 
 BuildArch:       noarch
 
@@ -84,6 +77,8 @@ utility.
 ###############################################################################
 
 %prep
+%setup -q
+
 %build
 %install
 rm -rf %{buildroot}
@@ -94,16 +89,16 @@ install -dm 755 %{buildroot}%{_sysconfdir}/sudoers.d
 install -dm 755 %{buildroot}%{home_dir}
 install -dm 700 %{buildroot}%{home_dir}/.ssh
 
-install -pm 755 %{SOURCE0} %{buildroot}%{home_dir}/
-install -pm 755 %{SOURCE1} %{buildroot}%{_initddir}/%{service_name}
-install -pm 644 %{SOURCE2} %{buildroot}%{_sysconfdir}/sudoers.d/%{user_name}
-install -pm 755 %{SOURCE3} %{buildroot}%{home_dir}/
-install -pm 755 %{SOURCE4} %{buildroot}%{home_dir}/
+install -pm 755 buildmon %{buildroot}%{home_dir}/
+install -pm 755 buildmon.init %{buildroot}%{_initddir}/%{service_name}
+install -pm 644 builder.sudoers %{buildroot}%{_sysconfdir}/sudoers.d/%{user_name}
+install -pm 755 nodeinfo %{buildroot}%{home_dir}/
+install -pm 755 initenv %{buildroot}%{home_dir}/
 
 %if 0%{?rhel} >= 7
-install -pm 755 %{SOURCE11} %{buildroot}%{home_dir}/.rpmmacros_rpmbuilder
+install -pm 755 rpmmacros_centos7 %{buildroot}%{home_dir}/.rpmmacros_rpmbuilder
 %else
-install -pm 755 %{SOURCE10} %{buildroot}%{home_dir}/.rpmmacros_rpmbuilder
+install -pm 755 rpmmacros_centos6 %{buildroot}%{home_dir}/.rpmmacros_rpmbuilder
 %endif
 
 %clean
@@ -158,6 +153,7 @@ fi
 
 %files
 %defattr(-,root,root,-)
+%doc LICENSE LICENSE.RU
 %{_initddir}/%{service_name}
 %{_sysconfdir}/sudoers.d/%{user_name}
 %{home_dir}

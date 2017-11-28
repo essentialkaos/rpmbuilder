@@ -1,0 +1,746 @@
+################################################################################
+
+require "build-remote-worker"
+require "upload"
+
+################################################################################
+
+# Start parallel build in tmux
+#
+# *: All options passed to utility 
+#
+# Code: No
+# Echo: No
+parallelBuild() {
+  if [[ ! -r $remote ]] ; then
+    error "Error! Can't start parallel build process - builder list not readable." $RED
+    doExit $ERROR_ARGS
+  fi
+
+  if [[ -n "$dlcache" ]] ; then
+    error "Warning! You can't use a parallel build with download cache." $YELLOW
+    doExit $ERROR_ARGS
+  fi
+
+  local opt opts
+
+  for opt in "$@" ; do
+    [[ "$opt" == "-r" ]] && continue
+    [[ "$opt" == "--remote" ]] && continue
+    [[ "$opt" == "-P" ]] && continue
+    [[ "$opt" == "--parallel" ]] && continue
+    [[ "$opt" == "$remote" ]] && continue
+
+    opts="$opts $opt"
+  done
+
+  checkParallelBuildAvailability
+  createParalellLock
+
+  local serv serv_name session_exist wid
+  local wids=()
+
+  while read serv ; do
+    serv_name=$(echo "$serv" | cut -f2 -d"@")
+    wid=$(mktemp -u XXXXXXXXXXXX)
+
+    wids+=($wid)
+
+    if [[ -z "$session_exist" ]] ; then
+      if [[ -z "$TMUX" ]] ; then
+        tmux new-session -s "rpmbuilder" -d "$0 $opts -r $serv --tmux-worker $wid" >/dev/null 2>&1
+      else
+        tmux new-window "$0 $opts -r $serv --tmux-worker $wid"
+      fi
+
+      tmux rename-window "$APP"
+      session_exist=true
+    else
+      tmux split-window "$0 $opts -r $serv --tmux-worker $wid" >/dev/null 2>&1
+    fi
+  done < "$remote"
+
+  # If we not in tmux, attach to session
+  if [[ -z "$TMUX" ]] ; then
+    tmux attach-session -t "rpmbuilder" >/dev/null 2>&1
+  fi
+
+  waitTillWorkersComplete "${wids[*]}"
+  removeParalellLock
+
+  show "Parallel build complete" $GREEN
+}
+
+# Process sources and run build on remote hosts
+#
+# 1: Path to spec file (String)
+#
+# Code: No
+# Echo: No
+remoteBuild() {
+  local spec="$1"
+
+  showSeparator "PREPARATION"
+
+  if [[ -n "$pre" ]] ; then
+    show "Executing pre-build script..."
+    $($pre)
+  fi
+
+  [[ -n "$git" ]]    && packSourcesFromGit "$spec"
+  [[ -n "$svn" ]]    && packSourcesFromSvn "$spec"
+  [[ -n "$bzr" ]]    && packSourcesFromBzr "$spec"
+  [[ -n "$hg" ]]     && packSourcesFromHg  "$spec"
+  [[ -n "$gopack" ]] && packGolangSources  "$spec"
+
+  [[ -n "$repo_spec" ]] && spec="$repo_spec"
+
+  [[ -n "$pack" || -n "$source_list" ]] && packSources "$spec" && show ""
+
+  processSpec "$spec"
+
+  show ""
+  show "All source files are ready for build" $GREEN
+
+  if [[ -r $remote ]] ; then
+    remoteRunMultibuild "$spec"
+  else
+    remoteRunBuild "$spec"
+  fi
+}
+
+# Run build on different build nodes
+#
+# 1: Path to spec file (String)
+#
+# Code: No
+# Echo: No
+remoteRunMultibuild() {
+  local spec="$1"
+
+  local build_hosts protect_user protect_pass protect_arch
+  local host_info r_user r_pass r_arch
+
+  build_hosts=$(cat "$remote")
+
+  for build_host in $build_hosts ; do
+    host_info=($(getURLVars "$build_host"))
+
+    host="${host_info[0]/-/}"
+
+    r_user="${host_info[1]/-/}"
+    r_pass="${host_info[2]/-/}"
+    r_arch="${host_info[3]/-/}"
+
+    [[ -z "$protect_user" ]] && user="$r_user"
+    [[ -z "$protect_pass" ]] && pass="$r_pass"
+    [[ -z "$protect_arch" ]] && arch="$r_arch"
+
+    remoteRunBuild "$spec"
+  done
+}
+
+# Run build on remote host
+#
+# 1: Path to spec file (String)
+#
+# Code: No
+# Echo: No
+remoteRunBuild() {
+  local spec="$1"
+
+  local host_info r_file r_line r_arch tlines
+
+  if [[ "$remote" =~ :[0-9]{1,}$ ]] ; then
+    r_file=$(echo "$remote" | cut -f1 -d":")
+    r_line=$(echo "$remote" | cut -f2 -d":")
+    tlines=$(wc -l "$r_file" | cut -f1 -d" ")
+
+    if [[ $r_line -gt $tlines ]] ; then
+      show ""
+      error "Error - file ${CL_BL_RED}${r_file}${CL_RED} don't contain a line with number ${CL_BL_RED}${r_line}${CL_RED}." $RED
+      return 1
+    fi
+
+    remote=$(sed -n "${r_line}p" "$r_file")
+  fi
+
+  if [[ "$remote" =~ \@|\~i ]] ; then
+    host_info=($(getURLVars "$remote"))
+
+    host="${host_info[0]/-/}"
+
+    r_user="${host_info[1]/-/}"
+    r_pass="${host_info[2]/-/}"
+    r_arch="${host_info[3]/-/}"
+
+    user="${r_user:-$user}"
+    pass="${r_pass:-$pass}"
+    arch="${r_arch:-$arch}"
+  fi
+
+  remoteCheckEnv
+
+  showSeparator "SOURCES UPLOADING"
+
+  uploadSourcesToRemoteHost "$spec"
+
+  if [[ -n "$depinstall" || -n "$dep_install" ]] ; then
+    showSeparator "DEPENDENCIES INSTALL"
+    remoteDepsInstall "$spec"
+  fi
+
+  [[ -n "$no_build" ]] && show "" && return
+
+  remoteBuildProcess "$spec"
+}
+
+# Check build environment on remote host
+#
+# Code: No
+# Echo: No
+remoteCheckEnv() {
+  showSeparator "REMOTE CHECK"
+
+  show "Connecting to a remote build server on ${CL_CYAN}$host${CL_NORM}."
+
+  if isRemoteServerReachable "$host" ; then
+    if ! isSSHConnectionWorks "$user" "$host" ; then
+      error "Can't connect to host ${CL_BL_RED}${host}${CL_RED}." $RED
+      doExit $ERROR_REMOTE
+    fi
+  else
+    error "Remote server ${CL_BL_RED}${host}${CL_RED} is not reachable!" $RED
+    doExit $ERROR_REMOTE
+  fi
+
+  # Print info about node
+  sshCommand "$user@$host" "$BUILDER_HOME/nodeinfo 2>/dev/null"
+
+  # Initialize build environment
+  sshCommand "$user@$host" "$BUILDER_HOME/initenv" &> /dev/null
+}
+
+# Install build dependencies on remote host
+#
+# 1: Path to spec file (String)
+#
+# Code: No
+# Echo: No
+remoteDepsInstall() {
+  local spec="$1"
+
+  local rpmbuild_dir specs_dir yum_opts
+
+  rpmbuild_dir=$(getRPMBuildDir)
+  specs_dir="$rpmbuild_dir/SPECS"
+
+  show "Installing required packages for build...\n"
+
+  yum_opts=$(getYumOpts "$verbose")
+
+  sshCommand "$user@$host" "sudo yum $yum_opts clean expire-cache && cd $specs_dir && sudo yum-builddep $yum_opts -y $spec"
+
+  if [[ $? -ne 0 ]] ; then
+    show ""
+    error "Can't install required dependencies" $RED
+    doExit $ERROR_DEPS
+  fi
+
+  show ""
+  show "All required packages installed" $GREEN
+}
+
+# Validate spec on remote host
+#
+# 1: Path to spec file (String)
+#
+# Code: No
+# Echo: No
+remoteSpecValidate() {
+  local spec="$1"
+
+  local rpmbuild_dir specs_dir result
+
+  rpmbuild_dir=$(getRPMBuildDir)
+  specs_dir="$rpmbuild_dir/SPECS"
+
+  result=$(sshCommand "$user@$host" "cd $specs_dir && rpmlint $spec" 2> /dev/null)
+
+  show "Spec file check result:" $CYAN
+  show "$result"
+
+  if [[ -n "$strict" && $(echo "$result" | grep " E: ") ]] ; then
+    show ""
+    error "Build canceled because spec has errors and strict mode is enabled" $YELLOW
+    doExit $ERROR_LINT
+  fi
+
+  if [[ -n "$pedantic" ]] ; then
+    if [[ $(echo "$result" | grep " E: ") || $(echo "$result" | grep " W: ") ]] ; then
+      show ""
+      error "Build canceled because spec has errors or warnings and a pedantic mode is enabled" $YELLOW
+      doExit $ERROR_LINT
+    fi
+  fi
+
+  [[ -n "$verbose" ]] && sleep $LINT_WAIT
+}
+
+# Execute build commands on remote host
+#
+# 1: Path to spec file (String)
+#
+# Code: No
+# Echo: No
+remoteBuildProcess() {
+  local spec="$1"
+
+  local spec_name build_args build_prfx rpmbuild_dir specs_dir
+
+  spec_name=$(basename "$spec")
+  build_args=$(getBuildOpts)
+  build_prfx=$(getBuildPrefix)
+  rpmbuild_dir=$(getRPMBuildDir)
+  specs_dir="$rpmbuild_dir/SPECS"
+
+  if [[ -z "$no_lint" ]] ; then
+    showSeparator "VALIDATION"
+    remoteSpecValidate "$spec_name"
+  fi
+
+  showSeparator "BUILD"
+
+  checkRemoteAvailability
+
+  build_start=$(now)
+
+  startStatusObserver
+
+  if [[ -n "$verbose" ]] ; then
+    sshCommand "$user@$host" "cd $specs_dir && $build_prfx rpmbuild $spec_name $build_args" | tee "$tmp_output" &> $verb_output
+  else
+    sshCommand "$user@$host" "cd $specs_dir && $build_prfx rpmbuild $spec_name $build_args" 1> "$tmp_output" 2> /dev/null
+  fi
+
+  stopStatusObserver
+
+  show ""
+
+  local has_errors bld_time grc_time packages package_name package_file
+
+  has_errors=$(tail -1 "$tmp_output" | grep -v "exit 0")
+
+  if [[ -z "$has_errors" ]] ; then
+    build_end=$(now)
+    bld_time=$(( build_end - build_start ))
+    grc_time=$(getGraceDuration "$bld_time")
+
+    show "Build complete! The build took $grc_time." $GREEN
+
+    showSeparator "PACKAGE PROCESSING"
+
+    packages=$(egrep "rpmbuild/(S|)RPMS" "$tmp_output" | cut -f2 -d" ")
+
+    for package in $packages ; do
+      package=$(echo "$package" | tr -dc '[:print:]')
+      package_name=$(basename "$package")
+
+       if [[ -n "$sign" ]] ; then
+        show "Signing package ${CL_CYAN}$package_name${CL_NORM}..."
+        remoteSign "$package"
+      fi
+
+      if [[ -n "$dest_dir" ]] ; then
+        downloadFromRemoteHost "$package" "$dest_dir"
+      else
+        downloadFromRemoteHost "$package"
+      fi
+
+      if [[ $? -eq 0 ]] ; then
+        show "Result: ${CL_CYAN}$package_name${CL_NORM}"
+      else
+        show "Result: ${CL_CYAN}$package_name${CL_NORM} ${CL_DARK}(ALREADY EXIST)${CL_NORM}"
+      fi
+    done
+
+    showSeparator "PACKAGE VALIDATION"
+
+    has_errors=""
+
+    for package in $packages ; do
+      package=$(echo "$package" | tr -dc '[:print:]')
+      package_name=$(basename "$package")
+      package_file="$CWD/$package_name"
+
+      [[ -n "$dest_dir" ]] && package_file="$dest_dir/$package_name"
+
+      if ! validatePackage "$package_file" ; then
+        has_errors=true
+      fi
+    done
+
+    if [[ -n "$has_errors" ]] ; then
+      doExit $ERROR_VALIDATE
+    fi
+
+    if [[ -n "$post" ]] ; then
+      show "Executing post-build script..."
+      $($post)
+    fi
+
+    [[ -n "$bump" ]] && releaseBump "$CWD/$spec"
+
+    if [[ -n "$dest_dir" ]] ; then
+      if [[ -n "$upload" ]] ; then
+        uploadPackages "$dest_dir" "$packages"
+      else
+        show ""
+        show "All rpm packages saved to a directory ${CL_BL_GREEN}${dest_dir}" $GREEN
+      fi
+    else
+      if [[ -n "$upload" ]] ; then
+        uploadPackages "$CWD" "$packages"
+      else
+        show ""
+        show "All rpm packages saved to a current directory" $GREEN
+      fi
+    fi
+  else
+    error "Error! Can't build a package." $RED
+
+    if [[ -z "$verbose" ]] ; then
+      error "Last $LOG_QUOTE_SIZE lines from build log:" $RED
+
+      showSeparator
+      tail -${LOG_QUOTE_SIZE} "$tmp_output" 1>&2
+      showSeparator
+    fi
+
+    if [[ -n "$keep_log" ]] ; then
+      local ldate lname
+
+      ldate=$(getLogDate)
+      lname="${spec_name/.spec/}+$host+$ldate.log"
+
+      cp "$tmp_output" "$CWD/$lname"
+
+      show "Build log saved to a current directory as ${CL_BL_YELLOW}${lname}" $YELLOW
+    fi
+
+    doExit $ERROR_BUILD
+  fi
+}
+
+# Upload sources to remote build host
+#
+# 1: Path to spec file (String)
+#
+# Code: No
+# Echo: No
+uploadSourcesToRemoteHost() {
+  local spec="$1"
+
+  local source_file source_files rmpbuild_dir
+
+  rmpbuild_dir=$(getRPMBuildDir)
+  source_files=$(find "$tmp_dir" -maxdepth 1 -type f)
+
+  for source_file in $source_files ; do
+    source_file_name=$(basename "$source_file")
+
+    showt "${CL_CYAN}${source_file_name}${CL_NORM}" 4
+
+    scpCommand "$source_file" "$user@$host:$rmpbuild_dir/SOURCES/" &> $verb_output
+
+    show "DONE" $GREEN
+  done
+
+  showt "${CL_CYAN}${spec}${CL_NORM}" 4
+
+  if [[ -n "$bump" ]] ; then
+    cp "$spec" "$tmp"
+
+    releaseBump "$tmp/$spec"
+    scpCommand "$tmp/$spec" "$user@$host:$rmpbuild_dir/SPECS/" &> $verb_output
+
+    rm -f "$tmp/$spec"
+  else
+    scpCommand "$spec" "$user@$host:$rmpbuild_dir/SPECS/" &> $verb_output
+  fi
+
+  show "DONE" $GREEN
+}
+
+# Download packages from remote build host
+#
+# 1: Package file (String)
+# 2: Output directory (String)
+#
+# Code: No
+# Echo: No
+downloadFromRemoteHost() {
+  local file="$1"
+  local dir="$2"
+
+  [[ -z "$dir" ]] && dir="$CWD"
+
+  local file_name mod_ts
+
+  file_name=$(basename "$file")
+
+  if [[ -f $dir/$file_name ]] ; then
+    mod_ts=$(stat -c "%Y" "$dir/$file_name")
+
+    if [[ $mod_ts -ge $build_start && $mod_ts -le $build_end ]] ; then
+      return 1
+    else
+      scpCommand "$user@$host:$file" "$dir" &> $verb_output
+    fi
+  else
+    scpCommand "$user@$host:$file" "$dir" &> $verb_output
+  fi
+}
+
+# Checks if remote build host is accessible
+#
+# Code: No
+# Echo: No
+checkRemoteAvailability() {
+  local remote_available
+
+  remote_available=$(sshCommand "$user@$host" "stat $BUILD_LOCK &> /dev/null || echo 1")
+
+  if [[ -z "$remote_available" ]] ; then
+    showt "\r${CL_GREEN}Executing:${CL_NORM} ${CL_YELLOW}waiting in queue${CL_NORM}"
+
+    while : ; do
+      sleep $CHECK_REMOTE_QUEUE_DELAY
+
+      showt "\r${CL_GREEN}Executing:${CL_NORM} ${CL_CYAN}checking queue${CL_NORM}"
+
+      remote_available=$(sshCommand "$user@$host" "stat $BUILD_LOCK &> /dev/null || echo 1")
+
+      if [[ -n "$remote_available" ]] ; then
+        showt "\r${CL_GREEN}Executing:${CL_NORM} ${CL_YELLOW}~${CL_NORM}"
+        break
+      else
+        showt "\r${CL_GREEN}Executing:${CL_NORM} ${CL_YELLOW}waiting in queue${CL_NORM}"
+      fi
+    done
+  fi
+}
+
+# Sign packages on remote host
+#
+# *: Packages (String)
+#
+# Code: No
+# Echo: No
+remoteSign() {
+  local package="$1"
+
+  sshCommand "$user@$host" "rpm --addsign $package &> /dev/null" 2> /dev/null
+}
+
+# Checks if parallel build is possible
+#
+# Code: No
+# Echo: No
+checkParallelBuildAvailability() {
+  if ! hasParalellLock ; then
+    return
+  fi
+
+  local cdt ct cdf
+
+  cdt=$(stat $BUILD_LOCK_PARALLEL -c "%Y" 2> /dev/null)
+  ct=$(now)
+  cdf=$(( ct - cdt ))
+
+  if [[ $cdf -gt $LOCK_TIME_MAX_DIFF ]] ; then
+    error "We found lock file created more than 3 hours ago. It's too much time for the usual build process." $YELLOW
+    error "If another build process doesn't occur, you must remove file $BUILD_LOCK_PARALLEL manually." $YELLOW
+    error "We will continue to build when this file will be removed." $YELLOW
+  else
+    error "Another parallel build process in progress." $YELLOW
+    error "We will continue to build when another process complete." $YELLOW
+  fi
+
+  while : ; do
+    sleep $CHECK_LOCAL_QUEUE_DELAY
+
+    if ! hasParalellLock ; then
+      break
+    fi
+  done
+}
+
+# Checks if SSH connection to remote server works
+#
+# 1: User (String)
+# 2: Host (String)
+#
+# Code: Yes
+# Echo: No
+isSSHConnectionWorks() {
+  sshCommand "$1@$2" "echo 2>&1" &> /dev/null
+
+  [[ $? -eq 0 ]] && return 0 || return 1
+}
+
+# Checks if host is reachable
+#
+# 1: Host (String)
+#
+# Code: Yes
+# Echo: No
+isRemoteServerReachable() {
+  local host="$1"
+
+  ping -c 1 -w 5 "$host" &> /dev/null
+
+  [[ $? -eq 0 ]] && return 0 || return 1
+}
+
+# Get options for SSH commands
+#
+# Code: No
+# Echo: Options (String)
+getSSHOpts() {
+  local opts
+
+  if [[ -n "$key" ]] ; then
+    opts="-i $key"
+  else
+    opts="-o PubkeyAuthentication=no"
+  fi
+
+  echo "$opts"
+}
+
+# Checks if parallel build lock file exists
+#
+# Code: No
+# Echo: No
+hasParalellLock() {
+  [[ ! -e $BUILD_LOCK_PARALLEL ]] && return 1
+
+  local pid
+  pid=$(cat "$BUILD_LOCK_PARALLEL")
+
+  if [[ ! -d "/proc/$pid" ]] ; then
+    if removeParalellLock ; then
+      return 1
+    fi
+  fi
+
+  return 0
+}
+
+# Create parallel build lock file
+#
+# Code: No
+# Echo: No
+createParalellLock() {
+  echo "$$" 1> "$BUILD_LOCK_PARALLEL" 2> /dev/null
+  chmod 666 "$BUILD_LOCK_PARALLEL" &> /dev/null
+}
+
+# Remove parallel build lock file
+#
+# Code: No
+# Echo: No
+removeParalellLock() {
+  local cur_user lock_owner
+
+  if [[ -f $BUILD_LOCK_PARALLEL ]] ; then
+    cur_user=$(whoami)
+    lock_owner=$(stat "$BUILD_LOCK_PARALLEL" -c "%U")
+
+    if [[ "$cur_user" == "$lock_owner" ]] ; then
+      rm -f "$BUILD_LOCK_PARALLEL" &> /dev/null
+    fi
+  fi
+}
+
+# Execute SSH command on remote host
+#
+# 1: Host (String)
+# 2: Command (String)
+# 3: Don't use password auth (String) [Optional]
+#
+# Code: No
+# Echo: No
+sshCommand() {
+  local host="$1"
+  local comm="$2"
+  local no_pass="$3"
+
+  local ssh_opts
+  ssh_opts=$(getSSHOpts)
+
+  if [[ -n "$pass" && -z "$no_pass" ]] ; then
+    sshpass -p "$pass" ssh $SSH_BASE_OPTS -t -t -q $ssh_opts "$host" "$comm"
+  else
+    ssh $SSH_BASE_OPTS -t -t -q $ssh_opts "$host" "$comm"
+  fi
+
+  return $?
+}
+
+# Copy file through SCP command
+#
+# 1: From (String)
+# 2: To (String)
+#
+# Code: No
+# Echo: No
+scpCommand() {
+  local from="$1"
+  local to="$2"
+
+  local ssh_opts
+  ssh_opts=$(getSSHOpts)
+
+  if [[ -n "$pass" ]] ; then
+    sshpass -p "$pass" scp -q $SSH_BASE_OPTS $ssh_opts "$from" "$to"
+  else
+    scp -q $SSH_BASE_OPTS $ssh_opts "$from" "$to"
+  fi
+
+  return $?
+}
+
+# Parse URL to remote host
+#
+# 1: URL (String)
+#
+# Code: No
+# Echo: Options and URL (String)
+getURLVars() {
+  local url="$1"
+
+  local user pass user_pass host arch
+
+  if [[ "$url" =~ \~ ]] ; then
+    arch=$(echo "$url" | cut -f2 -d"~")
+    url=$(echo "$url" | cut -f1 -d"~")
+  fi
+
+  if [[ "$url" =~ \@ ]] ; then
+    user_pass=$(echo "$url" | cut -f1 -d"@")
+    host=$(echo "$url" | cut -f2 -d"@")
+
+    if [[ "$user_pass" =~ \: ]] ; then
+      user=$(echo "$user_pass" | cut -f1 -d":")
+      pass=$(echo "$user_pass" | cut -f2 -d":")
+    else
+      user="$user_pass"
+    fi
+  else
+    host="$url"
+  fi
+
+  echo "${host:-} ${user:-} ${pass:-} ${arch:-}"
+}

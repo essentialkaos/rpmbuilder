@@ -1,0 +1,82 @@
+# Check if given file is spec file
+#
+# 1: Path to spec file (String)
+#
+# Code: Yes
+# Echo: No
+isSpecFile() {
+  if [[ ! -r "$1" ]] ; then
+    return 1
+  fi
+
+  if [[ ! -s "$1" ]] ; then
+    return 1
+  fi
+
+  if ! grep -q "%prep" "$1" ; then
+    return 1
+  fi
+
+  return 0
+}
+
+# Read options from spec file
+#
+# 1: Path to spec file (String)
+#
+# Code: No
+# Echo: No
+readInspecOptions() {
+  local spec="$1"
+  local arg line argn
+
+  while read line ; do
+    IFS=" " read -ra arg <<< "$line"
+
+    argn="${arg[0]//-/_}"
+
+    if [[ -z "${!argn}" && $INSPEC_ARGS\  =~ $argn\  ]] ; then
+      eval "$argn=${arg[@]:1:99}"
+    fi
+  done < <(grep "$INSPEC_ARG_PREFIX" "$spec" | sed "s/# \?$INSPEC_ARG_PREFIX//g" | tr -s " ")
+}
+
+# Get sources
+#
+# 1: Path to spec file (String)
+#
+# Code: No
+# Echo: Sources list (String)
+getSources() {
+  spectool -n -S "$1" 2>/dev/null | cut -f2 -d" "
+}
+
+# Get patches
+#
+# 1: Path to spec file (String)
+#
+# Code: No
+# Echo: Patches list (String)
+getPatches() {
+  spectool -n -P "$1" 2>/dev/null | cut -f2 -d" "
+}
+
+# Bump version in spec after successful build
+#
+# 1: Path to spec file (String)
+#
+# Code: No
+# Echo: No
+releaseBump() {
+  local spec="$1"
+
+  if [[ -n "$bump_comment" ]] ; then
+    rpmdev-bumpspec -c "$bump_comment" "$spec"
+  else
+    rpmdev-bumpspec "$spec"
+  fi
+
+  if [[ $? -ne 0 ]] ; then
+    error "Can't bump release - bumpspec return error code" $YELLOW
+  fi
+}
