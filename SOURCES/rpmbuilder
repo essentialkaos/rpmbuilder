@@ -4,7 +4,7 @@
 APP="RPMBuilder"
 
 # Utility version (String)
-VER="2.0.0"
+VER="2.1.0"
 
 ####################################################################
 
@@ -68,7 +68,8 @@ SUPPORTED_ARGS="remote !parallel host user pass key source_dir source_list
  svn_pass path !bump bump_comment tmp dlcache !depinstall !dep_install github 
  bitbucket launchpad with without define output !verbose !help !usage !ver 
  !version !raw_version qa_rpaths tmux_worker !no_colors !keep_log !notify 
- arch download !relative_pack enable_repo disable_repo exclude_package gopack"
+ arch download !relative_pack enable_repo disable_repo exclude_package gopack 
+ !attach"
 
 SHORT_ARGS="r:remote P:!parallel hh:host uu:user pp:pass kk:key sd:source_dir 
  sl:source_list NB:!no_build NC:!no_clean ND:!no_deps NR:!no_binary NS:!no_source 
@@ -77,7 +78,7 @@ SHORT_ARGS="r:remote P:!parallel hh:host uu:user pp:pass kk:key sd:source_dir
  di:!depinstall rb:branch rt:tag rr:revision gh:github bb:bitbucket lp:launchpad 
  w:with W:without s:!sign D:define O:output V:!verbose h:help v:!version 
  nc:!no_colors kl:!keep_log n:!notify a:arch dl:download R:relative_pack 
- ER:enable_repo DR:disable_repo EX:exclude_package G:gopack"
+ ER:enable_repo DR:disable_repo EX:exclude_package G:gopack A:!attach"
 
 INSPEC_ARGS="git svn hg bzr branch revision tag svn_user svn_pass github 
  bitbucket launchpad qa_rpaths pedantic strict no_lint relative_pack gopack"
@@ -99,6 +100,9 @@ TMUX_OK_SLEEP=5
 
 # Wait delay after errored build in seconds (Number)
 TMUX_ERROR_SLEEP=1800
+
+# tmux session name
+TMUX_SESSION_NAME="rpmbuilder"
 
 # Wait delay after spec linting in seconds (Number)
 LINT_WAIT=3
@@ -196,6 +200,12 @@ main() {
   if [[ $(id -u) == "0" ]] ; then
     show "You should not be building packages as the superuser!" $YELLOW
     exit 1
+  fi
+
+  # Attach to TMUX build session
+  if [[ -n "$attach" ]] ; then
+    tmux attach -t "$TMUX_SESSION_NAME"
+    exit $?
   fi
 
   require "build"
@@ -415,6 +425,7 @@ usage() {
   showo "--user, -uu" "Remote host user" "username"
   showo "--pass, -pp" "Password for specified user" "password"
   showo "--key, -kk" "Path to the private key for specified user" "file"
+  showo "--attach, -A" "Attach to parallel build session in tmux"
   show ""
   show "  Examples:" $BOLD
   show ""

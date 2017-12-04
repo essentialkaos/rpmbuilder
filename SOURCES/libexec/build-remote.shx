@@ -48,7 +48,7 @@ parallelBuild() {
 
     if [[ -z "$session_exist" ]] ; then
       if [[ -z "$TMUX" ]] ; then
-        tmux new-session -s "rpmbuilder" -d "$0 $opts -r $serv --tmux-worker $wid" >/dev/null 2>&1
+        tmux new-session -s "$TMUX_SESSION_NAME" -d "$0 $opts -r $serv --tmux-worker $wid" >/dev/null 2>&1
       else
         tmux new-window "$0 $opts -r $serv --tmux-worker $wid"
       fi
@@ -62,7 +62,7 @@ parallelBuild() {
 
   # If we not in tmux, attach to session
   if [[ -z "$TMUX" ]] ; then
-    tmux attach-session -t "rpmbuilder" >/dev/null 2>&1
+    tmux attach-session -t "$TMUX_SESSION_NAME" >/dev/null 2>&1
   fi
 
   waitTillWorkersComplete "${wids[*]}"
@@ -158,7 +158,7 @@ remoteRunBuild() {
 
     if [[ $r_line -gt $tlines ]] ; then
       show ""
-      error "Error - file ${CL_BL_RED}${r_file}${CL_RED} don't contain a line with number ${CL_BL_RED}${r_line}${CL_RED}." $RED
+      error "Error - file ${CL_BL_RED}${r_file}${CL_RED} don't contain a line with number ${CL_BL_RED}${r_line}${CL_RED}" $RED
       return 1
     fi
 
@@ -202,11 +202,11 @@ remoteRunBuild() {
 remoteCheckEnv() {
   showSeparator "REMOTE CHECK"
 
-  show "Connecting to a remote build server on ${CL_CYAN}$host${CL_NORM}."
+  show "Connecting to a remote build server on ${CL_CYAN}$host${CL_NORM}..."
 
   if isRemoteServerReachable "$host" ; then
     if ! isSSHConnectionWorks "$user" "$host" ; then
-      error "Can't connect to host ${CL_BL_RED}${host}${CL_RED}." $RED
+      error "Can't connect to host ${CL_BL_RED}${host}${CL_RED}" $RED
       doExit $ERROR_REMOTE
     fi
   else

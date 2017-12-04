@@ -2,7 +2,7 @@
 
 Summary:         RPM package build helper
 Name:            rpmbuilder
-Version:         2.0.0
+Version:         2.1.0
 Release:         0%{?dist}
 License:         EKOL
 Group:           Development/Tools
@@ -54,6 +54,10 @@ rm -rf %{buildroot}
 ###############################################################################
 
 %changelog
+* Thu Nov 30 2017 Anton Novojilov <andy@essentialkaos.com> - 2.1.0-0
+- Added option '--attach'/'-A' for attaching to parallel build session in tmux
+- Minor improvements
+
 * Wed Nov 29 2017 Anton Novojilov <andy@essentialkaos.com> - 2.0.0-0
 - Source code divided to separate files
 - Code refactoring

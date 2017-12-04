@@ -12,7 +12,7 @@ packGolangSources() {
 
   if findSource "${sources[0]}" &>/dev/null ; then
     if [[ -n "$download" ]] ; then
-      show "File ${CL_CYAN}${sources[0]}${CL_NORM} already created."
+      show "File ${CL_CYAN}${sources[0]}${CL_NORM} already created"
     fi
 
     return
