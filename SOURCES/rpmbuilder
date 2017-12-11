@@ -1,4 +1,5 @@
 #!/usr/bin/env bash
+# shellcheck disable=SC1117,SC2034,SC2154
 
 # Utility name (String)
 APP="RPMBuilder"
@@ -210,7 +211,7 @@ main() {
 
   require "build"
 
-  startBuild $*
+  startBuild "$*"
 }
 
 # Load libexec script
@@ -244,6 +245,7 @@ require() {
 
   _requires[$script]=1
 
+  # shellcheck disable=SC1090
   source "$LIBEXEC_DIR/$script"
 }
 
@@ -290,7 +292,7 @@ showt() {
   offset="${2-0}"
   spaces="                                                                                      "
 
-  adds=$((${#SEPARATOR} - ${#message} - $offset))
+  adds=$((${#SEPARATOR} - ${#message} - offset))
 
   echo -e -n "${1}${spaces:0:$adds}"
 }
@@ -499,7 +501,7 @@ unset arg argn argp
 PREFS_FILE="${PREFS_FILE//\~/$HOME}"
 
 if [[ -n "$PREFS_FILE" && -r "$PREFS_FILE" ]] ; then
-  while read arg ; do
+  while read -r arg ; do
     arg="${arg/: /:}" ; argn="${arg%:*}" ; argp="${arg#*:}"
     [[ "$SUPPORTED_ARGS " =~ $argn\  ]] && declare "$argn=$argp"
   done < <(awk 1 "$PREFS_FILE")
@@ -533,6 +535,7 @@ while [[ -n "$1" ]] ; do
     if [[ -z "$argn" ]] ; then
       argn=$arg
     else
+      # shellcheck disable=SC2015
       [[ -z "$argk" ]] && ( declare -F showArgValWarn &>/dev/null && showArgValWarn "--$argn" ) || declare "$argn=true"
       argn=$arg
     fi
@@ -562,6 +565,7 @@ while [[ -n "$1" ]] ; do
         shift && continue
       fi
 
+      # shellcheck disable=SC2015
       [[ -n "${!argm}" && $MERGEABLE_ARGS\  =~ $argm\  ]] && declare "$argm=${!argm} ${arg[*]:1:99}" || declare "$argm=${arg[*]:1:99}"
 
       unset argm && shift && continue
@@ -571,6 +575,7 @@ while [[ -n "$1" ]] ; do
       if [[ -z "$argn" ]] ; then
         argn=$arg
       else
+        # shellcheck disable=SC2015
         [[ -z "$argk" ]] && ( declare -F showArgValWarn &>/dev/null && showArgValWarn "--$argn" ) || declare "$argn=true"
         argn=$arg
       fi
@@ -590,6 +595,7 @@ while [[ -n "$1" ]] ; do
     fi
   else
     if [[ -n "$argn" ]] ; then
+      # shellcheck disable=SC2015
       [[ -n "${!argn}" && $MERGEABLE_ARGS\  =~ $argn\  ]] && declare "$argn=${!argn} $1" || declare "$argn=$1"
 
       unset argn && shift && continue
@@ -604,6 +610,7 @@ done
 
 unset arg argn argm argk
 
-[[ -n "$KEEP_ARGS" ]] && main "$argv" || main "${argt:1:9999}"
+# shellcheck disable=SC2015,SC2086
+[[ -n "$KEEP_ARGS" ]] && main $argv || main ${argt:1:9999}
 
 ########################################################################################

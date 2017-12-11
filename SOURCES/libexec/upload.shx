@@ -1,3 +1,8 @@
+#!/bin/bash
+# shellcheck disable=SC1117,SC2034,SC2086,SC2154,SC2181
+
+################################################################################
+
 # Upload packages to remote host
 #
 # 1: Directory with packages (String)
@@ -22,7 +27,7 @@ uploadPackages() {
     if [[ -r $upload ]] ; then
       has_errors=""
 
-      while read line ; do
+      while read -r line ; do
         target=$(echo "$line" | cut -f1 -d":")
 
         uploadPackagesToServer "$line" "$package_list"

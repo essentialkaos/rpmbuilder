@@ -1,3 +1,8 @@
+#!/bin/bash
+# shellcheck disable=SC1117,SC2034,SC2086,SC2154,SC2181
+
+################################################################################
+
 # Fetch and pack Golang sources
 #
 # 1: Path to spec file (String)
@@ -8,7 +13,7 @@ packGolangSources() {
   local spec="$1"
   local args sources output status
 
-  sources=($(getSources "$spec"))
+  IFS=" " read -r -a sources <<< "$(getSources "$spec")"
 
   if findSource "${sources[0]}" &>/dev/null ; then
     if [[ -n "$download" ]] ; then

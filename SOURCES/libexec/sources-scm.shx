@@ -1,3 +1,8 @@
+#!/bin/bash
+# shellcheck disable=SC1001,SC1117,SC2034,SC2086,SC2154,SC2181
+
+################################################################################
+
 # Try to extract SCM service from URL
 #
 # 1: Path to spec file (String)
@@ -6,9 +11,10 @@
 # Echo: No
 parseSourceURL() {
   local spec="$1"
-
   local url sources
-  sources=($(getSources "$spec"))
+
+  IFS=" " read -r -a sources <<< "$(getSources "$spec")"
+ 
   url="${sources[0]}"
 
   if [[ "$url" =~ github ]] ; then
@@ -166,7 +172,8 @@ packSourcesFromGit() {
   local spec sources source_name source_ext dir_name git_log abs_dir_path
 
   spec=$(getAbsPath "$1")
-  sources=($(getSources "$spec"))
+  
+  IFS=" " read -r -a sources <<< "$(getSources "$spec")"
 
   if findSource "${sources[0]}" &>/dev/null ; then
     if [[ -n "$download" ]] ; then
@@ -185,8 +192,12 @@ packSourcesFromGit() {
 
   git_log="$tmp_dir/git.log"
 
-  pushd "$tmp_dir" &> /dev/null
-    [[ -n "$verbose" ]] && git clone "$git" "$dir_name" | tee -a "$git_log" || git clone "$git" "$dir_name" &> "$git_log"
+  pushd "$tmp_dir" &> /dev/null || printErrorAndExit "Can't set working dir to $tmp_dir"
+    if [[ -n "$verbose" ]] ; then
+      git clone "$git" "$dir_name" | tee -a "$git_log"
+    else
+      git clone "$git" "$dir_name" &> "$git_log"
+    fi
 
     if [[ $? -ne 0 ]] ; then
       error "Can't clone repo - error while cloning" $RED
@@ -201,10 +212,14 @@ packSourcesFromGit() {
       doExit $ERROR_SOURCE
     fi
 
-    pushd "$tmp_dir/$dir_name" &> /dev/null
+    pushd "$tmp_dir/$dir_name" &> /dev/null  || printErrorAndExit "Can't set working dir to $tmp_dir/$dir_name"
 
       if [[ -n "$branch" ]] ; then
-        [[ -n "$verbose" ]] && git checkout "$branch" | tee -a "$git_log" || git checkout "$branch" &> "$git_log"
+        if [[ -n "$verbose" ]] ; then
+          git checkout "$branch" | tee -a "$git_log"
+        else
+          git checkout "$branch" &> "$git_log"
+        fi
 
         if [[ $? -ne 0 ]] ; then
           error "Can't switch branch to ${CL_BL_RED}${branch}${CL_RED}:" $RED
@@ -221,7 +236,11 @@ packSourcesFromGit() {
       fi
 
       if [[ -n "$revision" ]] ; then
-        [[ -n "$verbose" ]] && git checkout "$revision" | tee -a "$git_log" || git checkout "$revision" &> "$git_log"
+        if [[ -n "$verbose" ]] ; then
+          git checkout "$revision" | tee -a "$git_log"
+        else
+          git checkout "$revision" &> "$git_log"
+        fi
 
         if [[ $? -ne 0 ]] ; then
           error "Can't checkout revision ${CL_BL_RED}${revision}${CL_RED}:" $RED
@@ -236,7 +255,11 @@ packSourcesFromGit() {
           doExit $ERROR_SOURCE
         fi
       elif [[ -n "$tag" ]] ; then
-        [[ -n "$verbose" ]] && git checkout "$tag" | tee -a "$git_log" || git checkout "$tag" &> "$git_log"
+        if [[ -n "$verbose" ]] ; then
+          git checkout "$tag" | tee -a "$git_log"
+        else
+          git checkout "$tag" &> "$git_log"
+        fi
 
         if [[ $? -ne 0 ]] ; then
           error "Can't checkout tag ${CL_BL_RED}${tag}${CL_RED}:" $RED
@@ -258,7 +281,7 @@ packSourcesFromGit() {
       fi
 
       rm -rf .git .gitignore .gitmodules "$git_log" &> /dev/null
-    popd &> /dev/null
+    popd &> /dev/null || printErrorAndExit "Can't set working dir"
 
     if [[ -n "$path" ]] ; then
       if [[ ! -d "$dir_name/$path" ]] ; then
@@ -282,7 +305,7 @@ packSourcesFromGit() {
       cp "${source_name}.${source_ext}" "$dlcache/"
     fi
 
-  popd &> /dev/null
+  popd &> /dev/null || printErrorAndExit "Can't set working dir"
 
   show "Source files from ${CL_BOLD}git${CL_NORM} repo packed as ${CL_CYAN}${source_name}.${source_ext}${CL_NORM}\n"
 }
@@ -297,7 +320,8 @@ packSourcesFromHg() {
   local spec sources source_name source_ext dir_name hg_log abs_dir_path
 
   spec=$(getAbsPath "$1")
-  sources=($(getSources "$spec"))
+  
+  IFS=" " read -r -a sources <<< "$(getSources "$spec")"
 
   if findSource "${sources[0]}" &>/dev/null ; then
     if [[ -n "$download" ]] ; then
@@ -316,8 +340,12 @@ packSourcesFromHg() {
 
   hg_log="$tmp_dir/hg.log"
 
-  pushd "$tmp_dir" &> /dev/null
-    [[ -n "$verbose" ]] && hg clone "$hg" "$dir_name" | tee -a "$hg_log" || hg clone "$hg" "$dir_name" &> "$hg_log"
+  pushd "$tmp_dir" &> /dev/null || printErrorAndExit "Can't set working dir to $tmp_dir"
+    if [[ -n "$verbose" ]] ; then
+      hg clone "$hg" "$dir_name" | tee -a "$hg_log"
+    else
+      hg clone "$hg" "$dir_name" &> "$hg_log"
+    fi
 
     if [[ $? -ne 0 ]] ; then
       error "Can't clone repo - error while cloning" $RED
@@ -332,10 +360,13 @@ packSourcesFromHg() {
       doExit $ERROR_SOURCE
     fi
 
-    pushd "$tmp_dir/$dir_name" &> /dev/null
+    pushd "$tmp_dir/$dir_name" &> /dev/null || printErrorAndExit "Can't set working dir to $tmp_dir/$dir_name"
       if [[ -n "$branch" ]] ; then
-
-        [[ -n "$verbose" ]] && hg checkout "$branch" | tee -a "$hg_log" || hg checkout "$branch" &> "$hg_log"
+        if [[ -n "$verbose" ]] ; then
+          hg checkout "$branch" | tee -a "$hg_log"
+        else
+          hg checkout "$branch" &> "$hg_log"
+        fi
 
         if [[ $? -ne 0 ]] ; then
           error "Can't switch branch to ${CL_BL_RED}${branch}${CL_RED}:" $RED
@@ -352,7 +383,11 @@ packSourcesFromHg() {
       fi
 
       if [[ -n "$revision" ]] ; then
-        [[ -n "$verbose" ]] && hg checkout "$revision" | tee -a "$hg_log" || hg checkout "$revision" &> "$hg_log"
+        if [[ -n "$verbose" ]] ; then
+          hg checkout "$revision" | tee -a "$hg_log"
+        else
+          hg checkout "$revision" &> "$hg_log"
+        fi
 
         if [[ $? -ne 0 ]] ; then
           error "Can't checkout revision ${CL_BL_RED}${revision}${CL_RED}:" $RED
@@ -367,7 +402,11 @@ packSourcesFromHg() {
           doExit $ERROR_SOURCE
         fi
       elif [[ -n "$tag" ]] ; then
-        [[ -n "$verbose" ]] && hg checkout "$tag" | tee -a "$hg_log" || hg checkout "$tag" &> "$hg_log"
+        if [[ -n "$verbose" ]] ; then
+          hg checkout "$tag" | tee -a "$hg_log"
+        else
+          hg checkout "$tag" &> "$hg_log"
+        fi
 
         if [[ $? -ne 0 ]] ; then
           error "Can't checkout tag ${CL_BL_RED}${tag}${CL_RED}:" $RED
@@ -384,7 +423,7 @@ packSourcesFromHg() {
       fi
 
       rm -rf .hg .hgignore "$hg_log" &> /dev/null
-    popd &> /dev/null
+    popd &> /dev/null || printErrorAndExit "Can't set working dir"
 
     if [[ -n "$path" ]] ; then
       if [[ ! -d "$dir_name/$path" ]] ; then
@@ -408,7 +447,7 @@ packSourcesFromHg() {
       cp "${source_name}.${source_ext}" "$dlcache/"
     fi
 
-  popd &> /dev/null
+  popd &> /dev/null || printErrorAndExit "Can't set working dir"
 
   show "Source files from ${CL_BOLD}hg${CL_NORM} repo packed as ${CL_CYAN}${source_name}.${source_ext}${CL_NORM}\n"
 }
@@ -423,7 +462,8 @@ packSourcesFromBzr() {
   local spec sources source_name source_ext dir_name bzr_log bzr_opts abs_dir_path
 
   spec=$(getAbsPath "$1")
-  sources=($(getSources "$spec"))
+
+  IFS=" " read -r -a sources <<< "$(getSources "$spec")"
 
   if findSource "${sources[0]}" &>/dev/null ; then
     if [[ -n "$download" ]] ; then
@@ -441,11 +481,15 @@ packSourcesFromBzr() {
   dir_name=$(mktemp -u "$source_name-XXXX")
   bzr_log="$tmp_dir/bzr.log"
 
-  pushd "$tmp_dir" &> /dev/null
+  pushd "$tmp_dir" &> /dev/null || printErrorAndExit "Can't set working dir to $tmp_dir"
 
     [[ -n "$tag" ]] && bzr_opts="-r tag:$tag"
 
-    [[ -n "$verbose" ]] && bzr $bzr_opts branch "$bzr" "$dir_name" | tee -a "$bzr_log" || bzr $bzr_opts branch "$bzr" "$dir_name" &> "$bzr_log"
+    if [[ -n "$verbose" ]] ; then
+      bzr $bzr_opts branch "$bzr" "$dir_name" | tee -a "$bzr_log"
+    else
+      bzr $bzr_opts branch "$bzr" "$dir_name" &> "$bzr_log"
+    fi
 
     if [[ $? -ne 0 ]] ; then
       error "Can't make a copy of the branch" $RED
@@ -460,10 +504,14 @@ packSourcesFromBzr() {
       doExit $ERROR_SOURCE
     fi
 
-    pushd "$tmp_dir/$dir_name" &> /dev/null
+    pushd "$tmp_dir/$dir_name" &> /dev/null || printErrorAndExit "Can't set working dir to $tmp_dir/$dir_name"
 
       if [[ -n "$revision" ]] ; then
-        [[ -n "$verbose" ]] && bzr revert -r${revision} | tee -a "$bzr_log" || bzr revert -r${revision} &> "$bzr_log"
+        if [[ -n "$verbose" ]] ; then
+          bzr revert -r${revision} | tee -a "$bzr_log"
+        else
+          bzr revert -r${revision} &> "$bzr_log"
+        fi
 
         if [[ $? -ne 0 ]] ; then
           error "Can't revert to revision ${CL_BL_RED}${revision}" $RED
@@ -480,7 +528,7 @@ packSourcesFromBzr() {
       fi
 
       rm -rf .bzr .bzrignore "$bzr_log" &> /dev/null
-    popd &> /dev/null
+    popd &> /dev/null || printErrorAndExit "Can't set working dir"
 
     if [[ -n "$path" ]] ; then
       if [[ ! -d "$dir_name/$path" ]] ; then
@@ -504,7 +552,7 @@ packSourcesFromBzr() {
       cp "${source_name}.${source_ext}" "$dlcache/"
     fi
 
-  popd &> /dev/null
+  popd &> /dev/null || printErrorAndExit "Can't set working dir"
 
   show "Source files from ${CL_BOLD}bzr${CL_NORM} repo packed as ${CL_CYAN}${source_name}.${source_ext}${CL_NORM}\n"
 }
@@ -519,7 +567,8 @@ packSourcesFromSvn() {
   local spec sources source_name source_ext svn_opts svn_log abs_dir_path
 
   spec=$(getAbsPath "$1")
-  sources=($(getSources "$spec"))
+
+  IFS=" " read -r -a sources <<< "$(getSources "$spec")"
 
   if findSource "${sources[0]}" &>/dev/null ; then
     if [[ -n "$download" ]] ; then
@@ -555,7 +604,7 @@ packSourcesFromSvn() {
     fi
   fi
 
-  pushd "$tmp_dir" &> /dev/null
+  pushd "$tmp_dir" &> /dev/null || printErrorAndExit "Can't set working dir to $tmp_dir"
     if [[ -n "$path" ]] ; then
       if [[ -n "$verbose" ]] ; then
         svn checkout "$svn_url" "${source_name}_tmp" $svn_opts | tee -a "$svn_log"
@@ -607,7 +656,7 @@ packSourcesFromSvn() {
       cp "${source_name}.${source_ext}" "$dlcache/"
     fi
 
-  popd &> /dev/null
+  popd &> /dev/null || printErrorAndExit "Can't set working dir"
 
   show "Source files from ${CL_BOLD}svn${CL_NORM} repo packed as ${CL_CYAN}${source_name}.${source_ext}${CL_NORM}\n"
 }

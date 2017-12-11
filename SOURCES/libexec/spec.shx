@@ -1,3 +1,8 @@
+#!/bin/bash
+# shellcheck disable=SC1117,SC2034,SC2086,SC2154,SC2181
+
+################################################################################
+
 # Check if given file is spec file
 #
 # 1: Path to spec file (String)
@@ -30,13 +35,13 @@ readInspecOptions() {
   local spec="$1"
   local arg line argn
 
-  while read line ; do
+  while read -r line ; do
     IFS=" " read -ra arg <<< "$line"
 
     argn="${arg[0]//-/_}"
 
     if [[ -z "${!argn}" && $INSPEC_ARGS\  =~ $argn\  ]] ; then
-      eval "$argn=${arg[@]:1:99}"
+      eval "$argn=${arg[*]:1:99}"
     fi
   done < <(grep "$INSPEC_ARG_PREFIX" "$spec" | sed "s/# \?$INSPEC_ARG_PREFIX//g" | tr -s " ")
 }

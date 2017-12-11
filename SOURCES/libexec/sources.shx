@@ -1,3 +1,6 @@
+#!/bin/bash
+# shellcheck disable=SC1117,SC2034,SC2086,SC2154,SC2181
+
 ################################################################################
 
 require "sources-golang"
@@ -40,7 +43,8 @@ packSources() {
     fi
   done
 
-  sources=($(getSources "$spec"))
+  IFS=" " read -r -a sources <<< "$(getSources "$spec")"
+
   arch_name=$(getArchName "${sources[0]}")
   arch_ext=$(getArchExt "${sources[0]}")
 
@@ -59,11 +63,11 @@ packSources() {
 
   cleanPackDir "$tmp_dir/$arch_name"
 
-  pushd "$tmp_dir" &> /dev/null
+  pushd "$tmp_dir" &> /dev/null || printErrorAndExit "Can't set working dir to $tmp_dir"
 
     packDir "$tmp_dir/$arch_name" "$arch_ext"
 
-  popd &> /dev/null
+  popd &> /dev/null || printErrorAndExit "Can't set working dir"
 
   rm -rf "${tmp_dir:?}/$arch_name"
 
@@ -92,7 +96,7 @@ packDir() {
     arch_name="$dir_name"
   fi
 
-  pushd "$parent_dir" &> /dev/null
+  pushd "$parent_dir" &> /dev/null || printErrorAndExit "Can't set working dir to $parent_dir"
 
     if [[ "$ext" == "tar.gz" || "$ext" == "tgz" ]] ; then
       tar czfv "$arch_name.$ext" "$dir_name" &> $verb_output
@@ -107,7 +111,7 @@ packDir() {
       doExit $ERROR_SOURCE
     fi
 
-  popd &> /dev/null
+  popd &> /dev/null || printErrorAndExit "Can't set working dir"
 }
 
 # Try to find sources

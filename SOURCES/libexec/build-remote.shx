@@ -1,3 +1,6 @@
+#!/bin/bash
+# shellcheck disable=SC1117,SC2034,SC2086,SC2154,SC2181
+
 ################################################################################
 
 require "build-remote-worker"
@@ -40,11 +43,11 @@ parallelBuild() {
   local serv serv_name session_exist wid
   local wids=()
 
-  while read serv ; do
+  while read -r serv ; do
     serv_name=$(echo "$serv" | cut -f2 -d"@")
     wid=$(mktemp -u XXXXXXXXXXXX)
 
-    wids+=($wid)
+    wids+=("$wid")
 
     if [[ -z "$session_exist" ]] ; then
       if [[ -z "$TMUX" ]] ; then
@@ -84,6 +87,7 @@ remoteBuild() {
 
   if [[ -n "$pre" ]] ; then
     show "Executing pre-build script..."
+    # shellcheck disable=SC2091
     $($pre)
   fi
 
@@ -124,7 +128,7 @@ remoteRunMultibuild() {
   build_hosts=$(cat "$remote")
 
   for build_host in $build_hosts ; do
-    host_info=($(getURLVars "$build_host"))
+    IFS=" " read -r -a host_info <<< "$(getURLVars "$build_host")"
 
     host="${host_info[0]/-/}"
 
@@ -166,7 +170,7 @@ remoteRunBuild() {
   fi
 
   if [[ "$remote" =~ \@|\~i ]] ; then
-    host_info=($(getURLVars "$remote"))
+    IFS=" " read -r -a host_info <<< "$(getURLVars "$remote")"
 
     host="${host_info[0]/-/}"
 
@@ -270,6 +274,7 @@ remoteSpecValidate() {
   show "Spec file check result:" $CYAN
   show "$result"
 
+  # shellcheck disable=SC2143
   if [[ -n "$strict" && $(echo "$result" | grep " E: ") ]] ; then
     show ""
     error "Build canceled because spec has errors and strict mode is enabled" $YELLOW
@@ -277,6 +282,7 @@ remoteSpecValidate() {
   fi
 
   if [[ -n "$pedantic" ]] ; then
+    # shellcheck disable=SC2143
     if [[ $(echo "$result" | grep " E: ") || $(echo "$result" | grep " W: ") ]] ; then
       show ""
       error "Build canceled because spec has errors or warnings and a pedantic mode is enabled" $YELLOW
@@ -340,7 +346,7 @@ remoteBuildProcess() {
 
     showSeparator "PACKAGE PROCESSING"
 
-    packages=$(egrep "rpmbuild/(S|)RPMS" "$tmp_output" | cut -f2 -d" ")
+    packages=$(grep -E "rpmbuild/(S|)RPMS" "$tmp_output" | cut -f2 -d" ")
 
     for package in $packages ; do
       package=$(echo "$package" | tr -dc '[:print:]')
@@ -386,6 +392,7 @@ remoteBuildProcess() {
 
     if [[ -n "$post" ]] ; then
       show "Executing post-build script..."
+      # shellcheck disable=SC2091
       $($post)
     fi
 
@@ -683,6 +690,7 @@ sshCommand() {
   if [[ -n "$pass" && -z "$no_pass" ]] ; then
     sshpass -p "$pass" ssh $SSH_BASE_OPTS -t -t -q $ssh_opts "$host" "$comm"
   else
+    # shellcheck disable=SC2029
     ssh $SSH_BASE_OPTS -t -t -q $ssh_opts "$host" "$comm"
   fi
 
@@ -732,6 +740,7 @@ getURLVars() {
     user_pass=$(echo "$url" | cut -f1 -d"@")
     host=$(echo "$url" | cut -f2 -d"@")
 
+    # shellcheck disable=SC1001
     if [[ "$user_pass" =~ \: ]] ; then
       user=$(echo "$user_pass" | cut -f1 -d":")
       pass=$(echo "$user_pass" | cut -f2 -d":")

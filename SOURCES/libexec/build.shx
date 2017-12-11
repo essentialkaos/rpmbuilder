@@ -1,3 +1,6 @@
+#!/bin/bash
+# shellcheck disable=SC1117,SC2034,SC2086,SC2154,SC2181
+
 ################################################################################
 
 require "build-local"
@@ -287,6 +290,17 @@ checkOptions() {
   fi
 }
 
+# Print message and exit from utility
+#
+# 1: Error message (String)
+#
+# Code: No
+# Echo: No
+printErrorAndExit() {
+  error "$*"
+  doExit $ERROR_UNKNOWN
+}
+
 # Ring the bell
 #
 # Code: No
@@ -448,6 +462,7 @@ getBuildOpts() {
 getBuildPrefix() {
   local prfx="LC_ALL=C"
 
+  # shellcheck disable=SC2007
   [[ -n "$qa_rpaths" ]] && prfx="$prfx QA_RPATHS=$[ ${qa_rpaths//,/|} ]"
 
   echo "$prfx"

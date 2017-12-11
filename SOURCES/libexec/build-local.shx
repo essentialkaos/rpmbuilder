@@ -1,3 +1,6 @@
+#!/bin/bash
+# shellcheck disable=SC1117,SC2034,SC2086,SC2154,SC2181
+
 ################################################################################
 
 require "upload"
@@ -19,6 +22,7 @@ localBuild() {
 
   if [[ -n "$pre" ]] ; then
     show "Executing pre-build script..."
+    # shellcheck disable=SC2091
     $($pre)
   fi
 
@@ -148,6 +152,7 @@ localSpecValidate() {
   show "Spec file check result:" $CYAN
   show "$result"
 
+  # shellcheck disable=SC2143
   if [[ -n "$strict" && $(echo "$result" | grep " E: ") ]] ; then
     show ""
     error "Build canceled because spec has errors and strict mode is enabled" $YELLOW
@@ -155,6 +160,7 @@ localSpecValidate() {
   fi
 
   if [[ -n "$pedantic" ]] ; then
+    # shellcheck disable=SC2143
     if [[ $(echo "$result" | grep " E: ") || $(echo "$result" | grep " W: ") ]] ; then
       show ""
       error "Build canceled because spec has errors or warnings and a pedantic mode is enabled" $YELLOW
@@ -184,7 +190,7 @@ localBuildProcess() {
 
   local has_errors
 
-  pushd "$specs_dir" &> /dev/null
+  pushd "$specs_dir" &> /dev/null || printErrorAndExit "Can't set working dir to $specs_dir"
     if [[ -z "$no_lint" ]] ; then
       showSeparator "VALIDATION"
       localSpecValidate "$spec_name"
@@ -206,11 +212,11 @@ localBuildProcess() {
     local exit_status pipe_status
 
     if [[ -n "$verbose" ]] ; then
-      export $build_prfx
+      export build_prfx
       eval "rpmbuild $build_args $spec_name" | tee "$tmp_output" &> $verb_output
       pipe_status=${PIPESTATUS[0]}
     else
-      export $build_prfx
+      export build_prfx
       eval "rpmbuild $build_args $spec_name" &> "$tmp_output"
       exit_status=$?
     fi
@@ -266,7 +272,7 @@ localBuildProcess() {
 
       showSeparator "PACKAGE PROCESSING"
 
-      packages=$(egrep "rpmbuild/(S|)RPMS" "$tmp_output" | cut -f2 -d" ")
+      packages=$(grep -E "rpmbuild/(S|)RPMS" "$tmp_output" | cut -f2 -d" ")
 
       rm -f "$tmp_output"
 
@@ -306,14 +312,15 @@ localBuildProcess() {
         doExit $ERROR_VALIDATE
       fi
 
-      pushd "$CWD" &> /dev/null
+      pushd "$CWD" &> /dev/null || printErrorAndExit "Can't set working dir to $CWD"
 
       if [[ -n "$post" ]] ; then
         show "Executing post-build script..."
+        # shellcheck disable=SC2091
         $($post)
       fi
 
-      popd &> /dev/null
+      popd &> /dev/null || printErrorAndExit "Can't set working dir"
 
       [[ -n "$bump" ]] && releaseBump "$CWD/$spec"
 
@@ -336,7 +343,7 @@ localBuildProcess() {
 
     removeLocalLock
 
-  popd &> /dev/null
+  popd &> /dev/null || printErrorAndExit "Can't set working dir"
 }
 
 # Checks if local build is accessible
@@ -452,6 +459,7 @@ localSign() {
 # Code: No
 # Echo: No
 setupBuildTree() {
+  # shellcheck disable=SC2012
   if [[ $(ls -1 $HOME/rpmbuild 2>/dev/null | wc -l) == "6" ]] ; then
     return
   fi
