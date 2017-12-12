@@ -211,7 +211,7 @@ main() {
 
   require "build"
 
-  startBuild "$*"
+  startBuild "$@"
 }
 
 # Load libexec script
