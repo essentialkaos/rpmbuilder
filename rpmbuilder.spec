@@ -57,6 +57,7 @@ rm -rf %{buildroot}
 * Thu Nov 30 2017 Anton Novojilov <andy@essentialkaos.com> - 2.1.0-0
 - Added option '--attach'/'-A' for attaching to parallel build session in tmux
 - Minor improvements
+- Code refactoring
 
 * Wed Nov 29 2017 Anton Novojilov <andy@essentialkaos.com> - 2.0.0-0
 - Source code divided to separate files
