@@ -34,6 +34,7 @@ parallelBuild() {
     [[ "$opt" == "--parallel" ]] && continue
     [[ "$opt" == "$remote" ]] && continue
 
+    # shellcheck disable=SC2049
     if [[ "$opt" =~ \* ]] ; then
       opts="$opts \"$opt\""
     else
