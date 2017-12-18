@@ -34,7 +34,11 @@ parallelBuild() {
     [[ "$opt" == "--parallel" ]] && continue
     [[ "$opt" == "$remote" ]] && continue
 
-    opts="$opts $opt"
+    if [[ "$opt" =~ \* ]] ; then
+      opts="$opts \"$opt\""
+    else
+      opts="$opts $opt"
+    fi
   done
 
   checkParallelBuildAvailability
