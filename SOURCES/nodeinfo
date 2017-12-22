@@ -1,9 +1,10 @@
 #!/usr/bin/env bash
+# shellcheck disable=SC1117,SC2034,SC2154
 
 ###############################################################################
 
 APP="RPMBuilder Node Info Viewer"
-VER="1.0.2"
+VER="1.0.3"
 
 ###############################################################################
 
@@ -73,7 +74,7 @@ getSwapUsage() {
 }
 
 readMemInfo() {
-  cat "/proc/meminfo" | tr -s " " | egrep "^$1:" | cut -f2 -d" "
+  tr -s " " < "/proc/meminfo" | grep -E "^$1:" | cut -f2 -d" "
 }
 
 getOSVersion() {

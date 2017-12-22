@@ -1,3 +1,8 @@
+#!/bin/bash
+# shellcheck disable=SC1117,SC2034,SC2086,SC2154,SC2181
+
+################################################################################
+
 # Create lock file for worker
 #
 # 1: Worker UID (String)
@@ -81,7 +86,7 @@ waitTillWorkersComplete() {
 
     has_lock=""
 
-    for wid in $@ ; do
+    for wid in "$@" ; do
       if hasWorkerLock "$wid" ; then
         has_lock=true
       fi

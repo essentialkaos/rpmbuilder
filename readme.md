@@ -170,6 +170,13 @@ Other:
 
 ```
 
+### Build Status
+
+| Branch | Status |
+|--------|--------|
+| `master` | [![Build Status](https://travis-ci.org/essentialkaos/rpmbuilder.svg?branch=master)](https://travis-ci.org/essentialkaos/rpmbuilder) |
+| `develop` | [![Build Status](https://travis-ci.org/essentialkaos/rpmbuilder.svg?branch=develop)](https://travis-ci.org/essentialkaos/rpmbuilder) |
+
 ### Contributing
 
 Before contributing to this project please read our [Contributing Guidelines](https://github.com/essentialkaos/contributing-guidelines#contributing-guidelines).

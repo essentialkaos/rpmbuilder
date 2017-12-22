@@ -1,3 +1,6 @@
+#!/bin/bash
+# shellcheck disable=SC1117,SC2034,SC2086,SC2154,SC2181
+
 ################################################################################
 
 require "build-remote-worker"
@@ -31,7 +34,12 @@ parallelBuild() {
     [[ "$opt" == "--parallel" ]] && continue
     [[ "$opt" == "$remote" ]] && continue
 
-    opts="$opts $opt"
+    # shellcheck disable=SC2049
+    if [[ "$opt" =~ \* ]] ; then
+      opts="$opts \"$opt\""
+    else
+      opts="$opts $opt"
+    fi
   done
 
   checkParallelBuildAvailability
@@ -40,15 +48,15 @@ parallelBuild() {
   local serv serv_name session_exist wid
   local wids=()
 
-  while read serv ; do
+  while read -r serv ; do
     serv_name=$(echo "$serv" | cut -f2 -d"@")
     wid=$(mktemp -u XXXXXXXXXXXX)
 
-    wids+=($wid)
+    wids+=("$wid")
 
     if [[ -z "$session_exist" ]] ; then
       if [[ -z "$TMUX" ]] ; then
-        tmux new-session -s "rpmbuilder" -d "$0 $opts -r $serv --tmux-worker $wid" >/dev/null 2>&1
+        tmux new-session -s "$TMUX_SESSION_NAME" -d "$0 $opts -r $serv --tmux-worker $wid" >/dev/null 2>&1
       else
         tmux new-window "$0 $opts -r $serv --tmux-worker $wid"
       fi
@@ -62,10 +70,10 @@ parallelBuild() {
 
   # If we not in tmux, attach to session
   if [[ -z "$TMUX" ]] ; then
-    tmux attach-session -t "rpmbuilder" >/dev/null 2>&1
+    tmux attach-session -t "$TMUX_SESSION_NAME" >/dev/null 2>&1
   fi
 
-  waitTillWorkersComplete "${wids[*]}"
+  waitTillWorkersComplete ${wids[*]}
   removeParalellLock
 
   show "Parallel build complete" $GREEN
@@ -84,6 +92,7 @@ remoteBuild() {
 
   if [[ -n "$pre" ]] ; then
     show "Executing pre-build script..."
+    # shellcheck disable=SC2091
     $($pre)
   fi
 
@@ -124,7 +133,7 @@ remoteRunMultibuild() {
   build_hosts=$(cat "$remote")
 
   for build_host in $build_hosts ; do
-    host_info=($(getURLVars "$build_host"))
+    IFS=" " read -r -a host_info <<< "$(getURLVars "$build_host")"
 
     host="${host_info[0]/-/}"
 
@@ -158,7 +167,7 @@ remoteRunBuild() {
 
     if [[ $r_line -gt $tlines ]] ; then
       show ""
-      error "Error - file ${CL_BL_RED}${r_file}${CL_RED} don't contain a line with number ${CL_BL_RED}${r_line}${CL_RED}." $RED
+      error "Error - file ${CL_BL_RED}${r_file}${CL_RED} don't contain a line with number ${CL_BL_RED}${r_line}${CL_RED}" $RED
       return 1
     fi
 
@@ -166,7 +175,7 @@ remoteRunBuild() {
   fi
 
   if [[ "$remote" =~ \@|\~i ]] ; then
-    host_info=($(getURLVars "$remote"))
+    IFS=" " read -r -a host_info <<< "$(getURLVars "$remote")"
 
     host="${host_info[0]/-/}"
 
@@ -202,11 +211,11 @@ remoteRunBuild() {
 remoteCheckEnv() {
   showSeparator "REMOTE CHECK"
 
-  show "Connecting to a remote build server on ${CL_CYAN}$host${CL_NORM}."
+  show "Connecting to a remote build server on ${CL_CYAN}$host${CL_NORM}..."
 
   if isRemoteServerReachable "$host" ; then
     if ! isSSHConnectionWorks "$user" "$host" ; then
-      error "Can't connect to host ${CL_BL_RED}${host}${CL_RED}." $RED
+      error "Can't connect to host ${CL_BL_RED}${host}${CL_RED}" $RED
       doExit $ERROR_REMOTE
     fi
   else
@@ -270,6 +279,7 @@ remoteSpecValidate() {
   show "Spec file check result:" $CYAN
   show "$result"
 
+  # shellcheck disable=SC2143
   if [[ -n "$strict" && $(echo "$result" | grep " E: ") ]] ; then
     show ""
     error "Build canceled because spec has errors and strict mode is enabled" $YELLOW
@@ -277,6 +287,7 @@ remoteSpecValidate() {
   fi
 
   if [[ -n "$pedantic" ]] ; then
+    # shellcheck disable=SC2143
     if [[ $(echo "$result" | grep " E: ") || $(echo "$result" | grep " W: ") ]] ; then
       show ""
       error "Build canceled because spec has errors or warnings and a pedantic mode is enabled" $YELLOW
@@ -340,7 +351,7 @@ remoteBuildProcess() {
 
     showSeparator "PACKAGE PROCESSING"
 
-    packages=$(egrep "rpmbuild/(S|)RPMS" "$tmp_output" | cut -f2 -d" ")
+    packages=$(grep -E "rpmbuild/(S|)RPMS" "$tmp_output" | cut -f2 -d" ")
 
     for package in $packages ; do
       package=$(echo "$package" | tr -dc '[:print:]')
@@ -386,6 +397,7 @@ remoteBuildProcess() {
 
     if [[ -n "$post" ]] ; then
       show "Executing post-build script..."
+      # shellcheck disable=SC2091
       $($post)
     fi
 
@@ -683,6 +695,7 @@ sshCommand() {
   if [[ -n "$pass" && -z "$no_pass" ]] ; then
     sshpass -p "$pass" ssh $SSH_BASE_OPTS -t -t -q $ssh_opts "$host" "$comm"
   else
+    # shellcheck disable=SC2029
     ssh $SSH_BASE_OPTS -t -t -q $ssh_opts "$host" "$comm"
   fi
 
@@ -732,6 +745,7 @@ getURLVars() {
     user_pass=$(echo "$url" | cut -f1 -d"@")
     host=$(echo "$url" | cut -f2 -d"@")
 
+    # shellcheck disable=SC1001
     if [[ "$user_pass" =~ \: ]] ; then
       user=$(echo "$user_pass" | cut -f1 -d":")
       pass=$(echo "$user_pass" | cut -f2 -d":")
