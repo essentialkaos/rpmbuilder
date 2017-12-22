@@ -117,6 +117,7 @@ Remote build:
   --user, -uu username             Remote host user
   --pass, -pp password             Password for specified user
   --key, -kk file                  Path to the private key for specified user
+  --attach, -A                     Attach to parallel build session in tmux
 
   Examples:
 
