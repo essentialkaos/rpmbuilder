@@ -139,7 +139,7 @@ localDepsInstall() {
 # Code: No
 # Echo: No
 localSpecValidate() {
-  if ! checkDeps "rpmlint" ; then
+  if ! hasApp "rpmlint" ; then
     error "Can't validate spec file - rpmlint not installed!" $RED
     return 1
   fi

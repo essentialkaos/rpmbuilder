@@ -205,6 +205,11 @@ checkOptions() {
     doExit $ERROR_ARGS
   fi
 
+  if ! hasApp "perfecto" && [[ -n "$perfect" ]] ; then
+    error "Can't start build process - for using --perfect argument, you must install perfecto first" $RED
+    doExit $ERROR_DEPS
+  fi
+
   if [[ -n "$dest_dir" && ! -d $dest_dir ]] ; then
     error "Can't start build process - destination directory doesn't exist" $RED
     doExit $ERROR_ARGS
@@ -220,47 +225,47 @@ checkOptions() {
     doExit $ERROR_ARGS
   fi
 
-  if ! checkDeps "git" && [[ -n "$git" ]] ; then
+  if ! hasApp "git" && [[ -n "$git" ]] ; then
     error "Can't start build process - for using --git argument, you must install git first" $RED
     doExit $ERROR_DEPS
   fi
 
-  if ! checkDeps "svn" && [[ -n "$svn" ]] ; then
+  if ! hasApp "svn" && [[ -n "$svn" ]] ; then
     error "Can't start build process - for using --svn argument, you must install svn first" $RED
     doExit $ERROR_DEPS
   fi
 
-  if ! checkDeps "hg" && [[ -n "$hg" ]] ; then
+  if ! hasApp "hg" && [[ -n "$hg" ]] ; then
     error "Can't start build process - for using --hg argument, you must install hg first" $RED
     doExit $ERROR_DEPS
   fi
 
-  if ! checkDeps "bzr" && [[ -n "$bzr" ]] ; then
+  if ! hasApp "bzr" && [[ -n "$bzr" ]] ; then
     error "Can't start build process - for using --bzr argument, you must install bzr first" $RED
     doExit $ERROR_DEPS
   fi
 
-  if ! checkDeps "gopack" && [[ -n "$gopack" ]] ; then
+  if ! hasApp "gopack" && [[ -n "$gopack" ]] ; then
     error "Can't start build process - for using --gopack argument, you must install gopack first" $RED
     doExit $ERROR_DEPS
   fi
 
-  if ! checkDeps "sshpass" && [[ -n "$pass" ]] ; then
+  if ! hasApp "sshpass" && [[ -n "$pass" ]] ; then
     error "Can't start build process - for using --pass argument, you must install sshpass first" $RED
     doExit $ERROR_DEPS
   fi
 
-  if ! checkDeps "rpmbuild" "rpmlint" && [[ -z "$remote" ]] ; then
+  if ! hasApp "rpmbuild" "rpmlint" && [[ -z "$remote" ]] ; then
     error "Can't start local build process -  you must install rpmbuild and rpmlint first" $RED
     doExit $ERROR_DEPS
   fi
 
-  if ! checkDeps "rpm" && [[ -n "$sign" && -z "$remote" ]] ; then
+  if ! hasApp "rpm" && [[ -n "$sign" && -z "$remote" ]] ; then
     error "Can't start local build process - for signing packages you must install rpm first" $RED
     doExit $ERROR_DEPS
   fi
 
-  if ! checkDeps "spectool" ; then
+  if ! hasApp "spectool" ; then
     error "Can't start local build process - spectool (part of rpmdevtools) is required" $RED
     doExit $ERROR_DEPS
   fi
@@ -276,7 +281,7 @@ checkOptions() {
   fi
 
   if [[ -n "$bump" ]] ; then
-    if ! checkDeps "rpmdev-packager" "rpmdev-bumpspec" ; then
+    if ! hasApp "rpmdev-packager" "rpmdev-bumpspec" ; then
       error "Can't start build process - for automatic release bumping you must install rpmdev-bumpspec and rpmdev-packager (from rpmdevtools package) first" $RED
       doExit $ERROR_DEPS
     fi

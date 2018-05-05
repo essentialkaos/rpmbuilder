@@ -5,7 +5,7 @@
 APP="RPMBuilder"
 
 # Utility version (String)
-VER="2.1.0"
+VER="2.2.0"
 
 ####################################################################
 
@@ -64,17 +64,17 @@ SEPARATOR="---------------------------------------------------------------------
 PREFS_FILE="$HOME/.rpmbuilder"
 
 SUPPORTED_ARGS="remote !parallel host user pass key source_dir source_list 
- !sign !no_build !no_clean !no_deps !no_lint !no_source pack !pedantic !strict 
+ !sign !no_build !no_clean !no_deps !no_lint !no_source pack !attach 
  pre post dest dest_dir upload git svn hg bzr branch revision tag svn_user 
  svn_pass path !bump bump_comment tmp dlcache !depinstall !dep_install github 
  bitbucket launchpad with without define output !verbose !help !usage !ver 
  !version !raw_version qa_rpaths tmux_worker !no_colors !keep_log !notify 
  arch download !relative_pack enable_repo disable_repo exclude_package gopack 
- !attach"
+ !pedantic !strict !perfect"
 
 SHORT_ARGS="r:remote P:!parallel hh:host uu:user pp:pass kk:key sd:source_dir 
  sl:source_list NB:!no_build NC:!no_clean ND:!no_deps NR:!no_binary NS:!no_source 
- p:pack 0:!no_lint 1:!strict 2:!pedantic pr:pre ps:post d:dest u:upload 
+ p:pack 0:!no_lint 1:!strict 2:!pedantic 3:!perfect pr:pre ps:post d:dest u:upload 
  su:svn_user sp:svn_pass rp:path b:!bump bc:bump_comment dc:dlcache 
  di:!depinstall rb:branch rt:tag rr:revision gh:github bb:bitbucket lp:launchpad 
  w:with W:without s:!sign D:define O:output V:!verbose h:help v:!version 
@@ -82,7 +82,8 @@ SHORT_ARGS="r:remote P:!parallel hh:host uu:user pp:pass kk:key sd:source_dir
  ER:enable_repo DR:disable_repo EX:exclude_package G:gopack A:!attach"
 
 INSPEC_ARGS="git svn hg bzr branch revision tag svn_user svn_pass github 
- bitbucket launchpad qa_rpaths pedantic strict no_lint relative_pack gopack"
+ bitbucket launchpad qa_rpaths no_lint relative_pack gopack strict 
+ pedantic perfect"
 
 MERGEABLE_ARGS="pack with without enable_repo disable_repo exclude_package define"
 
@@ -465,6 +466,7 @@ usage() {
   showo "--no-lint, -0" "Don't check spec file before package build"
   showo "--strict, -1" "Don't build package if linter found errors in spec file"
   showo "--pedantic, -2" "Don't build package if linter found errors or warnings in spec file"
+  showo "--perfect, -3" "Don't build package if perfecto found any problems in spec file"
   show ""
   show "Other:" $BOLD
   show ""

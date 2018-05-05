@@ -4,7 +4,7 @@
 ########################################################################################
 
 APP="RPMUnbuilder"
-VER="1.1.5"
+VER="1.1.6"
 
 ########################################################################################
 
@@ -55,7 +55,7 @@ main() {
     exit 0
   fi
 
-  if [[ ! $(checkDeps "rpm" "rpm2cpio" "cpio") ]] ; then
+  if ! hasApp "rpm" "rpm2cpio" "cpio" ; then
     error "For using this utility install this packages first: rpm rpm2cpio cpio"
     exit 2
   fi
@@ -63,20 +63,20 @@ main() {
   local pkg="$1"
   local path="$2"
 
-  if [[ ! $(isRPMPackage "$pkg") ]] ; then
+  if ! isRPMPackage "$pkg" ; then
     error "Error! [$pkg] is not an rpm package!"
     exit 1
   fi
 
   if [[ -n "$path" ]] ; then
-    if [[ ! $(checkPerms "$path" "DWX") ]] ; then
+    if ! checkPerms "$path" "DWX" ; then
       error "Error! Please check permissions for directory [$path]."
       exit 3
     fi
   else
     path=$(pwd)
 
-    if [[ ! $(checkPerms "$path" "DWX") ]] ; then
+    if ! checkPerms "$path" "DWX" ; then
       error "Error! Please check permissions for directory [$path]."
       exit 3
     fi
@@ -109,13 +109,11 @@ processPackage() {
 }
 
 isRPMPackage() {
-  
-
   if LC_ALL=C rpm -qp --qf "%{name}\n" "$1" &> /dev/null ; then
-    echo 1 && return 0
-  else
-    echo "" && return 1
+    return 0
   fi
+
+  return 1
 }
 
 checkPerms() {
@@ -126,35 +124,34 @@ checkPerms() {
 
   for perm in $(echo "$perms" | fold -w1) ; do
     case $perm in
-      "R") [[ ! -r $path ]] && echo "" && return 1 ;;
-      "W") [[ ! -w $path ]] && echo "" && return 1 ;;
-      "E") [[ ! -e $path ]] && echo "" && return 1 ;;
-      "D") [[ ! -d $path ]] && echo "" && return 1 ;;
-      "F") [[ ! -f $path ]] && echo "" && return 1 ;;
-      "S") [[ ! -s $path ]] && echo "" && return 1 ;;
-      "H") [[ ! -h $path ]] && echo "" && return 1 ;;
-      "X") [[ ! -x $path ]] && echo "" && return 1 ;;
-      *) echo "" && return 1
+      "R") [[ ! -r $path ]] return 1 ;;
+      "W") [[ ! -w $path ]] return 1 ;;
+      "E") [[ ! -e $path ]] return 1 ;;
+      "D") [[ ! -d $path ]] return 1 ;;
+      "F") [[ ! -f $path ]] return 1 ;;
+      "S") [[ ! -s $path ]] return 1 ;;
+      "H") [[ ! -h $path ]] return 1 ;;
+      "X") [[ ! -x $path ]] return 1 ;;
+      *) return 1
     esac
   done
 
-  echo 1
   return 0
 }
 
 ####################################################################
 
-checkDeps() {
+hasApp() {
+  local app
+
   for app in "$@" ; do
     type -P "$app" &> /dev/null
 
     if [[ $? -eq 1 ]] ; then
-      echo ""
       return 1
     fi
   done
 
-  echo 1
   return 0
 }
 

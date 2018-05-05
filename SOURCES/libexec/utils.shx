@@ -9,7 +9,7 @@
 #
 # Code: Yes
 # Echo: No
-checkDeps() {
+hasApp() {
   local app
 
   for app in "$@" ; do

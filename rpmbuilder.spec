@@ -2,7 +2,7 @@
 
 Summary:         RPM package build helper
 Name:            rpmbuilder
-Version:         2.1.0
+Version:         2.2.0
 Release:         0%{?dist}
 License:         EKOL
 Group:           Development/Tools
