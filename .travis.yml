@@ -2,12 +2,8 @@ language: bash
 
 sudo: false
 
-addons:
-  apt:
-    sources:
-      - debian-sid
-    packages:
-      - shellcheck
+before_install:
+  - make get-shellcheck
 
 script:
  - bash -c 'shopt -s globstar; shellcheck SOURCES/rpmbuilder SOURCES/libexec/*.shx'

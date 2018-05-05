@@ -1,6 +1,6 @@
 <p align="center"><a href="#usage-demo">Usage demo</a> • <a href="#installation">Installation</a> • <a href="#usage">Usage</a> • <a href="#contributing">Contributing</a> • <a href="#license">License</a></p>
 
-<p align="center"><a href="#readme"><img src="https://gh.kaos.io/rpmbuilder.svg"/></a></p>
+<p align="center"><a href="#readme"><img src="https://gh.kaos.st/rpmbuilder.svg"/></a></p>
 
 `rpmbuilder` is RPM package build helper.
 
@@ -8,20 +8,20 @@
 
 Building Redis rpm package for CentOS6 and CentOS7:
 
-[![demo](https://gh.kaos.io/rpmbuilder-190.gif)](#usage-demo)
+[![demo](https://gh.kaos.st/rpmbuilder-190.gif)](#usage-demo)
 
 ### Installation
 
 #### From ESSENTIAL KAOS Public repo for RHEL6/CentOS6
 ```
-[sudo] yum install -y https://yum.kaos.io/6/release/x86_64/kaos-repo-8.0-0.el6.noarch.rpm
+[sudo] yum install -y https://yum.kaos.st/6/release/x86_64/kaos-repo-9.1-0.el6.noarch.rpm
 [sudo] yum install rpmbuilder
 ```
 
 Build node:
 
 ```
-[sudo] yum install -y https://yum.kaos.io/6/release/x86_64/kaos-repo-8.0-0.el6.noarch.rpm
+[sudo] yum install -y https://yum.kaos.st/6/release/x86_64/kaos-repo-9.1-0.el6.noarch.rpm
 [sudo] yum install rpmbuilder-node
 [sudo] passwd builder
 ... change builder user password here
@@ -31,14 +31,14 @@ Build node:
 
 #### From ESSENTIAL KAOS Public repo for RHEL7/CentOS7
 ```
-[sudo] yum install -y https://yum.kaos.io/7/release/x86_64/kaos-repo-8.0-0.el7.noarch.rpm
+[sudo] yum install -y https://yum.kaos.st/7/release/x86_64/kaos-repo-9.1-0.el7.noarch.rpm
 [sudo] yum install rpmbuilder
 ```
 
 Build node:
 
 ```
-[sudo] yum install -y https://yum.kaos.io/7/release/x86_64/kaos-repo-8.0-0.el7.noarch.rpm
+[sudo] yum install -y https://yum.kaos.st/7/release/x86_64/kaos-repo-9.1-0.el7.noarch.rpm
 [sudo] yum install rpmbuilder-node
 [sudo] passwd builder
 ... change builder user password here
@@ -186,4 +186,4 @@ Before contributing to this project please read our [Contributing Guidelines](ht
 
 [EKOL](https://essentialkaos.com/ekol)
 
-<p align="center"><a href="https://essentialkaos.com"><img src="https://gh.kaos.io/ekgh.svg"/></a></p>
+<p align="center"><a href="https://essentialkaos.com"><img src="https://gh.kaos.st/ekgh.svg"/></a></p>
