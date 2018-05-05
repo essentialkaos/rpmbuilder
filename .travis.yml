@@ -6,6 +6,7 @@ before_install:
   - make get-shellcheck
 
 script:
+ - export PATH=shellcheck-latest:$(PATH)
  - bash -c 'shopt -s globstar; shellcheck SOURCES/rpmbuilder SOURCES/libexec/*.shx'
  - bash -c 'shopt -s globstar; shellcheck SOURCES/rpmunbuilder'
  - bash -c 'shopt -s globstar; shellcheck SOURCES/buildmon'
