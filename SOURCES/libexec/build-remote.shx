@@ -269,30 +269,23 @@ remoteDepsInstall() {
 remoteSpecValidate() {
   local spec="$1"
 
-  local rpmbuild_dir specs_dir result
+  local opts="-e critical"
+
+  [[ -n "$strict" ]] && opts="-e error"
+  [[ -n "$pedantic" ]] && opts="-e warning"
+  [[ -n "$perfect" ]] && opts="-e notice"
+
+  local rpmbuild_dir specs_dir
 
   rpmbuild_dir=$(getRPMBuildDir)
   specs_dir="$rpmbuild_dir/SPECS"
 
-  result=$(sshCommand "$user@$host" "cd $specs_dir && rpmlint $spec" 2> /dev/null)
+  sshCommand "$user@$host" "cd $specs_dir && perfecto -f short $opts $spec"
 
-  show "Spec file check result:" $CYAN
-  show "$result"
-
-  # shellcheck disable=SC2143
-  if [[ -n "$strict" && $(echo "$result" | grep " E: ") ]] ; then
+  if [[ $? -ne 0 ]] ; then
     show ""
-    error "Build canceled because spec has errors and strict mode is enabled" $YELLOW
+    error "Build canceled because spec contains problems reported by perfecto" $RED
     doExit $ERROR_LINT
-  fi
-
-  if [[ -n "$pedantic" ]] ; then
-    # shellcheck disable=SC2143
-    if [[ $(echo "$result" | grep " E: ") || $(echo "$result" | grep " W: ") ]] ; then
-      show ""
-      error "Build canceled because spec has errors or warnings and a pedantic mode is enabled" $YELLOW
-      doExit $ERROR_LINT
-    fi
   fi
 
   [[ -n "$verbose" ]] && sleep $LINT_WAIT

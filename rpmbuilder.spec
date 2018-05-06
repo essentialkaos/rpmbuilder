@@ -14,7 +14,8 @@ BuildArch:       noarch
 BuildRoot:       %{_tmppath}/%{name}-%{version}-%{release}-root-%(%{__id_u} -n)
 
 Requires:        rpm >= 4.8.0 rpm-build rpmdevtools yum-utils
-Requires:        rpmlint sshpass coreutils tmux
+Requires:        sshpass coreutils tmux
+Requires:        perfecto >= 2.0 rpmlint
 
 Provides:        %{name} = %{version}-%{release}
 
@@ -54,6 +55,10 @@ rm -rf %{buildroot}
 ###############################################################################
 
 %changelog
+* Sun May 06 2018 Anton Novojilov <andy@essentialkaos.com> - 2.2.0-0
+- Perfecto used by default for specs validation
+- Added option '--perfect'/'-3' for the most strict spec check
+
 * Thu Nov 30 2017 Anton Novojilov <andy@essentialkaos.com> - 2.1.0-0
 - Added option '--attach'/'-A' for attaching to parallel build session in tmux
 - Minor improvements

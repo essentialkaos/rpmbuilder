@@ -70,7 +70,7 @@ SUPPORTED_ARGS="remote !parallel host user pass key source_dir source_list
  bitbucket launchpad with without define output !verbose !help !usage !ver 
  !version !raw_version qa_rpaths tmux_worker !no_colors !keep_log !notify 
  arch download !relative_pack enable_repo disable_repo exclude_package gopack 
- !pedantic !strict !perfect"
+ !strict !pedantic !perfect"
 
 SHORT_ARGS="r:remote P:!parallel hh:host uu:user pp:pass kk:key sd:source_dir 
  sl:source_list NB:!no_build NC:!no_clean ND:!no_deps NR:!no_binary NS:!no_source 
@@ -464,8 +464,8 @@ usage() {
   show "Spec validation:" $BOLD
   show ""
   showo "--no-lint, -0" "Don't check spec file before package build"
-  showo "--strict, -1" "Don't build package if linter found errors in spec file"
-  showo "--pedantic, -2" "Don't build package if linter found errors or warnings in spec file"
+  showo "--strict, -1" "Don't build package if perfecto found major problems in spec file"
+  showo "--pedantic, -2" "Don't build package if perfecto found minor problems in spec file"
   showo "--perfect, -3" "Don't build package if perfecto found any problems in spec file"
   show ""
   show "Other:" $BOLD

@@ -51,7 +51,7 @@
 
 Summary:         Configuration package for rpmbuilder node
 Name:            rpmbuilder-node
-Version:         1.3.3
+Version:         1.4.0
 Release:         0%{?dist}
 License:         EKOL
 Group:           Development/Tools
@@ -64,7 +64,8 @@ BuildArch:       noarch
 BuildRoot:       %{_tmppath}/%{name}-%{version}-%{release}-root-%(%{__id_u} -n)
 
 Requires:        rpm >= 4.8.0 rpm-build rpmdevtools
-Requires:        rpmlint kaosv yum-utils
+Requires:        kaosv yum-utils
+Requires:        perfecto >= 2.0 rpmlint
 
 Provides:        %{name} = %{version}-%{release}
 
@@ -161,6 +162,9 @@ fi
 ###############################################################################
 
 %changelog
+* Sun May 06 2018 Anton Novojilov <andy@essentialkaos.com> - 1.4.0-0
+- Added perfecto support
+
 * Sat Dec 23 2017 Anton Novojilov <andy@essentialkaos.com> - 1.3.3-0
 - Code refactoring
 
