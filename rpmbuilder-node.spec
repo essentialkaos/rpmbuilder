@@ -166,6 +166,7 @@ fi
 %changelog
 * Sun May 06 2018 Anton Novojilov <andy@essentialkaos.com> - 1.4.0-0
 - Added perfecto support
+- Added config for rpmlint
 
 * Sat Dec 23 2017 Anton Novojilov <andy@essentialkaos.com> - 1.3.3-0
 - Code refactoring
