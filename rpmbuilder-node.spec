@@ -96,7 +96,7 @@ install -pm 755 buildmon.init %{buildroot}%{_initddir}/%{service_name}
 install -pm 644 builder.sudoers %{buildroot}%{_sysconfdir}/sudoers.d/%{user_name}
 install -pm 755 nodeinfo %{buildroot}%{home_dir}/
 install -pm 755 initenv %{buildroot}%{home_dir}/
-install -om 644 rpmlint %{buildroot}%{home_dir}/.config/
+install -pm 644 rpmlint %{buildroot}%{home_dir}/.config/
 
 %if 0%{?rhel} >= 7
 install -pm 755 rpmmacros_centos7 %{buildroot}%{home_dir}/.rpmmacros_rpmbuilder
