@@ -274,6 +274,7 @@ remoteSpecValidate() {
   [[ -n "$strict" ]] && opts="-e error"
   [[ -n "$pedantic" ]] && opts="-e warning"
   [[ -n "$perfect" ]] && opts="-e notice"
+  [[ -n "$no_colors" ]] && opts="$opts -nc"
 
   local rpmbuild_dir specs_dir
 
