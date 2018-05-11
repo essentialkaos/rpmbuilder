@@ -2,19 +2,15 @@ language: bash
 
 sudo: false
 
-addons:
-  apt:
-    sources:
-      - debian-sid
-    packages:
-      - shellcheck
+before_install:
+  - make get-shellcheck
 
 script:
- - bash -c 'shopt -s globstar; shellcheck SOURCES/rpmbuilder SOURCES/libexec/*.shx'
- - bash -c 'shopt -s globstar; shellcheck SOURCES/rpmunbuilder'
- - bash -c 'shopt -s globstar; shellcheck SOURCES/buildmon'
- - bash -c 'shopt -s globstar; shellcheck SOURCES/initenv'
- - bash -c 'shopt -s globstar; shellcheck SOURCES/nodeinfo'
+ - bash -c 'shopt -s globstar; ./shellcheck-latest/shellcheck SOURCES/rpmbuilder SOURCES/libexec/*.shx'
+ - bash -c 'shopt -s globstar; ./shellcheck-latest/shellcheck SOURCES/rpmunbuilder'
+ - bash -c 'shopt -s globstar; ./shellcheck-latest/shellcheck SOURCES/buildmon'
+ - bash -c 'shopt -s globstar; ./shellcheck-latest/shellcheck SOURCES/initenv'
+ - bash -c 'shopt -s globstar; ./shellcheck-latest/shellcheck SOURCES/nodeinfo'
 
 matrix:
   fast_finish: true

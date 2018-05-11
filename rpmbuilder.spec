@@ -1,8 +1,8 @@
-###############################################################################
+################################################################################
 
 Summary:         RPM package build helper
 Name:            rpmbuilder
-Version:         2.1.0
+Version:         2.2.0
 Release:         0%{?dist}
 License:         EKOL
 Group:           Development/Tools
@@ -14,16 +14,17 @@ BuildArch:       noarch
 BuildRoot:       %{_tmppath}/%{name}-%{version}-%{release}-root-%(%{__id_u} -n)
 
 Requires:        rpm >= 4.8.0 rpm-build rpmdevtools yum-utils
-Requires:        rpmlint sshpass coreutils tmux
+Requires:        sshpass coreutils tmux
+Requires:        perfecto >= 2.0 rpmlint
 
 Provides:        %{name} = %{version}-%{release}
 
-###############################################################################
+################################################################################
 
 %description
 RPM package build helper.
 
-###############################################################################
+################################################################################
 
 %prep
 %setup -q
@@ -42,7 +43,7 @@ install -pm 644 libexec/* %{buildroot}%{_libexecdir}/%{name}/
 %clean
 rm -rf %{buildroot}
 
-###############################################################################
+################################################################################
 
 %files
 %defattr(-,root,root,-)
@@ -51,9 +52,14 @@ rm -rf %{buildroot}
 %{_bindir}/%{name}
 %{_bindir}/rpmunbuilder
 
-###############################################################################
+################################################################################
 
 %changelog
+* Sun May 06 2018 Anton Novojilov <andy@essentialkaos.com> - 2.2.0-0
+- Perfecto used by default for specs validation
+- Added option '--perfect'/'-3' for the most strict spec check
+- Code refactoring
+
 * Thu Nov 30 2017 Anton Novojilov <andy@essentialkaos.com> - 2.1.0-0
 - Added option '--attach'/'-A' for attaching to parallel build session in tmux
 - Minor improvements

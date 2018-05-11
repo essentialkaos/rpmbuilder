@@ -3,13 +3,13 @@
 
 ################################################################################
 
-# Check if command is supported on this system
+# Checks if given binary is installed on the system
 #
 # *: Commands (String)
 #
 # Code: Yes
 # Echo: No
-checkDeps() {
+hasApp() {
   local app
 
   for app in "$@" ; do
