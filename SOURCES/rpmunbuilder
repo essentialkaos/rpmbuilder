@@ -3,7 +3,10 @@
 
 ########################################################################################
 
+# Utility name (String)
 APP="RPMUnbuilder"
+
+# Utility version (String)
 VER="1.1.6"
 
 ########################################################################################
@@ -44,6 +47,10 @@ SHORT_ARGS="h:help v:version"
 
 ########################################################################################
 
+# Main function
+#
+# Code: No
+# Echo: No
 main() {
   if [[ -n "$ver" || -n "$version" ]] ; then
     about
@@ -85,6 +92,13 @@ main() {
   processPackage "$pkg" "$path"
 }
 
+# Start package processing
+#
+# 1: Package (String)
+# 2: Path (String)
+#
+# Code: No
+# Echo: No
 processPackage() {
   local pkg="$1"
   local path="$2"
@@ -108,6 +122,12 @@ processPackage() {
   show "DONE" $GREEN
 }
 
+# Check if given file is RPM package
+#
+# 1: Package (String)
+#
+# Code: Yes
+# Echo: No
 isRPMPackage() {
   if LC_ALL=C rpm -qp --qf "%{name}\n" "$1" &> /dev/null ; then
     return 0
@@ -116,6 +136,12 @@ isRPMPackage() {
   return 1
 }
 
+# Checks file or directory permissions
+#
+# 1: Path to file or directory (String)
+#
+# Code: Yes
+# Echo: No
 checkPerms() {
   local path="$1"
   local perms
@@ -124,14 +150,14 @@ checkPerms() {
 
   for perm in $(echo "$perms" | fold -w1) ; do
     case $perm in
-      "R") [[ ! -r $path ]] return 1 ;;
-      "W") [[ ! -w $path ]] return 1 ;;
-      "E") [[ ! -e $path ]] return 1 ;;
-      "D") [[ ! -d $path ]] return 1 ;;
-      "F") [[ ! -f $path ]] return 1 ;;
-      "S") [[ ! -s $path ]] return 1 ;;
-      "H") [[ ! -h $path ]] return 1 ;;
-      "X") [[ ! -x $path ]] return 1 ;;
+      "R") [[ ! -r "$path" ]] return 1 ;;
+      "W") [[ ! -w "$path" ]] return 1 ;;
+      "E") [[ ! -e "$path" ]] return 1 ;;
+      "D") [[ ! -d "$path" ]] return 1 ;;
+      "F") [[ ! -f "$path" ]] return 1 ;;
+      "S") [[ ! -s "$path" ]] return 1 ;;
+      "H") [[ ! -h "$path" ]] return 1 ;;
+      "X") [[ ! -x "$path" ]] return 1 ;;
       *) return 1
     esac
   done
@@ -141,6 +167,12 @@ checkPerms() {
 
 ####################################################################
 
+# Checks if given binary is installed on the system
+#
+# 1: Binary name (String)
+#
+# Code: Yes
+# Echo: No
 hasApp() {
   local app
 
@@ -155,6 +187,13 @@ hasApp() {
   return 0
 }
 
+# Print message
+#
+# 1: Message (String)
+# 2: Color code (Number) [Optional]
+#
+# Code: No
+# Echo: No
 show() {
   if [[ -n "$2" ]] ; then
     echo -e "\e[${2}m${1}\e[0m"
@@ -163,6 +202,13 @@ show() {
   fi
 }
 
+# Print message without new lines symbol
+#
+# 1: Message (String)
+# 2: Color code (Number) [Optional]
+#
+# Code: No
+# Echo: No
 showm() {
   if [[ -n "$2" ]] ; then
     echo -e -n "\e[${2}m${1}\e[0m"
@@ -171,19 +217,39 @@ showm() {
   fi
 }
 
+# Print error message
+#
+# 1: Message (String)
+#
+# Code: No
+# Echo: No
 error() {
   show "$@" $RED 1>&2
 }
 
+# Show message about unknown option
+#
+# 1: Option name (String)
+#
+# Code: No
+# Echo: No
 showArgWarn() {
   error "Error! Unknown argument $1."
   doExit 1
 }
 
+# Print usage info
+#
+# Code: No
+# Echo: No
 usage() {
   show "${CL_BOLD}Usage:${CL_NORM} rpmunbuilder ${CL_BROWN}{rpm-file}${CL_NORM} ${CL_GREEN}{path}${CL_NORM}"
 }
 
+# Print version info
+#
+# Code: No
+# Echo: No
 about() {
   show "${CL_BL_CYAN}$APP${CL_NORM} ${CL_CYAN}$VER${CL_NORM} - Source RPM unbuilder"
   show ""

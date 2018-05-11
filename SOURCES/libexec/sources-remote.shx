@@ -119,9 +119,9 @@ isAccessibleURL() {
     code=$(echo -e "$status" | grep "HTTP" | cut -f2 -d" " | tail -1)
     nosniff=$(echo -e "$status" | grep "X-Content-Type-Options: nosniff")
 
-    # Nosniff mode works on Google Code, if we simple try check status server return
-    # code 404, but we can download this file
-    [[ -n $nosniff || "$code" == "200" ]] && return 0 || return 1
+    # Nosniff mode works on Google Code and if we simply try to check status server
+    # return code 404, but we can download this file
+    [[ -n "$nosniff" || "$code" == "200" ]] && return 0 || return 1
   elif [[ "$1" =~ ftp: ]] ; then
     status=$(curl -A "$USER_AGENT" "$1" -Is)
     size=$(echo "$status" | grep "Content-Length" | cut -f2 -d" ")

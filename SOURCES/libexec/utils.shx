@@ -3,7 +3,7 @@
 
 ################################################################################
 
-# Check if command is supported on this system
+# Checks if given binary is installed on the system
 #
 # *: Commands (String)
 #
