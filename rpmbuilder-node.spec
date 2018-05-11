@@ -1,4 +1,4 @@
-###############################################################################
+################################################################################
 
 %define _posixroot        /
 %define _root             /root
@@ -41,13 +41,13 @@
 %define __userdel         %{_sbindir}/userdel
 %define __systemctl       %{_bindir}/systemctl
 
-###############################################################################
+################################################################################
 
 %define user_name         builder
 %define home_dir          %{_home}/%{user_name}
 %define service_name      buildmon
 
-###############################################################################
+################################################################################
 
 Summary:         Configuration package for rpmbuilder node
 Name:            rpmbuilder-node
@@ -69,13 +69,13 @@ Requires:        perfecto >= 2.0 rpmlint
 
 Provides:        %{name} = %{version}-%{release}
 
-###############################################################################
+################################################################################
 
 %description
-Package configure remote node for building rpm packages with rpmbuilder 
+Package configure remote node for building RPM packages with rpmbuilder
 utility.
 
-###############################################################################
+################################################################################
 
 %prep
 %setup -q
@@ -107,7 +107,7 @@ install -pm 755 rpmmacros_centos6 %{buildroot}%{home_dir}/.rpmmacros_rpmbuilder
 %clean
 rm -rf %{buildroot}
 
-###############################################################################
+################################################################################
 
 %pre
 getent group %{user_name} >/dev/null || groupadd -r %{user_name}
@@ -152,7 +152,7 @@ if [[ $1 -eq 0 ]] ; then
   rm -rf %{home_dir}
 fi
 
-###############################################################################
+################################################################################
 
 %files
 %defattr(-,root,root,-)
@@ -161,7 +161,7 @@ fi
 %{_sysconfdir}/sudoers.d/%{user_name}
 %{home_dir}
 
-###############################################################################
+################################################################################
 
 %changelog
 * Sun May 06 2018 Anton Novojilov <andy@essentialkaos.com> - 1.4.0-0
