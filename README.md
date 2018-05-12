@@ -153,8 +153,9 @@ Arguments passing:
 Spec validation:
 
   --no-lint, -0                    Don't check spec file before package build
-  --strict, -1                     Don't build package if linter found errors in spec file
-  --pedantic, -2                   Don't build package if linter found errors or warnings in spec file
+  --strict, -1                     Don't build package if perfecto found major problems in spec file
+  --pedantic, -2                   Don't build package if perfecto found minor problems in spec file
+  --perfect, -3                    Don't build package if perfecto found any problems in spec file
 
 Other:
 
