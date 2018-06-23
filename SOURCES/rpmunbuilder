@@ -7,7 +7,7 @@
 APP="RPMUnbuilder"
 
 # Utility version (String)
-VER="1.1.6"
+VER="1.1.7"
 
 ########################################################################################
 
@@ -150,15 +150,15 @@ checkPerms() {
 
   for perm in $(echo "$perms" | fold -w1) ; do
     case $perm in
-      "R") [[ ! -r "$path" ]] return 1 ;;
-      "W") [[ ! -w "$path" ]] return 1 ;;
-      "E") [[ ! -e "$path" ]] return 1 ;;
-      "D") [[ ! -d "$path" ]] return 1 ;;
-      "F") [[ ! -f "$path" ]] return 1 ;;
-      "S") [[ ! -s "$path" ]] return 1 ;;
-      "H") [[ ! -h "$path" ]] return 1 ;;
-      "X") [[ ! -x "$path" ]] return 1 ;;
-      *) return 1
+      "R") [[ ! -r "$path" ]] && return 1 ;;
+      "W") [[ ! -w "$path" ]] && return 1 ;;
+      "E") [[ ! -e "$path" ]] && return 1 ;;
+      "D") [[ ! -d "$path" ]] && return 1 ;;
+      "F") [[ ! -f "$path" ]] && return 1 ;;
+      "S") [[ ! -s "$path" ]] && return 1 ;;
+      "H") [[ ! -h "$path" ]] && return 1 ;;
+      "X") [[ ! -x "$path" ]] && return 1 ;;
+      *) return 1 ;;
     esac
   done
 
@@ -257,7 +257,7 @@ about() {
   show "Essential Kaos Open Source License <https://essentialkaos.com/ekol>" $DARK
 }
 
-## ARGUMENTS PARSING 3 #################################################################
+## ARGUMENTS PARSING 4 #################################################################
 
 [[ $# -eq 0 ]] && main && exit $?
 
@@ -359,6 +359,6 @@ done
 unset arg argn argm argk
 
 # shellcheck disable=SC2015,SC2086
-[[ -n "$KEEP_ARGS" ]] && main $argv || main ${argt:1:9999}
+[[ -n "$KEEP_ARGS" ]] && main $argv || main ${argt:1}
 
 ########################################################################################

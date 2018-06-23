@@ -2,7 +2,7 @@
 
 Summary:         RPM package build helper
 Name:            rpmbuilder
-Version:         2.2.0
+Version:         2.2.1
 Release:         0%{?dist}
 License:         EKOL
 Group:           Development/Tools
@@ -55,6 +55,10 @@ rm -rf %{buildroot}
 ################################################################################
 
 %changelog
+* Sat Jun 23 2018 Anton Novojilov <andy@essentialkaos.com> - 2.2.1-0
+- Updated argument parser
+- Fixed bug in rpmunbuilder
+
 * Sun May 06 2018 Anton Novojilov <andy@essentialkaos.com> - 2.2.0-0
 - Perfecto used by default for specs validation
 - Added option '--perfect'/'-3' for the most strict spec check
