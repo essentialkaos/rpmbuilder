@@ -7,7 +7,7 @@
 APP="RPMUnbuilder"
 
 # Utility version (String)
-VER="1.1.6"
+VER="1.1.7"
 
 ########################################################################################
 
@@ -257,7 +257,7 @@ about() {
   show "Essential Kaos Open Source License <https://essentialkaos.com/ekol>" $DARK
 }
 
-## ARGUMENTS PARSING 3 #################################################################
+## ARGUMENTS PARSING 4 #################################################################
 
 [[ $# -eq 0 ]] && main && exit $?
 
@@ -359,6 +359,6 @@ done
 unset arg argn argm argk
 
 # shellcheck disable=SC2015,SC2086
-[[ -n "$KEEP_ARGS" ]] && main $argv || main ${argt:1:9999}
+[[ -n "$KEEP_ARGS" ]] && main $argv || main ${argt:1}
 
 ########################################################################################

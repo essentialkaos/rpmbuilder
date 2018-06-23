@@ -5,7 +5,7 @@
 APP="RPMBuilder"
 
 # Utility version (String)
-VER="2.2.0"
+VER="2.2.1"
 
 ####################################################################
 
@@ -511,7 +511,7 @@ if [[ -n "$PREFS_FILE" && -r "$PREFS_FILE" ]] ; then
   unset arg argn argp
 fi
 
-## ARGUMENTS PARSING 3 #################################################################
+## ARGUMENTS PARSING 4 #################################################################
 
 [[ $# -eq 0 ]] && main && exit $?
 
@@ -613,6 +613,6 @@ done
 unset arg argn argm argk
 
 # shellcheck disable=SC2015,SC2086
-[[ -n "$KEEP_ARGS" ]] && main $argv || main ${argt:1:9999}
+[[ -n "$KEEP_ARGS" ]] && main $argv || main ${argt:1}
 
 ########################################################################################
