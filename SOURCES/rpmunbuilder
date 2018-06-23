@@ -150,15 +150,15 @@ checkPerms() {
 
   for perm in $(echo "$perms" | fold -w1) ; do
     case $perm in
-      "R") [[ ! -r "$path" ]] return 1 ;;
-      "W") [[ ! -w "$path" ]] return 1 ;;
-      "E") [[ ! -e "$path" ]] return 1 ;;
-      "D") [[ ! -d "$path" ]] return 1 ;;
-      "F") [[ ! -f "$path" ]] return 1 ;;
-      "S") [[ ! -s "$path" ]] return 1 ;;
-      "H") [[ ! -h "$path" ]] return 1 ;;
-      "X") [[ ! -x "$path" ]] return 1 ;;
-      *) return 1
+      "R") [[ ! -r "$path" ]] && return 1 ;;
+      "W") [[ ! -w "$path" ]] && return 1 ;;
+      "E") [[ ! -e "$path" ]] && return 1 ;;
+      "D") [[ ! -d "$path" ]] && return 1 ;;
+      "F") [[ ! -f "$path" ]] && return 1 ;;
+      "S") [[ ! -s "$path" ]] && return 1 ;;
+      "H") [[ ! -h "$path" ]] && return 1 ;;
+      "X") [[ ! -x "$path" ]] && return 1 ;;
+      *) return 1 ;;
     esac
   done
 
