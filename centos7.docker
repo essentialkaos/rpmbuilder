@@ -1,7 +1,7 @@
 FROM centos:7
 
 RUN yum -y -q install https://yum.kaos.st/7/release/x86_64/kaos-repo-9.1-0.el7.noarch.rpm && \
-    yum -q -q install epel-release centos-release-scl && \
+    yum -y -q install epel-release centos-release-scl && \
     yum -y -q clean metadata && \
     yum -y -q update
 
