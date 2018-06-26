@@ -1,0 +1,22 @@
+FROM centos:6
+
+RUN yum -y -q install https://yum.kaos.st/6/release/x86_64/kaos-repo-9.1-0.el6.noarch.rpm && \
+    yum -q -q install epel-release centos-release-scl && \
+    yum -y -q clean metadata && \
+    yum -y -q update
+
+RUN yum -y -q install sudo make which rpmlint perfecto rpmbuilder
+
+RUN curl -o /usr/local/bin/gosu -sSL "https://github.com/tianon/gosu/releases/download/1.10/gosu-amd64" && \
+		chmod +x /usr/local/bin/gosu
+
+COPY SOURCES/conf/builder.sudoers /etc/sudoers.d/rpmbuilder
+COPY SOURCES/conf/rpmmacros_centos6 /home/builder/.rpmmacros
+COPY SOURCES/docker-entrypoint /usr/local/bin/docker-entrypoint
+
+RUN chmod +x /usr/local/bin/docker-entrypoint
+
+VOLUME /rpmbuilder
+WORKDIR /rpmbuilder
+
+ENTRYPOINT ["/usr/local/bin/docker-entrypoint"]

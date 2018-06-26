@@ -11,6 +11,7 @@ script:
  - bash -c 'shopt -s globstar; ./shellcheck-latest/shellcheck SOURCES/buildmon'
  - bash -c 'shopt -s globstar; ./shellcheck-latest/shellcheck SOURCES/initenv'
  - bash -c 'shopt -s globstar; ./shellcheck-latest/shellcheck SOURCES/nodeinfo'
+ - bash -c 'shopt -s globstar; ./shellcheck-latest/shellcheck SOURCES/docker-entrypoint'
 
 matrix:
   fast_finish: true
