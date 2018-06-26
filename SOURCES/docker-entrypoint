@@ -1,0 +1,26 @@
+#!/usr/bin/env bash
+
+set -e
+
+USER_ID=9001
+
+if [[ ! $LOCAL_USER_ID -eq 0 ]] ; then
+  USER_ID=${LOCAL_USER_ID:-9001} 
+fi
+
+useradd -s /bin/bash -u "$USER_ID" -M -d /home/builder builder
+
+# Fix for docker/docker issue about /proc/self/fd/{0,1,2}
+# URL: https://github.com/docker/docker/issues/11462
+chmod 777 /dev/stdout
+
+mkdir -p /home/builder/rpmbuild/BUILD \
+         /home/builder/rpmbuild/BUILDROOT \
+         /home/builder/rpmbuild/RPMS \
+         /home/builder/rpmbuild/SOURCES \
+         /home/builder/rpmbuild/SPECS \
+         /home/builder/rpmbuild/SRPMS
+
+chown -R builder:builder /home/builder /rpmbuilder
+
+exec /usr/local/bin/gosu builder "$@"
