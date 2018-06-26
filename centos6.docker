@@ -5,7 +5,7 @@ RUN yum -y -q install https://yum.kaos.st/6/release/x86_64/kaos-repo-9.1-0.el6.n
     yum -y -q clean metadata && \
     yum -y -q update
 
-RUN yum -y -q install sudo make which rpmlint perfecto rpmbuilder
+RUN yum -y -q install sudo make which rpmbuilder
 
 RUN curl -o /usr/local/bin/gosu -sSL "https://github.com/tianon/gosu/releases/download/1.10/gosu-amd64" && \
 		chmod +x /usr/local/bin/gosu
