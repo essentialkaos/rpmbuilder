@@ -475,10 +475,8 @@ getBuildPrefix() {
 
 # Convert utility 'with' options to rpmbuilder --with option
 #
-# 1: 
-#
 # Code: No
-# Echo: No
+# Echo: Options list (String)
 getBuildOptsWith() {
   local opts wopt
 
@@ -489,10 +487,14 @@ getBuildOptsWith() {
   echo "$opts"
 }
 
+# Convert utility 'without' options to rpmbuilder --without option
+#
+# Code: No
+# Echo: Options list (String)
 getBuildOptsWithout() {
   local opts wopt
 
-  for wopt in $with ; do
+  for wopt in $without ; do
     opts="$opts --without $wopt"
   done
 
