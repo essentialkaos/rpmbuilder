@@ -2,7 +2,7 @@
 
 Summary:         RPM package build helper
 Name:            rpmbuilder
-Version:         2.2.1
+Version:         2.2.2
 Release:         0%{?dist}
 License:         EKOL
 Group:           Development/Tools
@@ -55,6 +55,9 @@ rm -rf %{buildroot}
 ################################################################################
 
 %changelog
+* Mon Aug 27 2018 Anton Novojilov <andy@essentialkaos.com> - 2.2.2-0
+- Fixed bug with handling --without argument
+
 * Sat Jun 23 2018 Anton Novojilov <andy@essentialkaos.com> - 2.2.1-0
 - Updated argument parser
 - Fixed bug in rpmunbuilder
