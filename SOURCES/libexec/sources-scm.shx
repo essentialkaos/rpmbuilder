@@ -307,7 +307,7 @@ packSourcesFromGit() {
 
   popd &> /dev/null || printErrorAndExit "Can't set working dir"
 
-  show "Source files from ${CL_BOLD}git${CL_NORM} repo packed as ${CL_CYAN}${source_name}.${source_ext}${CL_NORM}\n"
+  show "Source files from ${CL_BOLD}git${CL_NORM} repo packed as ${CL_CYAN}${source_name}.${source_ext}${CL_NORM}"
 }
 
 # Fetch and pack sources from mercurial repo
@@ -449,7 +449,7 @@ packSourcesFromHg() {
 
   popd &> /dev/null || printErrorAndExit "Can't set working dir"
 
-  show "Source files from ${CL_BOLD}hg${CL_NORM} repo packed as ${CL_CYAN}${source_name}.${source_ext}${CL_NORM}\n"
+  show "Source files from ${CL_BOLD}hg${CL_NORM} repo packed as ${CL_CYAN}${source_name}.${source_ext}${CL_NORM}"
 }
 
 # Fetch and pack sources from bazaar repo
@@ -554,7 +554,7 @@ packSourcesFromBzr() {
 
   popd &> /dev/null || printErrorAndExit "Can't set working dir"
 
-  show "Source files from ${CL_BOLD}bzr${CL_NORM} repo packed as ${CL_CYAN}${source_name}.${source_ext}${CL_NORM}\n"
+  show "Source files from ${CL_BOLD}bzr${CL_NORM} repo packed as ${CL_CYAN}${source_name}.${source_ext}${CL_NORM}"
 }
 
 # Fetch and pack sources from SVN repo
@@ -658,7 +658,7 @@ packSourcesFromSvn() {
 
   popd &> /dev/null || printErrorAndExit "Can't set working dir"
 
-  show "Source files from ${CL_BOLD}svn${CL_NORM} repo packed as ${CL_CYAN}${source_name}.${source_ext}${CL_NORM}\n"
+  show "Source files from ${CL_BOLD}svn${CL_NORM} repo packed as ${CL_CYAN}${source_name}.${source_ext}${CL_NORM}"
 }
 
 # Remove SCM data from directory with data
