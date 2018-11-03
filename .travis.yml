@@ -14,11 +14,13 @@ env:
 
 before_install:
   - wget https://storage.googleapis.com/shellcheck/shellcheck-latest.linux.x86_64.tar.xz
+  - wget -o hadolint "https://github.com/hadolint/hadolint/releases/download/v1.15.0/hadolint-$(uname -s)-$(uname -m)"
   - tar xf shellcheck-latest.linux.x86_64.tar.xz
   - ./shellcheck-latest/shellcheck --version
   - docker pull "$IMAGE"
   - wget https://kaos.sh/perfecto/perfecto-docker
   - chmod +x perfecto-docker
+  - chmod +x hadolint
 
 script:
  - bash -c 'shopt -s globstar; ./shellcheck-latest/shellcheck SOURCES/rpmbuilder SOURCES/libexec/*.shx'
@@ -29,3 +31,5 @@ script:
  - bash -c 'shopt -s globstar; ./shellcheck-latest/shellcheck SOURCES/docker-entrypoint'
  - ./perfecto-docker rpmbuilder.spec
  - ./perfecto-docker rpmbuilder-node.spec
+ - ./hadolint centos6.docker
+ - ./hadolint centos7.docker
