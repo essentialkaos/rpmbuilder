@@ -45,7 +45,7 @@ validatePackage() {
 
     if [[ "$pver" != "$cver" ]] ; then
       error "WARNING" $YELLOW
-      error "RPM package version not equal to the version from the changelog ($pver ≠ $cver)\n" $YELLOW
+      error "RPM package version not equal to the version from the latest record in the changelog ($pver ≠ $cver)\n" $YELLOW
 
       return 0
     fi
