@@ -10,7 +10,7 @@
 # Code: Yes
 # Echo: No
 validatePackage() {
-  local rpm_file rpm_name has_errors
+  local rpm_file rpm_name
 
   rpm_file="$1"
   rpm_name=$(basename "$rpm_file")
@@ -18,27 +18,39 @@ validatePackage() {
   showm "${CL_CYAN}${rpm_name}:${CL_NORM} "
 
   if rpm -qp --scripts "$rpm_file" 2>&1 | grep -E -q '\%\{.*\}' ; then
-    has_errors=true
     error "ERROR\n" $RED
     error "RPM package ${CL_BL_YELLOW}${rpm_name}${CL_YELLOW} contains unexpanded macroses in scriptlets:" $YELLOW
     error "${CL_GREY}"
     rpm -qp --scripts "$rpm_file" 2>&1 | grep -E -A1 -B1 '\%\{.*\}' | sed '/^$/d' | sed 's/^/  /g' 1>&2
     error "${CL_NORM}"
+
+    return 1
   fi
 
   if rpm -qlp "$rpm_file" 2>&1 | grep -E -q '\%\{.*\}' ; then
-    has_errors=true
     error "ERROR\n" $RED
     error "RPM package ${CL_BL_YELLOW}${rpm_name}${CL_YELLOW} contains unexpanded macroses in files section:" $YELLOW
     error "${CL_GREY}"
     rpm -qlp "$rpm_file" 2>&1 | grep -E -A1 -B1 '\%\{.*\}' | sed '/^$/d' | sed 's/^/  /g' 1>&2
     error "${CL_NORM}"
+
+    return 1
   fi
 
-  if [[ -z "$has_errors" ]] ; then
-    show "OK" $GREEN
-    return 0
+  if [[ "$rpm_name" =~ \.src\. ]] ; then
+    local pver cver
+
+    pver=$(rpm -qp --qf "%{version}" "$rpm_file")
+    cver=$(rpm -qp --changelog "$rpm_file" | head -1 | cut -d"-" -f2 | tr -d " ")
+
+    if [[ "$pver" != "$cver" ]] ; then
+      error "WARNING" $YELLOW
+      error "RPM package version not equal to the version from the latest record in the changelog ($pver ≠ $cver)\n" $YELLOW
+
+      return 0
+    fi
   fi
 
-  return 1
+  show "OK" $GREEN
+  return 0
 }
