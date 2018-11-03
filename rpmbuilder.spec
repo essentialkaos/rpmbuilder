@@ -57,6 +57,7 @@ rm -rf %{buildroot}
 %changelog
 * Sat Nov 03 2018 Anton Novojilov <andy@essentialkaos.com> - 2.3.0-0
 - Improved package validation
+- Minor UI improvements
 
 * Thu Sep 13 2018 Anton Novojilov <andy@essentialkaos.com> - 2.2.3-0
 - Minor UI bugfixes
