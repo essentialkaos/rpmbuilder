@@ -44,7 +44,7 @@ validatePackage() {
     cver=$(rpm -qp --changelog "$rpm_file" | head -1 | cut -d"-" -f2 | tr -d " ")
 
     if [[ "$pver" != "$cver" ]] ; then
-      error "WARNING\n" $YELLOW
+      error "WARNING" $YELLOW
       error "RPM package version not equal to the version from the changelog ($pver ≠ $cver)\n" $YELLOW
 
       return 0
