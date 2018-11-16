@@ -186,7 +186,7 @@ packSourcesFromGit() {
   source_name=$(getArchName "${sources[0]}")
   source_ext=$(getArchExt "${sources[0]}")
 
-  show "Fetching sources from git repo ${CL_CYAN}$git${CL_NORM}..."
+  show "Fetching sources from git repo ${CL_CYAN}$git${CL_NORM}…"
 
   dir_name=$(mktemp -u "$source_name-XXXX")
 
@@ -334,7 +334,7 @@ packSourcesFromHg() {
   source_name=$(getArchName "${sources[0]}")
   source_ext=$(getArchExt "${sources[0]}")
 
-  show "Fetching sources from hg repo ${CL_CYAN}$hg${CL_NORM}..."
+  show "Fetching sources from hg repo ${CL_CYAN}$hg${CL_NORM}…"
 
   dir_name=$(mktemp -u "$source_name-XXXX")
 
@@ -476,7 +476,7 @@ packSourcesFromBzr() {
   source_name=$(getArchName "${sources[0]}")
   source_ext=$(getArchExt "${sources[0]}")
 
-  show "Fetching sources from bzr repo ${CL_CYAN}${bzr}${CL_NORM}..."
+  show "Fetching sources from bzr repo ${CL_CYAN}${bzr}${CL_NORM}…"
 
   dir_name=$(mktemp -u "$source_name-XXXX")
   bzr_log="$tmp_dir/bzr.log"
@@ -581,7 +581,7 @@ packSourcesFromSvn() {
   source_name=$(getArchName "${sources[0]}")
   source_ext=$(getArchExt "${sources[0]}")
 
-  show "Fetching sources from svn repo ${CL_CYAN}$svn${CL_NORM}..."
+  show "Fetching sources from svn repo ${CL_CYAN}$svn${CL_NORM}…"
 
   svn_log="$tmp_dir/svn.log"
   svn_opts="--non-interactive --no-auth-cache"

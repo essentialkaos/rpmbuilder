@@ -89,7 +89,7 @@ uploadPackagesToServer() {
     url_path=$(echo "$url" | cut -f2 -d":")
   fi
 
-  show "Connecting to remote server ${CL_CYAN}${url_host}${CL_NORM}..."
+  show "Connecting to remote server ${CL_CYAN}${url_host}${CL_NORM}…"
 
   if isRemoteServerReachable "$url_host" ; then
     if isSSHConnectionWorks "$url_user" "$url_host" ; then

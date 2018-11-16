@@ -21,7 +21,7 @@ localBuild() {
   setupBuildTree
 
   if [[ -n "$pre" ]] ; then
-    show "Executing pre-build script..."
+    show "Executing pre-build script…"
     # shellcheck disable=SC2091
     $($pre)
   fi
@@ -109,7 +109,7 @@ copySourcesToBuildDir() {
 localDepsInstall() {
   local spec="$1"
 
-  show "Installing required packages for build...\n"
+  show "Installing required packages for build…\n"
 
   local yum_opts
   yum_opts=$(getYumOpts "$verbose")
@@ -306,7 +306,7 @@ localBuildProcess() {
       pushd "$CWD" &> /dev/null || printErrorAndExit "Can't set working dir to $CWD"
 
       if [[ -n "$post" ]] ; then
-        show "Executing post-build script..."
+        show "Executing post-build script…"
         # shellcheck disable=SC2091
         $($post)
       fi
@@ -432,7 +432,7 @@ removeLocalLock() {
 localSign() {
   local package="$1"
 
-  show "Signing package ${CL_CYAN}${package_name}${CL_NORM}..."
+  show "Signing package ${CL_CYAN}${package_name}${CL_NORM}…"
 
   if [[ -n "$verbose" ]] ; then
     rpm --addsign "$package" | tee "$tmp_output" &> $verb_output

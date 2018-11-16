@@ -5,7 +5,7 @@
 APP="RPMBuilder"
 
 # Utility version (String)
-VER="2.3.0"
+VER="2.4.0"
 
 ####################################################################
 
@@ -444,7 +444,7 @@ usage() {
   showo "--no-binary, -NR" "Don't build binary packages"
   showo "--no-source, -NS" "Don't build source package"
   showo "--arch, -a" "Override target arch for a build" "arch"
-  showo "--qa-rpaths" "Ignoring rpaths check" "\"<value>,...\""
+  showo "--qa-rpaths" "Ignoring rpaths check" "\"<value>,…\""
   show ""
   show "Arguments passing:" $BOLD
   show ""

@@ -50,7 +50,7 @@ downloadRemoteSources() {
         continue
       fi
 
-      show "Downloading source file ${CL_CYAN}${source_file}${CL_NORM}..."
+      show "Downloading source file ${CL_CYAN}${source_file}${CL_NORM}…"
 
       downloadSource "$source_file" "$download"
 

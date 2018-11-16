@@ -133,7 +133,7 @@ Build options:
   --no-binary, -NR                 Don't build binary packages
   --no-source, -NS                 Don't build source package
   --arch, -a arch                  Override target arch for a build
-  --qa-rpaths "<value>,..."        Ignoring rpaths check
+  --qa-rpaths "<value>,…"          Ignoring rpaths check
 
 Arguments passing:
 

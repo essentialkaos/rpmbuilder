@@ -16,7 +16,7 @@ require "sources-scm"
 # Code: No
 # Echo: No
 packSources() {
-  show "Packing source files to archive..."
+  show "Packing source files to archive…"
 
   local spec="$1"
 
