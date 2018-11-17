@@ -376,6 +376,7 @@ usage() {
   showo "--source-list, -sl" "Path to file which contains a list of source files specified in spec file" "file"
   showo "--dlcache, -dc" "Path to a directory for downloads caching" "dir"
   showo "--download, -dl" "Download all remote sources to a specified directory" "dir"
+  showo "--no-validate, -nv" "Don't validate sources"
   show ""
   showo "--git" "Fetch sources from Git repository" "url"
   showo "--svn" "Fetch sources from SVN repository" "url"
@@ -398,8 +399,6 @@ usage() {
   showo "--launchpad, -lp" "Fetch sources from launchpad.net repository by project name" "project-name"
   show ""
   showo "--gopack, -G" "Fetch and pack golang sources using gopack" "url"
-  show ""
-  showo "--no-validate, -nv" "Don't validate sources"
   show ""
   show "  Examples:" $BOLD
   show ""
