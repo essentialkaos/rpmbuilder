@@ -157,7 +157,7 @@ findSource() {
 # Code: Yes
 # Echo: No
 validateSources() {
-  local source_file has_errors
+  local source_file source_name has_errors
 
   if [[ -n "$no_validate" ]] ; then
     return 0
@@ -168,12 +168,14 @@ validateSources() {
   fi
 
   for source_file in "$tmp_dir"/* ; do
-    if ! validateSourceFile "$tmp_dir/$source_file" ; then
+    source_name=$(basename "$source_file")
+
+    if ! validateSourceFile "$source_file" ; then
       if [[ -z "$has_errors" ]] ; then
         show ""
       fi
 
-      error "Can't use file ${CL_BL_RED}${source_file}${CL_RED} for build - file type doesn't match to file content"
+      error "Can't use file ${CL_BL_RED}${source_name}${CL_RED} for build - file type doesn't match to file content"
       has_errors=true
     fi
   done
@@ -192,7 +194,8 @@ validateSources() {
 # Code: Yes
 # Echo: No
 validateSourceFile() {
-  local source_file src_type
+  local source_file="$1"
+  local src_type
 
   src_type=$(file -i -b "$source_file" | cut -f1 -d";")
 
