@@ -2,13 +2,13 @@
 
 Summary:         RPM package build helper
 Name:            rpmbuilder
-Version:         2.3.0
+Version:         2.4.0
 Release:         0%{?dist}
 License:         EKOL
 Group:           Development/Tools
 URL:             https://github.com/essentialkaos/rpmbuilder
 
-Source0:         https://source.kaos.io/%{name}/%{name}-%{version}.tar.bz2
+Source0:         https://source.kaos.st/%{name}/%{name}-%{version}.tar.bz2
 
 BuildArch:       noarch
 BuildRoot:       %{_tmppath}/%{name}-%{version}-%{release}-root-%(%{__id_u} -n)
@@ -55,6 +55,10 @@ rm -rf %{buildroot}
 ################################################################################
 
 %changelog
+* Sat Nov 17 2018 Anton Novojilov <andy@essentialkaos.com> - 2.4.0-0
+- Added sources validation feature
+- Minor UI improvements
+
 * Sat Nov 03 2018 Anton Novojilov <andy@essentialkaos.com> - 2.3.0-0
 - Improved package validation
 - Minor UI improvements
