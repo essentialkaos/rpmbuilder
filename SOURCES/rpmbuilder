@@ -5,7 +5,7 @@
 APP="RPMBuilder"
 
 # Utility version (String)
-VER="2.3.0"
+VER="2.4.0"
 
 ####################################################################
 
@@ -70,7 +70,7 @@ SUPPORTED_ARGS="remote !parallel host user pass key source_dir source_list
  bitbucket launchpad with without define output !verbose !help !usage !ver 
  !version !raw_version qa_rpaths tmux_worker !no_colors !keep_log !notify 
  arch download !relative_pack enable_repo disable_repo exclude_package gopack 
- !strict !pedantic !perfect"
+ !no_validate !strict !pedantic !perfect"
 
 SHORT_ARGS="r:remote P:!parallel hh:host uu:user pp:pass kk:key sd:source_dir 
  sl:source_list NB:!no_build NC:!no_clean ND:!no_deps NR:!no_binary NS:!no_source 
@@ -78,11 +78,12 @@ SHORT_ARGS="r:remote P:!parallel hh:host uu:user pp:pass kk:key sd:source_dir
  su:svn_user sp:svn_pass rp:path b:!bump bc:bump_comment dc:dlcache 
  di:!depinstall rb:branch rt:tag rr:revision gh:github bb:bitbucket lp:launchpad 
  w:with W:without s:!sign D:define O:output V:!verbose h:help v:!version 
- nc:!no_colors kl:!keep_log n:!notify a:arch dl:download R:relative_pack 
- ER:enable_repo DR:disable_repo EX:exclude_package G:gopack A:!attach"
+ nv:!no_validate nc:!no_colors kl:!keep_log n:!notify a:arch dl:download 
+ R:relative_pack ER:enable_repo DR:disable_repo EX:exclude_package G:gopack 
+ A:!attach"
 
 INSPEC_ARGS="git svn hg bzr branch revision tag svn_user svn_pass github 
- bitbucket launchpad qa_rpaths no_lint relative_pack gopack strict 
+ bitbucket launchpad qa_rpaths no_lint no_validate relative_pack gopack strict 
  pedantic perfect"
 
 MERGEABLE_ARGS="pack with without enable_repo disable_repo exclude_package define"
@@ -375,6 +376,7 @@ usage() {
   showo "--source-list, -sl" "Path to file which contains a list of source files specified in spec file" "file"
   showo "--dlcache, -dc" "Path to a directory for downloads caching" "dir"
   showo "--download, -dl" "Download all remote sources to a specified directory" "dir"
+  showo "--no-validate, -nv" "Don't validate sources"
   show ""
   showo "--git" "Fetch sources from Git repository" "url"
   showo "--svn" "Fetch sources from SVN repository" "url"
@@ -444,7 +446,7 @@ usage() {
   showo "--no-binary, -NR" "Don't build binary packages"
   showo "--no-source, -NS" "Don't build source package"
   showo "--arch, -a" "Override target arch for a build" "arch"
-  showo "--qa-rpaths" "Ignoring rpaths check" "\"<value>,...\""
+  showo "--qa-rpaths" "Ignoring rpaths check" "\"<value>,…\""
   show ""
   show "Arguments passing:" $BOLD
   show ""

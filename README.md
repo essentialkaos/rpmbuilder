@@ -64,6 +64,7 @@ Source packaging:
   --source-list, -sl file          Path to file which contains a list of source files specified in spec file
   --dlcache, -dc dir               Path to a directory for downloads caching
   --download, -dl dir              Download all remote sources to a specified directory
+  --no-validate, -nv               Don't validate sources
 
   --git url                        Fetch sources from Git repository
   --svn url                        Fetch sources from SVN repository
@@ -133,7 +134,7 @@ Build options:
   --no-binary, -NR                 Don't build binary packages
   --no-source, -NS                 Don't build source package
   --arch, -a arch                  Override target arch for a build
-  --qa-rpaths "<value>,..."        Ignoring rpaths check
+  --qa-rpaths "<value>,…"          Ignoring rpaths check
 
 Arguments passing:
 

@@ -79,7 +79,7 @@ getPathToWorkerLock() {
 waitTillWorkersComplete() {
   local wid has_lock lock_file
 
-  show "Waiting till remote builds complete..." $DARK
+  show "Waiting till remote builds complete…" $DARK
 
   while : ; do
     sleep 1

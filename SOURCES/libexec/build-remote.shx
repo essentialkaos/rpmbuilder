@@ -91,7 +91,7 @@ remoteBuild() {
   showSeparator "PREPARATION"
 
   if [[ -n "$pre" ]] ; then
-    show "Executing pre-build script..."
+    show "Executing pre-build script…"
     # shellcheck disable=SC2091
     $($pre)
   fi
@@ -211,7 +211,7 @@ remoteRunBuild() {
 remoteCheckEnv() {
   showSeparator "REMOTE CHECK"
 
-  show "Connecting to a remote build server on ${CL_CYAN}$host${CL_NORM}..."
+  show "Connecting to a remote build server on ${CL_CYAN}$host${CL_NORM}…"
 
   if isRemoteServerReachable "$host" ; then
     if ! isSSHConnectionWorks "$user" "$host" ; then
@@ -244,7 +244,7 @@ remoteDepsInstall() {
   rpmbuild_dir=$(getRPMBuildDir)
   specs_dir="$rpmbuild_dir/SPECS"
 
-  show "Installing required packages for build...\n"
+  show "Installing required packages for build…\n"
 
   yum_opts=$(getYumOpts "$verbose")
 
@@ -352,7 +352,7 @@ remoteBuildProcess() {
       package_name=$(basename "$package")
 
        if [[ -n "$sign" ]] ; then
-        show "Signing package ${CL_CYAN}$package_name${CL_NORM}..."
+        show "Signing package ${CL_CYAN}$package_name${CL_NORM}…"
         remoteSign "$package"
       fi
 
@@ -363,9 +363,9 @@ remoteBuildProcess() {
       fi
 
       if [[ $? -eq 0 ]] ; then
-        show "${CL_BOLD}+${CL_NORM} ${CL_CYAN}$package_name${CL_NORM}"
+        show "${CL_GREY}+${CL_NORM} ${CL_CYAN}$package_name${CL_NORM}"
       else
-        show "${CL_BOLD}+${CL_NORM} ${CL_CYAN}$package_name${CL_NORM} ${CL_DARK}(ALREADY EXIST)${CL_NORM}"
+        show "${CL_GREY}+${CL_NORM} ${CL_CYAN}$package_name${CL_NORM} ${CL_DARK}(ALREADY EXIST)${CL_NORM}"
       fi
     done
 
@@ -390,7 +390,7 @@ remoteBuildProcess() {
     fi
 
     if [[ -n "$post" ]] ; then
-      show "Executing post-build script..."
+      show "Executing post-build script…"
       # shellcheck disable=SC2091
       $($post)
     fi

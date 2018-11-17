@@ -131,7 +131,7 @@ processSpec() {
           show "File ${CL_CYAN}$file_name${CL_NORM} listed in spec and will be used for the build"
           cp "$dlcache/$file_name" "$tmp_dir"
         else
-          show "Downloading source file ${CL_CYAN}${source_file}${CL_NORM}..."
+          show "Downloading source file ${CL_CYAN}${source_file}${CL_NORM}…"
 
           downloadSource "$source_file" "$dlcache"
 
@@ -143,7 +143,7 @@ processSpec() {
           cp "$dlcache/$file_name" "$tmp_dir"
         fi
       else
-        show "Downloading source file ${CL_CYAN}${source_file}${CL_NORM}..."
+        show "Downloading source file ${CL_CYAN}${source_file}${CL_NORM}…"
 
         downloadSource "$source_file" "$tmp_dir"
 
@@ -186,6 +186,10 @@ processSpec() {
 
     source_num=$(( source_num + 1 ))
   done
+
+  if ! validateSources ; then
+    doExit $ERROR_SOURCE
+  fi
 }
 
 # Check given command-line options

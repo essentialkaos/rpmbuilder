@@ -16,7 +16,7 @@ require "sources-scm"
 # Code: No
 # Echo: No
 packSources() {
-  show "Packing source files to archive..."
+  show "Packing source files to archive…"
 
   local spec="$1"
 
@@ -150,4 +150,84 @@ findSource() {
   fi
 
   echo "" && return 1
+}
+
+# Validate source files
+#
+# Code: Yes
+# Echo: No
+validateSources() {
+  local source_file source_name has_errors
+
+  if [[ -n "$no_validate" ]] ; then
+    return 0
+  fi
+
+  if ! hasApp "file" ; then
+    return 0
+  fi
+
+  for source_file in "$tmp_dir"/* ; do
+    source_name=$(basename "$source_file")
+
+    if ! validateSourceFile "$source_file" ; then
+      if [[ -z "$has_errors" ]] ; then
+        show ""
+      fi
+
+      error "Can't use file ${CL_BL_RED}${source_name}${CL_RED} for build - file type doesn't match to file content"
+      has_errors=true
+    fi
+  done
+
+  if [[ -n "$has_errors" ]] ; then
+    return 1
+  fi
+
+  return 0
+}
+
+# Validate source file type
+#
+# 1: Path to file (String)
+#
+# Code: Yes
+# Echo: No
+validateSourceFile() {
+  local source_file="$1"
+  local src_type
+
+  src_type=$(file -i -b "$source_file" | cut -f1 -d";")
+
+  if [[ -z "$src_type" ]] ; then
+    return 0
+  fi
+
+  if [[ "$source_file" =~ \.gz$ || "$source_file" =~ \.tgz$ ]] ; then
+    if [[ "$src_type" != "application/x-gzip" ]] ; then
+      return 1
+    fi
+  elif [[ "$source_file" =~ \.bz2$ || "$source_file" =~ \.tbz2$ ]] ; then
+    if [[ "$src_type" != "application/x-bzip2" ]] ; then
+      return 1
+    fi
+  elif [[ "$source_file" =~ \.xz$ || "$source_file" =~ \.txz$ ]] ; then
+    if [[ "$src_type" != "application/x-xz" ]] ; then
+      return 1
+    fi
+  elif [[ "$source_file" =~ \.zip$ || "$source_file" =~ \.jar$ ]] ; then
+    if [[ "$src_type" != "application/zip" ]] ; then
+      return 1
+    fi
+  elif [[ "$source_file" =~ \.patch$ ]] ; then
+    if [[ "$src_type" != "text/x-diff" ]] ; then
+      return 1
+    fi
+  elif [[ "$source_file" =~ \.pdf$ ]] ; then
+    if [[ "$src_type" != "application/pdf" ]] ; then
+      return 1
+    fi
+  fi
+
+  return 0
 }
