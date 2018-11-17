@@ -273,7 +273,7 @@ localBuildProcess() {
         if [[ -n "$sign" ]] ; then
           localSign "$package"
         else
-          show "${CL_BOLD}+${CL_NORM} ${CL_CYAN}$package_name${CL_NORM}"
+          show "${CL_GREY}+${CL_NORM} ${CL_CYAN}$package_name${CL_NORM}"
         fi
 
         if [[ -n "$dest_dir" ]] ; then

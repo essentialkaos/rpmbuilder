@@ -157,7 +157,7 @@ findSource() {
 # Code: Yes
 # Echo: No
 validateSources() {
-  local src_file has_errors
+  local source_file has_errors
 
   if [[ -n "$no_validate" ]] ; then
     return 0
@@ -167,11 +167,13 @@ validateSources() {
     return 0
   fi
 
-  show "Sources validation…"
+  for source_file in "$tmp_dir"/* ; do
+    if ! validateSourceFile "$tmp_dir/$source_file" ; then
+      if [[ -z "$has_errors" ]] ; then
+        show ""
+      fi
 
-  for src_file in "$tmp_dir"/* ; do
-    if ! validateSourceFile "$tmp_dir/$src_file" ; then
-      error "File $src_file type doesn't match to file content"
+      error "Can't use file ${CL_BL_RED}${source_file}${CL_RED} for build - file type doesn't match to file content"
       has_errors=true
     fi
   done
@@ -190,35 +192,35 @@ validateSources() {
 # Code: Yes
 # Echo: No
 validateSourceFile() {
-  local src_file src_type
+  local source_file src_type
 
-  src_type=$(file -i -b "$src_file" | cut -f1 -d";")
+  src_type=$(file -i -b "$source_file" | cut -f1 -d";")
 
   if [[ -z "$src_type" ]] ; then
     return 0
   fi
 
-  if [[ "$src_file" =~ \.gz$ || "$src_file" =~ \.tgz$ ]] ; then
+  if [[ "$source_file" =~ \.gz$ || "$source_file" =~ \.tgz$ ]] ; then
     if [[ "$src_type" != "application/x-gzip" ]] ; then
       return 1
     fi
-  elif [[ "$src_file" =~ \.bz2$ || "$src_file" =~ \.tbz2$ ]] ; then
+  elif [[ "$source_file" =~ \.bz2$ || "$source_file" =~ \.tbz2$ ]] ; then
     if [[ "$src_type" != "application/x-bzip2" ]] ; then
       return 1
     fi
-  elif [[ "$src_file" =~ \.xz$ || "$src_file" =~ \.txz$ ]] ; then
+  elif [[ "$source_file" =~ \.xz$ || "$source_file" =~ \.txz$ ]] ; then
     if [[ "$src_type" != "application/x-xz" ]] ; then
       return 1
     fi
-  elif [[ "$src_file" =~ \.zip$ || "$src_file" =~ \.jar$ ]] ; then
+  elif [[ "$source_file" =~ \.zip$ || "$source_file" =~ \.jar$ ]] ; then
     if [[ "$src_type" != "application/zip" ]] ; then
       return 1
     fi
-  elif [[ "$src_file" =~ \.patch$ ]] ; then
+  elif [[ "$source_file" =~ \.patch$ ]] ; then
     if [[ "$src_type" != "text/x-diff" ]] ; then
       return 1
     fi
-  elif [[ "$src_file" =~ \.pdf$ ]] ; then
+  elif [[ "$source_file" =~ \.pdf$ ]] ; then
     if [[ "$src_type" != "application/pdf" ]] ; then
       return 1
     fi
