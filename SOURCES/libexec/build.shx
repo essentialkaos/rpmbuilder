@@ -186,6 +186,10 @@ processSpec() {
 
     source_num=$(( source_num + 1 ))
   done
+
+  if ! validateSources ; then
+    doExit $ERROR_SOURCE
+  fi
 }
 
 # Check given command-line options
