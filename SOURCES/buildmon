@@ -4,7 +4,7 @@
 ###############################################################################
 
 APP="RPMBuilder Node Monitor"
-VER="1.1.2"
+VER="1.1.3"
 
 ###############################################################################
 
@@ -52,11 +52,11 @@ check() {
 }
 
 isBuildInProgress() {
-  if [[ $(pgrep -U "$BUILDER_USER" "rpmbuild") ]] ; then
+  if pgrep -U "$BUILDER_USER" "rpmbuild" &>/dev/null ; then
     return 0
   fi
 
-  if [[ $(pgrep -U "$BUILDER_USER" "yum-builddep") ]] ; then
+  if pgrep -U "$BUILDER_USER" "yum-builddep" &>/dev/null ; then
     return 0
   fi
 

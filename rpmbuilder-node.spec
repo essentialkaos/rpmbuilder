@@ -51,7 +51,7 @@
 
 Summary:         Configuration package for rpmbuilder node
 Name:            rpmbuilder-node
-Version:         1.4.0
+Version:         1.4.1
 Release:         0%{?dist}
 License:         EKOL
 Group:           Development/Tools
@@ -164,6 +164,9 @@ fi
 ################################################################################
 
 %changelog
+* Fri Jan 04 2019 Anton Novojilov <andy@essentialkaos.com> - 1.4.1-0
+- Code refactoring
+
 * Sun May 06 2018 Anton Novojilov <andy@essentialkaos.com> - 1.4.0-0
 - Added perfecto support
 - Added config for rpmlint
