@@ -408,7 +408,11 @@ getYumOpts() {
   local verb="$1"
   local opts repo pkg
 
-  [[ -z "$verb" ]] && opts="-q"
+  if [[ -z "$verb" ]] ; then
+    opts="-q --disablerepo='*-source'"
+  else
+    opts="--disablerepo='*-source'"
+  fi
 
   if [[ -n "$enable_repo" ]] ; then
     for repo in $enable_repo ; do

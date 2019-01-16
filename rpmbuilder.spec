@@ -2,7 +2,7 @@
 
 Summary:         RPM package build helper
 Name:            rpmbuilder
-Version:         2.4.0
+Version:         2.4.1
 Release:         0%{?dist}
 License:         EKOL
 Group:           Development/Tools
@@ -55,6 +55,9 @@ rm -rf %{buildroot}
 ################################################################################
 
 %changelog
+* Thu Jan 17 2019 Anton Novojilov <andy@essentialkaos.com> - 2.4.1-0
+- Source repositories disabled by default for dependencies install
+
 * Sat Nov 17 2018 Anton Novojilov <andy@essentialkaos.com> - 2.4.0-0
 - Added sources validation feature
 - Minor UI improvements
