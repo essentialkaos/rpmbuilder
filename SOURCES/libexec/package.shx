@@ -41,7 +41,7 @@ validatePackage() {
     local pver cver
 
     pver=$(rpm -qp --qf "%{version}" "$rpm_file")
-    cver=$(rpm -qp --changelog "$rpm_file" | head -1 | cut -d"-" -f2 | tr -d " ")
+    cver=$(rpm -qp --changelog "$rpm_file" | head -1 | rev | cut -d"-" -f2 | rev | tr -d " ")
 
     if [[ "$pver" != "$cver" ]] ; then
       error "WARNING" $YELLOW

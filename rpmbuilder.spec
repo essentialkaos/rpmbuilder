@@ -57,6 +57,7 @@ rm -rf %{buildroot}
 %changelog
 * Thu Jan 17 2019 Anton Novojilov <andy@essentialkaos.com> - 2.4.1-0
 - Source repositories disabled by default for dependencies install
+- Improved changelog's version extractor (part of package validator)
 
 * Sat Nov 17 2018 Anton Novojilov <andy@essentialkaos.com> - 2.4.0-0
 - Added sources validation feature
