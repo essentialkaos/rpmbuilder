@@ -5,7 +5,7 @@
 APP="RPMBuilder"
 
 # Utility version (String)
-VER="2.4.1"
+VER="2.4.2"
 
 ####################################################################
 
@@ -50,7 +50,7 @@ ERROR_REMOTE=7
 ERROR_DEPS=8
 ERROR_VALIDATE=9
 
-# Prefix for in spec arguments
+# Prefix for in spec options
 INSPEC_ARG_PREFIX="rpmbuilder:"
 
 # User Agent used for all HTTP requests (String)
@@ -348,7 +348,7 @@ error() {
 # Code: No
 # Echo: No
 showArgWarn() {
-  error "Error! Unknown argument $1"
+  error "Error! Unknown option $1"
   exit 1
 }
 
@@ -513,7 +513,7 @@ if [[ -n "$PREFS_FILE" && -r "$PREFS_FILE" ]] ; then
   unset arg argn argp
 fi
 
-## ARGUMENTS PARSING 4 #################################################################
+## OPTIONS PARSING 4 ###################################################################
 
 [[ $# -eq 0 ]] && main && exit $?
 
