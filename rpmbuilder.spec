@@ -2,7 +2,7 @@
 
 Summary:         RPM package build helper
 Name:            rpmbuilder
-Version:         2.4.2
+Version:         2.4.3
 Release:         0%{?dist}
 License:         EKOL
 Group:           Development/Tools
@@ -55,6 +55,10 @@ rm -rf %{buildroot}
 ################################################################################
 
 %changelog
+* Wed Jul 03 2019 Anton Novojilov <andy@essentialkaos.com> - 2.4.3-0
+- Fixed bug with handling build node index in --parallel option
+- Fixed bug with handling names of built packages
+
 * Sat May 25 2019 Anton Novojilov <andy@essentialkaos.com> - 2.4.2-0
 - Added checking options after reading inspec options
 - Minor UI improvements
