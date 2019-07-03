@@ -345,7 +345,7 @@ remoteBuildProcess() {
 
     showSeparator "PACKAGE PROCESSING"
 
-    packages=$(grep -E "rpmbuild/(S|)RPMS.*\.rpm$" "$tmp_output" | cut -f2 -d" ")
+    packages=$(grep -E "rpmbuild/(S|)RPMS/.*\.rpm" "$tmp_output" | cut -f2 -d" ")
 
     for package in $packages ; do
       package=$(echo "$package" | tr -dc '[:print:]')

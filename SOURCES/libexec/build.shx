@@ -37,7 +37,11 @@ startBuild() {
   trap termExit SIGINT SIGQUIT SIGTERM
 
   if [[ -n "$parallel" && $(wc -l "${remote/:*/}" | cut -f1 -d" ") -gt 1 ]] ; then
-    parallelBuild "$@"
+    if [[ "${remote/:*/}" != "$remote" ]] ; then
+      basicBuild "$@"
+    else
+      parallelBuild "$@"
+    fi
   else
     basicBuild "$@"
   fi
