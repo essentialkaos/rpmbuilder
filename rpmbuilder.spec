@@ -57,6 +57,7 @@ rm -rf %{buildroot}
 %changelog
 * Wed Jul 03 2019 Anton Novojilov <andy@essentialkaos.com> - 2.4.3-0
 - Fixed bug with handling build node index in --parallel option
+- Fixed bug with handling names of built packages
 
 * Sat May 25 2019 Anton Novojilov <andy@essentialkaos.com> - 2.4.2-0
 - Added checking options after reading inspec options

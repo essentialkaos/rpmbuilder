@@ -263,7 +263,7 @@ localBuildProcess() {
 
       showSeparator "PACKAGE PROCESSING"
 
-      packages=$(grep -E "rpmbuild/(S|)RPMS" "$tmp_output" | cut -f2 -d" ")
+      packages=$(grep -E "rpmbuild/(S|)RPMS.*\.rpm$" "$tmp_output" | cut -f2 -d" ")
 
       rm -f "$tmp_output"
 
