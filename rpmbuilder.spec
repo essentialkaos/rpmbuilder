@@ -56,7 +56,7 @@ rm -rf %{buildroot}
 
 %changelog
 * Thu Aug 08 2019 Anton Novojilov <andy@essentialkaos.com> - 2.5.0-0
-- Auto SHA-512 CRC generation feature
+- Automatic SHA-512 CRC generation feature
 
 * Wed Jul 03 2019 Anton Novojilov <andy@essentialkaos.com> - 2.4.3-0
 - Fixed bug with handling build node index in --parallel option
