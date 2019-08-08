@@ -164,17 +164,17 @@ processSpec() {
         source_num=$(( source_num + 1 )) && continue
       fi
 
-      if [[ "$source_file" == "$CHECKSUM_FILE" ]] ; then
-        gen_crc=true
-        continue
-      fi
-
       local source_ext source_name found_dir found_source
 
       source_ext=$(getArchExt "$source_file")
       source_name=$(getArchName "$source_file")
       found_dir=$(findSource "$source_name" true)
       found_source=$(findSource "$source_file")
+
+      if [[ "$source_file" == "$CHECKSUM_FILE" && -z "$found_source" ]] ; then
+        gen_crc=true
+        continue
+      fi
 
       if [[ -n "$source_ext" && -n "$found_dir" ]] ; then
         show "File ${CL_CYAN}${source_file}${CL_NORM} listed in spec and will be created from sources directory"
