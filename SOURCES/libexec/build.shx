@@ -108,7 +108,8 @@ basicBuild() {
 processSpec() {
   local spec="$1"
 
-  local source_list patch_list files source_file source_num file_name found_source
+  local source_list patch_list files source_file
+  local source_num file_name found_source gen_crc
 
   source_list=$(getSources "$spec")
   patch_list=$(getPatches "$spec")
@@ -163,6 +164,11 @@ processSpec() {
         source_num=$(( source_num + 1 )) && continue
       fi
 
+      if [[ "$source_file" == "$CHECKSUM_FILE" ]] ; then
+        gen_crc=true
+        continue
+      fi
+
       local source_ext source_name found_dir found_source
 
       source_ext=$(getArchExt "$source_file")
@@ -191,6 +197,13 @@ processSpec() {
 
     source_num=$(( source_num + 1 ))
   done
+
+  if [[ -n "$gen_crc" ]] ; then
+    if ! generateChecksumFile ; then
+      error "Can't generate file with checksums"
+      doExit $ERROR_SOURCE
+    fi
+  fi
 
   if ! validateSources ; then
     doExit $ERROR_SOURCE

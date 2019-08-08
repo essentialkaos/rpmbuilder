@@ -2,7 +2,7 @@
 
 Summary:         RPM package build helper
 Name:            rpmbuilder
-Version:         2.4.3
+Version:         2.5.0
 Release:         0%{?dist}
 License:         EKOL
 Group:           Development/Tools
@@ -55,6 +55,9 @@ rm -rf %{buildroot}
 ################################################################################
 
 %changelog
+* Thu Aug 08 2019 Anton Novojilov <andy@essentialkaos.com> - 2.5.0-0
+- Auto SHA-512 CRC generation feature
+
 * Wed Jul 03 2019 Anton Novojilov <andy@essentialkaos.com> - 2.4.3-0
 - Fixed bug with handling build node index in --parallel option
 - Fixed bug with handling names of built packages

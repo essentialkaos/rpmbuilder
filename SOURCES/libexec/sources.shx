@@ -231,3 +231,20 @@ validateSourceFile() {
 
   return 0
 }
+
+# Generate file with SHA-512 checksums for all source files
+#
+# Code: Yes
+# Echo: No
+generateChecksumFile() {
+  local status
+
+  pushd "$tmp_dir" &> /dev/null || return 1
+
+    sha512sum ./* 1> "$CHECKSUM_FILE" 2>/dev/null
+    status=$?
+
+  popd &> /dev/null || return 1
+
+  return $status
+}

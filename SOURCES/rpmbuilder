@@ -5,7 +5,7 @@
 APP="RPMBuilder"
 
 # Utility version (String)
-VER="2.4.3"
+VER="2.5.0"
 
 ####################################################################
 
@@ -55,6 +55,9 @@ INSPEC_ARG_PREFIX="rpmbuilder:"
 
 # User Agent used for all HTTP requests (String)
 USER_AGENT="$APP/$VER"
+
+# Name of file with sources checksums
+CHECKSUM_FILE="checksum.sha512"
 
 SEPARATOR="----------------------------------------------------------------------------------------"
 
