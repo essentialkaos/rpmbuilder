@@ -16,12 +16,12 @@ require "upload"
 # Echo: No
 parallelBuild() {
   if [[ ! -r $remote ]] ; then
-    error "Error! Can't start parallel build process - builder list not readable." $RED
+    error "Error! Can't start parallel build process - builder list not readable."
     doExit $ERROR_ARGS
   fi
 
   if [[ -n "$dlcache" ]] ; then
-    error "Warning! You can't use a parallel build with download cache." $YELLOW
+    show "Warning! You can't use a parallel build with download cache." $YELLOW
     doExit $ERROR_ARGS
   fi
 
@@ -167,7 +167,7 @@ remoteRunBuild() {
 
     if [[ $r_line -gt $tlines ]] ; then
       show ""
-      error "Error - file ${CL_BL_RED}${r_file}${CL_RED} don't contain a line with number ${CL_BL_RED}${r_line}${CL_RED}" $RED
+      error "Error - file ${CL_BL_RED}${r_file}${CL_RED} don't contain a line with number ${CL_BL_RED}${r_line}${CL_RED}"
       return 1
     fi
 
@@ -215,11 +215,11 @@ remoteCheckEnv() {
 
   if isRemoteServerReachable "$host" ; then
     if ! isSSHConnectionWorks "$user" "$host" ; then
-      error "Can't connect to host ${CL_BL_RED}${host}${CL_RED}" $RED
+      error "Can't connect to host ${CL_BL_RED}${host}${CL_RED}"
       doExit $ERROR_REMOTE
     fi
   else
-    error "Remote server ${CL_BL_RED}${host}${CL_RED} is not reachable!" $RED
+    error "Remote server ${CL_BL_RED}${host}${CL_RED} is not reachable!"
     doExit $ERROR_REMOTE
   fi
 
@@ -252,7 +252,7 @@ remoteDepsInstall() {
 
   if [[ $? -ne 0 ]] ; then
     show ""
-    error "Can't install required dependencies" $RED
+    error "Can't install required dependencies"
     doExit $ERROR_DEPS
   fi
 
@@ -285,7 +285,7 @@ remoteSpecValidate() {
 
   if [[ $? -ne 0 ]] ; then
     show ""
-    error "Build canceled because spec contains problems reported by perfecto" $RED
+    error "Build canceled because spec contains problems reported by perfecto"
     doExit $ERROR_LINT
   fi
 
@@ -413,10 +413,10 @@ remoteBuildProcess() {
       fi
     fi
   else
-    error "Error! Can't build a package." $RED
+    error "Error! Can't build a package."
 
     if [[ -z "$verbose" ]] ; then
-      error "Last $LOG_QUOTE_SIZE lines from build log:" $RED
+      error "Last $LOG_QUOTE_SIZE lines from build log:"
 
       showSeparator
       tail -${LOG_QUOTE_SIZE} "$tmp_output" 1>&2
@@ -565,12 +565,12 @@ checkParallelBuildAvailability() {
   cdf=$(( ct - cdt ))
 
   if [[ $cdf -gt $LOCK_TIME_MAX_DIFF ]] ; then
-    error "We found lock file created more than 3 hours ago. It's too much time for the usual build process." $YELLOW
-    error "If another build process doesn't occur, you must remove file $BUILD_LOCK_PARALLEL manually." $YELLOW
-    error "We will continue to build when this file will be removed." $YELLOW
+    show "We found lock file created more than 3 hours ago. It's too much time for the usual build process." $YELLOW
+    show "If another build process doesn't occur, you must remove file $BUILD_LOCK_PARALLEL manually." $YELLOW
+    show "We will continue to build when this file will be removed." $YELLOW
   else
-    error "Another parallel build process in progress." $YELLOW
-    error "We will continue to build when another process complete." $YELLOW
+    show "Another parallel build process in progress." $YELLOW
+    show "We will continue to build when another process complete." $YELLOW
   fi
 
   while : ; do

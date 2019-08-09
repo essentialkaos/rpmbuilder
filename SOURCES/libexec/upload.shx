@@ -44,7 +44,7 @@ uploadPackages() {
         show "All rpm packages uploaded to all remote servers" $GREEN
       fi
     else
-      error "Can't read file ${CL_BL_RED}${upload}" $RED
+      error "Can't read file ${CL_BL_RED}${upload}"
       show ""
       show "All rpm packages saved to a directory ${CL_CYAN}${packages_dir}${CL_NORM}"
     fi
@@ -110,11 +110,11 @@ uploadPackagesToServer() {
 
       [[ -n "$has_errors" ]] && return 1
     else
-      error "Remote server ${CL_BL_RED}${url_host}${CL_RED} not accessible!" $RED
+      error "Remote server ${CL_BL_RED}${url_host}${CL_RED} not accessible!"
       return 1
     fi
   else
-    error "Remote server ${CL_BL_RED}${url_host}${CL_RED} not accessible!" $RED
+    error "Remote server ${CL_BL_RED}${url_host}${CL_RED} not accessible!"
     return 1
   fi
 

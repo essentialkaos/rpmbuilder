@@ -200,7 +200,7 @@ packSourcesFromGit() {
     fi
 
     if [[ $? -ne 0 ]] ; then
-      error "Can't clone repo - error while cloning" $RED
+      error "Can't clone repo - error while cloning"
 
       if [[ -z "$verbose" ]] ; then
         error ""
@@ -222,7 +222,7 @@ packSourcesFromGit() {
         fi
 
         if [[ $? -ne 0 ]] ; then
-          error "Can't switch branch to ${CL_BL_RED}${branch}${CL_RED}:" $RED
+          error "Can't switch branch to ${CL_BL_RED}${branch}${CL_RED}:"
 
           if [[ -z "$verbose" ]] ; then
             error ""
@@ -243,7 +243,7 @@ packSourcesFromGit() {
         fi
 
         if [[ $? -ne 0 ]] ; then
-          error "Can't checkout revision ${CL_BL_RED}${revision}${CL_RED}:" $RED
+          error "Can't checkout revision ${CL_BL_RED}${revision}${CL_RED}:"
 
           if [[ -z "$verbose" ]] ; then
             error ""
@@ -262,7 +262,7 @@ packSourcesFromGit() {
         fi
 
         if [[ $? -ne 0 ]] ; then
-          error "Can't checkout tag ${CL_BL_RED}${tag}${CL_RED}:" $RED
+          error "Can't checkout tag ${CL_BL_RED}${tag}${CL_RED}:"
 
           if [[ -z "$verbose" ]] ; then
             error ""
@@ -285,7 +285,7 @@ packSourcesFromGit() {
 
     if [[ -n "$path" ]] ; then
       if [[ ! -d "$dir_name/$path" ]] ; then
-        error "Can't find path ${CL_BL_RED}${path}${CL_NORM} in git repository" $RED
+        error "Can't find path ${CL_BL_RED}${path}${CL_NORM} in git repository"
         doExit $ERROR_SOURCE
       else
         mv "$dir_name/$path" "$source_name"
@@ -348,7 +348,7 @@ packSourcesFromHg() {
     fi
 
     if [[ $? -ne 0 ]] ; then
-      error "Can't clone repo - error while cloning" $RED
+      error "Can't clone repo - error while cloning"
 
       if [[ -z "$verbose" ]] ; then
         error ""
@@ -369,7 +369,7 @@ packSourcesFromHg() {
         fi
 
         if [[ $? -ne 0 ]] ; then
-          error "Can't switch branch to ${CL_BL_RED}${branch}${CL_RED}:" $RED
+          error "Can't switch branch to ${CL_BL_RED}${branch}${CL_RED}:"
 
           if [[ -z "$verbose" ]] ; then
             error ""
@@ -390,7 +390,7 @@ packSourcesFromHg() {
         fi
 
         if [[ $? -ne 0 ]] ; then
-          error "Can't checkout revision ${CL_BL_RED}${revision}${CL_RED}:" $RED
+          error "Can't checkout revision ${CL_BL_RED}${revision}${CL_RED}:"
 
           if [[ -z "$verbose" ]] ; then
             error ""
@@ -409,7 +409,7 @@ packSourcesFromHg() {
         fi
 
         if [[ $? -ne 0 ]] ; then
-          error "Can't checkout tag ${CL_BL_RED}${tag}${CL_RED}:" $RED
+          error "Can't checkout tag ${CL_BL_RED}${tag}${CL_RED}:"
 
           if [[ -z "$verbose" ]] ; then
             error ""
@@ -427,7 +427,7 @@ packSourcesFromHg() {
 
     if [[ -n "$path" ]] ; then
       if [[ ! -d "$dir_name/$path" ]] ; then
-        error "Can't find path ${CL_BL_RED}${path}${CL_NORM} in mercurial repository" $RED
+        error "Can't find path ${CL_BL_RED}${path}${CL_NORM} in mercurial repository"
         doExit $ERROR_SOURCE
       else
         mv "$dir_name/$path" "$source_name"
@@ -492,7 +492,7 @@ packSourcesFromBzr() {
     fi
 
     if [[ $? -ne 0 ]] ; then
-      error "Can't make a copy of the branch" $RED
+      error "Can't make a copy of the branch"
 
       if [[ -z "$verbose" ]] ; then
         error ""
@@ -514,7 +514,7 @@ packSourcesFromBzr() {
         fi
 
         if [[ $? -ne 0 ]] ; then
-          error "Can't revert to revision ${CL_BL_RED}${revision}" $RED
+          error "Can't revert to revision ${CL_BL_RED}${revision}"
 
           if [[ -z "$verbose" ]] ; then
             error ""
@@ -532,7 +532,7 @@ packSourcesFromBzr() {
 
     if [[ -n "$path" ]] ; then
       if [[ ! -d "$dir_name/$path" ]] ; then
-        error "Can't find path ${CL_BL_RED}${path}${CL_NORM} in bazaar repository" $RED
+        error "Can't find path ${CL_BL_RED}${path}${CL_NORM} in bazaar repository"
         doExit $ERROR_SOURCE
       else
         mv "$dir_name/$path" "$source_name"
@@ -620,7 +620,7 @@ packSourcesFromSvn() {
     fi
 
     if [[ $? -ne 0 ]] ; then
-      error "Can't checkout source code from ${CL_BL_RED}${svn}" $RED
+      error "Can't checkout source code from ${CL_BL_RED}${svn}"
 
       if [[ -z "$verbose" ]] ; then
         error ""
@@ -635,7 +635,7 @@ packSourcesFromSvn() {
 
       if [[ -n "$path" ]] ; then
         if [[ ! -d "${source_name}_tmp/$path" ]] ; then
-          error "Can't find path ${CL_BL_RED}${path}${CL_NORM} in svn repository" $RED
+          error "Can't find path ${CL_BL_RED}${path}${CL_NORM} in svn repository"
           doExit $ERROR_SOURCE
         else
           mv "${source_name}_tmp/$path" "$source_name"

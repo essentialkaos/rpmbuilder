@@ -18,21 +18,21 @@ validatePackage() {
   showm "${CL_CYAN}${rpm_name}:${CL_NORM} "
 
   if rpm -qp --scripts "$rpm_file" 2>&1 | grep -E -q '\%\{.*\}' ; then
-    error "ERROR\n" $RED
-    error "RPM package ${CL_BL_YELLOW}${rpm_name}${CL_YELLOW} contains unexpanded macroses in scriptlets:" $YELLOW
-    error "${CL_GREY}"
-    rpm -qp --scripts "$rpm_file" 2>&1 | grep -E -A1 -B1 '\%\{.*\}' | sed '/^$/d' | sed 's/^/  /g' 1>&2
-    error "${CL_NORM}"
+    show "ERROR\n" $RED
+    show "RPM package ${CL_BL_YELLOW}${rpm_name}${CL_YELLOW} contains unexpanded macroses in scriptlets:" $YELLOW
+    show "${CL_GREY}"
+    rpm -qp --scripts "$rpm_file" 2>&1 | grep -E -A1 -B1 '\%\{.*\}' | sed '/^$/d' | sed 's/^/  /g'
+    show "${CL_NORM}"
 
     return 1
   fi
 
   if rpm -qlp "$rpm_file" 2>&1 | grep -E -q '\%\{.*\}' ; then
-    error "ERROR\n" $RED
-    error "RPM package ${CL_BL_YELLOW}${rpm_name}${CL_YELLOW} contains unexpanded macroses in files section:" $YELLOW
-    error "${CL_GREY}"
-    rpm -qlp "$rpm_file" 2>&1 | grep -E -A1 -B1 '\%\{.*\}' | sed '/^$/d' | sed 's/^/  /g' 1>&2
-    error "${CL_NORM}"
+    show "ERROR\n" $RED
+    show "RPM package ${CL_BL_YELLOW}${rpm_name}${CL_YELLOW} contains unexpanded macroses in files section:" $YELLOW
+    show "${CL_GREY}"
+    rpm -qlp "$rpm_file" 2>&1 | grep -E -A1 -B1 '\%\{.*\}' | sed '/^$/d' | sed 's/^/  /g'
+    show "${CL_NORM}"
 
     return 1
   fi
@@ -44,8 +44,8 @@ validatePackage() {
     cver=$(rpm -qp --changelog "$rpm_file" | head -1 | rev | cut -d"-" -f2 | rev | tr -d " ")
 
     if [[ "$pver" != "$cver" ]] ; then
-      error "WARNING" $YELLOW
-      error "RPM package version not equal to the version from the latest record in the changelog ($pver ≠ $cver)\n" $YELLOW
+      show "WARNING" $YELLOW
+      show "RPM package version not equal to the version from the latest record in the changelog ($pver ≠ $cver)\n" $YELLOW
 
       return 0
     fi
