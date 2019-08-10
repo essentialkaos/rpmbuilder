@@ -1,6 +1,8 @@
 <p align="center"><a href="#readme"><img src="https://gh.kaos.st/rpmbuilder.svg"/></a></p>
 
-<p align="center"><a href="#usage-demo">Usage demo</a> • <a href="#installation">Installation</a> • <a href="#usage">Usage</a> • <a href="#contributing">Contributing</a> • <a href="#license">License</a></p>
+<p align="center"><a href="#usage-demo">Usage demo</a> • <a href="#installation">Installation</a> • <a href="#tips">Tips</a> • <a href="#usage">Usage</a> • <a href="#build-status">Build Status</a> • <a href="#contributing">Contributing</a> • <a href="#license">License</a></p>
+
+<br/>
 
 `rpmbuilder` is RPM package build helper.
 
@@ -45,6 +47,11 @@ Build node:
 [sudo] service buildmon start
 ```
 
+### Tips
+
+* You could define rpmbuilder options inside your specs ([example](https://github.com/essentialkaos/kaos-repo/blob/develop/specs/clickhouse/clickhouse.spec#L3-L4)). It very helpful for determining information about external sources.
+* Since version 2.5.0 rpmbuilder provides automatic checksum generation feature. [More info](https://github.com/essentialkaos/rpmbuilder/wiki/Automatic-SHA-512-checksum-generation).
+
 ### Usage
 
 ```
@@ -69,7 +76,7 @@ Source packaging:
   --git url                        Fetch sources from Git repository
   --svn url                        Fetch sources from SVN repository
   --hg url                         Fetch sources from Mercurial repository
-  --bzr url                        Fetch sources from Bazar repository
+  --bzr url                        Fetch sources from Bazaar repository
   --path, -rp path                 Path to a directory with sources in repository
   --branch, -rb branch             Use specified repository branch
   --revision, -rr rev              Use specified revision

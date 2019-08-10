@@ -384,7 +384,7 @@ usage() {
   showo "--git" "Fetch sources from Git repository" "url"
   showo "--svn" "Fetch sources from SVN repository" "url"
   showo "--hg" "Fetch sources from Mercurial repository" "url"
-  showo "--bzr" "Fetch sources from Bazar repository" "url"
+  showo "--bzr" "Fetch sources from Bazaar repository" "url"
   showo "--path, -rp" "Path to a directory with sources in repository" "path"
   showo "--branch, -rb" "Use specified repository branch" "branch"
   showo "--revision, -rr" "Use specified revision" "rev"
