@@ -76,12 +76,12 @@ copySourcesToBuildDir() {
 
       if [[ $? -ne 0 ]] ; then
         source_file_name=$(basename "$source_file")
-        error "Can't copy source file ${CL_BL_RED}${source_file_name}${CL_RED} to directory ${CL_BL_RED}${src_dir}${CL_RED} - error while copy process" $RED
+        error "Can't copy source file ${CL_BL_RED}${source_file_name}${CL_RED} to directory ${CL_BL_RED}${src_dir}${CL_RED} - error while copy process"
         doExit $ERROR_SOURCE
       fi
     done
   else
-    error "Error! Can't copy source files - directory ${CL_BL_RED}${src_dir}${CL_RED} doesn't exist" $RED
+    error "Error! Can't copy source files - directory ${CL_BL_RED}${src_dir}${CL_RED} doesn't exist"
     doExit $ERROR_SOURCE
   fi
 
@@ -95,7 +95,7 @@ copySourcesToBuildDir() {
 
     [[ -n "$bump" ]] && releaseBump "$specs_dir/$spec"
   else
-    error "Error! Can't copy spec file - directory ${CL_BL_RED}${specs_dir}${CL_RED} doesn't exist." $RED
+    error "Error! Can't copy spec file - directory ${CL_BL_RED}${specs_dir}${CL_RED} doesn't exist."
     doExit $ERROR_SOURCE
   fi
 }
@@ -124,7 +124,7 @@ localDepsInstall() {
 
   if [[ $? -ne 0 ]] ; then
     show ""
-    error "Can't install required dependencies" $RED
+    error "Can't install required dependencies"
     doExit $ERROR_DEPS
   fi
 
@@ -140,7 +140,7 @@ localDepsInstall() {
 # Echo: No
 localSpecValidate() {
   if ! hasApp "perfecto" ; then
-    error "Can't validate spec file - perfecto not installed!" $RED
+    error "Can't validate spec file - perfecto not installed!"
     return 1
   fi
 
@@ -155,7 +155,7 @@ localSpecValidate() {
 
   if [[ $? -ne 0 ]] ; then
     show ""
-    error "Build canceled because spec contains problems reported by perfecto" $RED
+    error "Build canceled because spec contains problems reported by perfecto"
     doExit $ERROR_LINT
   fi
 
@@ -224,10 +224,10 @@ localBuildProcess() {
       stopStatusObserver
       show ""
 
-      error "Error! Can't build a package." $RED
+      error "Error! Can't build a package."
 
       if [[ -z "$verbose" ]] ; then
-        error "Last $LOG_QUOTE_SIZE lines from build log:" $RED
+        error "Last $LOG_QUOTE_SIZE lines from build log:"
 
         showSeparator
         tail -${LOG_QUOTE_SIZE} "$tmp_output" 1>&2
@@ -242,7 +242,7 @@ localBuildProcess() {
 
         cp "$tmp_output" "$CWD/$lname"
 
-        error "Build log saved to current directory as ${CL_BL_YELLOW}${lname}" $YELLOW
+        error "Build log saved to current directory as ${CL_BL_RED}${lname}"
       fi
 
       removeLocalLock
@@ -353,10 +353,10 @@ checkLocalBuildAvailability() {
   cdf=$(( ct - cdt ))
 
   if [[ $cdf -gt $LOCK_TIME_MAX_DIFF ]] ; then
-    error "We found lock file created more than 3 hours ago. It's too much time for the usual build process." $YELLOW
-    error "If another build process doesn't occur, you must remove file $BUILD_LOCK_LOCAL manually." $YELLOW
-    error "We will continue to build when this file will be removed." $YELLOW
-    error ""
+    show "We found lock file created more than 3 hours ago. It's too much time for the usual build process." $YELLOW
+    show "If another build process doesn't occur, you must remove file $BUILD_LOCK_LOCAL manually." $YELLOW
+    show "We will continue to build when this file will be removed." $YELLOW
+    show ""
   fi
 
   showt "\r${CL_GREEN}Executing:${CL_NORM} ${CL_YELLOW}waiting in queue${CL_NORM}"

@@ -113,7 +113,7 @@ makeTemp() {
   tmp_dir=$(mktemp -d "${tmp:?}/$TMP_DIR_TEMPLATE")
 
   if [[ ! -f "$tmp_output" || ! -d "$tmp_dir" ]] ; then
-    error "Can't start build process - temp file can't be created" $RED
+    error "Can't start build process - temp file can't be created"
     doExit $ERROR_UNKNOWN
   fi
 }

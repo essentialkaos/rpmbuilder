@@ -24,7 +24,7 @@ downloadRemoteSources() {
   showSeparator "DOWNLOADING"
 
   if [[ ! -d "$dlcache" ]] ; then
-    error "Can't download sources - download destination directory doesn't exist" $RED
+    error "Can't download sources - download destination directory doesn't exist"
     doExit $ERROR_ARGS
   fi
 
@@ -55,7 +55,7 @@ downloadRemoteSources() {
       downloadSource "$source_file" "$download"
 
       if [[ $? -ne 0 ]] ; then
-        error "Error! Can't download file ${CL_BL_RED}${source_file}${CL_RED}." $RED
+        error "Error! Can't download file ${CL_BL_RED}${source_file}${CL_RED}."
         doExit $ERROR_SOURCE
       fi
 
@@ -86,7 +86,7 @@ downloadSource() {
   file_name=$(basename "$url")
 
   if ! isAccessibleURL "$url" ; then
-    error "Can't download file ${CL_BL_RED}${file_name}${CL_RED} - server return error code" $RED
+    error "Can't download file ${CL_BL_RED}${file_name}${CL_RED} - server return error code"
     doExit $ERROR_SOURCE
   else
     start=$(now)

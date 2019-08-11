@@ -22,12 +22,12 @@ packSources() {
 
   if [[ -n "$source_list" ]] ; then
     if [[ ! -r $source_list ]] ; then
-      error "Can't pack sources - file ${CL_BL_RED}${source_list}${CL_RED} not readable" $RED
+      error "Can't pack sources - file ${CL_BL_RED}${source_list}${CL_RED} not readable"
       doExit $ERROR_SOURCE
     fi
 
     if [[ ! -s $source_list ]] ; then
-      error "Can't pack sources - file ${CL_BL_RED}${source_list}${CL_RED} is empty" $RED
+      error "Can't pack sources - file ${CL_BL_RED}${source_list}${CL_RED} is empty"
       doExit $ERROR_SOURCE
     fi
 
@@ -38,7 +38,7 @@ packSources() {
 
   for src_target in $pack ; do
     if [[ ! -a $src_target ]] ; then
-      error "Can't pack sources - ${CL_BL_RED}${src_target}${CL_RED} not exist or not accesable" $RED
+      error "Can't pack sources - ${CL_BL_RED}${src_target}${CL_RED} not exist or not accesable"
       doExit $ERROR_SOURCE
     fi
   done
@@ -57,7 +57,7 @@ packSources() {
   fi
 
   if [[ $? -ne 0 ]] ; then
-    error "Can't copy source files to a temporary directory" $RED
+    error "Can't copy source files to a temporary directory"
     doExit 1
   fi
 
@@ -107,7 +107,7 @@ packDir() {
     elif [[ "$ext" == "tar.xz" || "$ext" == "txz" ]] ; then
       tar cf - "$dir_name" | xz -9 -c - > "$arch_name.$ext"
     else
-      error "Error! Unknown archive type." $RED
+      error "Error! Unknown archive type."
       doExit $ERROR_SOURCE
     fi
 
@@ -230,4 +230,21 @@ validateSourceFile() {
   fi
 
   return 0
+}
+
+# Generate file with SHA-512 checksums for all source files
+#
+# Code: Yes
+# Echo: No
+generateChecksumFile() {
+  local status
+
+  pushd "$tmp_dir" &> /dev/null || return 1
+
+    sha512sum ./* 1> "$CHECKSUM_FILE" 2>/dev/null
+    status=$?
+
+  popd &> /dev/null || return 1
+
+  return $status
 }

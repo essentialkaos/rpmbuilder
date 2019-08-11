@@ -108,7 +108,8 @@ basicBuild() {
 processSpec() {
   local spec="$1"
 
-  local source_list patch_list files source_file source_num file_name found_source
+  local source_list patch_list files source_file
+  local source_num file_name found_source gen_crc
 
   source_list=$(getSources "$spec")
   patch_list=$(getPatches "$spec")
@@ -141,7 +142,7 @@ processSpec() {
           downloadSource "$source_file" "$dlcache"
 
           if [[ $? -ne 0 ]] ; then
-            error "Error! Can't download file ${CL_BL_RED}${source_file}${CL_RED}." $RED
+            error "Error! Can't download file ${CL_BL_RED}${source_file}${CL_RED}."
             doExit $ERROR_SOURCE
           fi
 
@@ -153,7 +154,7 @@ processSpec() {
         downloadSource "$source_file" "$tmp_dir"
 
         if [[ $? -ne 0 ]] ; then
-          error "Error! Can't download file ${CL_BL_RED}${source_file}${CL_RED}." $RED
+          error "Error! Can't download file ${CL_BL_RED}${source_file}${CL_RED}."
           doExit $ERROR_SOURCE
         fi
       fi
@@ -170,6 +171,11 @@ processSpec() {
       found_dir=$(findSource "$source_name" true)
       found_source=$(findSource "$source_file")
 
+      if [[ "$source_file" == "$CHECKSUM_FILE" && -z "$found_source" ]] ; then
+        gen_crc=true
+        continue
+      fi
+
       if [[ -n "$source_ext" && -n "$found_dir" ]] ; then
         show "File ${CL_CYAN}${source_file}${CL_NORM} listed in spec and will be created from sources directory"
 
@@ -184,13 +190,20 @@ processSpec() {
 
         source_num=$(( source_num + 1 )) && continue
       else
-        error "Can't use file ${CL_BL_RED}${source_file}${CL_RED} for build - file not found in sources directory" $RED
+        error "Can't use file ${CL_BL_RED}${source_file}${CL_RED} for build - file not found in sources directory"
         doExit $ERROR_SOURCE
       fi
     fi
 
     source_num=$(( source_num + 1 ))
   done
+
+  if [[ -n "$gen_crc" ]] ; then
+    if ! generateChecksumFile ; then
+      error "Can't generate file with checksums"
+      doExit $ERROR_SOURCE
+    fi
+  fi
 
   if ! validateSources ; then
     doExit $ERROR_SOURCE
@@ -204,101 +217,103 @@ processSpec() {
 checkOptions() {
   if [[ -n "$key" ]] ; then
     if [[ ! -r "$key" && ! -r "$HOME/.ssh/$key" ]] ; then
-      error "Can't start build process: key file is not readable" $RED
+      error "Can't start build process: key file is not readable"
       doExit $ERROR_ARGS
     fi
   fi
 
   if [[ -n "$parallel" && -z "$remote" ]] ; then
-    error "Can't start build process: remote build server not defined" $RED
+    error "Can't start build process: remote build server not defined"
     doExit $ERROR_ARGS
   fi
 
   if ! hasApp "perfecto" && [[ -n "$perfect" ]] ; then
-    error "Can't start build process: for using --perfect option, you must install perfecto first" $RED
+    error "Can't start build process: for using --perfect option, you must install perfecto first"
     doExit $ERROR_DEPS
   fi
 
   if [[ -n "$dest_dir" && ! -d $dest_dir ]] ; then
-    error "Can't start build process: destination directory doesn't exist" $RED
+    error "Can't start build process: destination directory doesn't exist"
     doExit $ERROR_ARGS
   fi
 
   if [[ -n "$dlcache" && ! -d $dlcache ]] ; then
-    error "Can't start build process: download cached directory doesn't exist" $RED
+    error "Can't start build process: download cached directory doesn't exist"
     doExit $ERROR_ARGS
   fi
 
   if [[ -n "$remote" && -z "$host" && ! -r $remote && ! "$remote" =~ \@|\~ && ! "$remote" =~ :[0-9]{1,}$ ]] ; then
-    error "Can't start remote build process: you must define the remote host" $RED
+    error "Can't start remote build process: you must define the remote host"
     doExit $ERROR_ARGS
   fi
 
   if ! hasApp "git" && [[ -n "$git" ]] ; then
-    error "Can't start build process: for using --git option, you must install git first" $RED
+    error "Can't start build process: for using --git option, you must install git first"
     doExit $ERROR_DEPS
   fi
 
   if ! hasApp "svn" && [[ -n "$svn" ]] ; then
-    error "Can't start build process: for using --svn option, you must install svn first" $RED
+    error "Can't start build process: for using --svn option, you must install svn first"
     doExit $ERROR_DEPS
   fi
 
   if ! hasApp "hg" && [[ -n "$hg" ]] ; then
-    error "Can't start build process: for using --hg option, you must install hg first" $RED
+    error "Can't start build process: for using --hg option, you must install hg first"
     doExit $ERROR_DEPS
   fi
 
   if ! hasApp "bzr" && [[ -n "$bzr" ]] ; then
-    error "Can't start build process: for using --bzr option, you must install bzr first" $RED
+    error "Can't start build process: for using --bzr option, you must install bzr first"
     doExit $ERROR_DEPS
   fi
 
   if ! hasApp "gopack" && [[ -n "$gopack" ]] ; then
-    error "Can't start build process: for using --gopack option, you must install gopack first" $RED
+    error "Can't start build process: for using --gopack option, you must install gopack first"
     doExit $ERROR_DEPS
   fi
 
   if ! hasApp "sshpass" && [[ -n "$pass" ]] ; then
-    error "Can't start build process: for using --pass option, you must install sshpass first" $RED
+    error "Can't start build process: for using --pass option, you must install sshpass first"
     doExit $ERROR_DEPS
   fi
 
   if ! hasApp "rpmbuild" "rpmlint" && [[ -z "$remote" ]] ; then
-    error "Can't start local build process:  you must install rpmbuild and rpmlint first" $RED
+    error "Can't start local build process:  you must install rpmbuild and rpmlint first"
     doExit $ERROR_DEPS
   fi
 
   if ! hasApp "rpm" && [[ -n "$sign" && -z "$remote" ]] ; then
-    error "Can't start local build process: for signing packages you must install rpm first" $RED
+    error "Can't start local build process: for signing packages you must install rpm first"
     doExit $ERROR_DEPS
   fi
 
   if ! hasApp "spectool" ; then
-    error "Can't start local build process: spectool (part of rpmdevtools) is required" $RED
+    error "Can't start local build process: spectool (part of rpmdevtools) is required"
     doExit $ERROR_DEPS
   fi
 
   if [[ ! -d $tmp ]] ; then
-    error "Can't start build process: temp directory doesn't exist" $RED
+    error "Can't start build process: temp directory doesn't exist"
     doExit $ERROR_UNKNOWN
   fi
 
   if [[ -n "$dlcache" && ! -d $dlcache ]] ; then
-    error "Can't start build process: download cache directory doesn't exist" $RED
+    error "Can't start build process: download cache directory doesn't exist"
     doExit $ERROR_UNKNOWN
   fi
 
   if [[ -n "$bump" ]] ; then
     if ! hasApp "rpmdev-packager" "rpmdev-bumpspec" ; then
-      error "Can't start build process: for automatic release bumping you must install rpmdev-bumpspec and rpmdev-packager (from rpmdevtools package) first" $RED
+      error "Can't start build process: for automatic release bumping you must install"
+      error "rpmdev-bumpspec and rpmdev-packager (from rpmdevtools package) first"
       doExit $ERROR_DEPS
     fi
 
     packager=$(rpmdev-packager)
 
     if [[ -z "$packager" ]] ; then
-      error "Can't start build process: for automatic release bumping you must define %packager (name + email e.g. \"%packager John Smith <mail@smith.com>\") value in file ~/.rpmmacros" $RED
+      error "Can't start build process: for automatic release bumping you must define %packager"
+      error "(name + email e.g. \"%packager John Smith <mail@smith.com>\") value in file ~/.rpmmacros"
       doExit $ERROR_UNKNOWN
     fi
   fi
