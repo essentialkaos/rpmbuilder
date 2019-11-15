@@ -13,24 +13,24 @@ env:
     - IMAGE=essentialkaos/perfecto:centos7
 
 before_install:
-  - wget https://storage.googleapis.com/shellcheck/shellcheck-latest.linux.x86_64.tar.xz
+  - wget https://storage.googleapis.com/shellcheck/shellcheck-stable.linux.x86_64.tar.xz
   - wget -O hadolint "https://github.com/hadolint/hadolint/releases/download/v1.15.0/hadolint-Linux-x86_64"
-  - tar xf shellcheck-latest.linux.x86_64.tar.xz
+  - tar xf shellcheck-stable.linux.x86_64.tar.xz
   - docker pull "$IMAGE"
   - wget https://kaos.sh/perfecto/perfecto-docker
   - chmod +x perfecto-docker
   - chmod +x hadolint
   - ./perfecto-docker --version
-  - ./shellcheck-latest/shellcheck --version
+  - ./shellcheck-stable/shellcheck --version
   - ./hadolint --version
 
 script:
- - bash -c 'shopt -s globstar; ./shellcheck-latest/shellcheck SOURCES/rpmbuilder SOURCES/libexec/*.shx'
- - bash -c 'shopt -s globstar; ./shellcheck-latest/shellcheck SOURCES/rpmunbuilder'
- - bash -c 'shopt -s globstar; ./shellcheck-latest/shellcheck SOURCES/buildmon'
- - bash -c 'shopt -s globstar; ./shellcheck-latest/shellcheck SOURCES/initenv'
- - bash -c 'shopt -s globstar; ./shellcheck-latest/shellcheck SOURCES/nodeinfo'
- - bash -c 'shopt -s globstar; ./shellcheck-latest/shellcheck SOURCES/docker-entrypoint'
+ - bash -c 'shopt -s globstar; ./shellcheck-stable/shellcheck SOURCES/rpmbuilder SOURCES/libexec/*.shx'
+ - bash -c 'shopt -s globstar; ./shellcheck-stable/shellcheck SOURCES/rpmunbuilder'
+ - bash -c 'shopt -s globstar; ./shellcheck-stable/shellcheck SOURCES/buildmon'
+ - bash -c 'shopt -s globstar; ./shellcheck-stable/shellcheck SOURCES/initenv'
+ - bash -c 'shopt -s globstar; ./shellcheck-stable/shellcheck SOURCES/nodeinfo'
+ - bash -c 'shopt -s globstar; ./shellcheck-stable/shellcheck SOURCES/docker-entrypoint'
  - ./perfecto-docker rpmbuilder.spec
  - ./perfecto-docker rpmbuilder-node.spec
  - ./hadolint centos6.docker
