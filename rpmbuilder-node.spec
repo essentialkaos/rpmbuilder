@@ -98,15 +98,15 @@ install -pm 755 nodeinfo %{buildroot}%{home_dir}/
 install -pm 755 initenv %{buildroot}%{home_dir}/
 install -pm 644 rpmlint %{buildroot}%{home_dir}/.config/
 
-%if 0%{?rhel} = 8
+%if 0%{?rhel} == 8
 install -pm 755 rpmmacros_centos8 %{buildroot}%{home_dir}/.rpmmacros_rpmbuilder
 %endif
 
-%if 0%{?rhel} = 7
+%if 0%{?rhel} == 7
 install -pm 755 rpmmacros_centos7 %{buildroot}%{home_dir}/.rpmmacros_rpmbuilder
 %endif
 
-%if 0%{?rhel} = 6
+%if 0%{?rhel} == 6
 install -pm 755 rpmmacros_centos6 %{buildroot}%{home_dir}/.rpmmacros_rpmbuilder
 %endif
 
