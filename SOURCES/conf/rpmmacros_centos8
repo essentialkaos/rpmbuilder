@@ -11,6 +11,12 @@
 # Added check-buildroot for post install actions
 %__arch_install_post  /usr/lib/rpm/check-rpaths /usr/lib/rpm/check-buildroot
 
+# Fix broken provides search on CentOS 8
+%_use_internal_dependency_generator  0
+
+# Fix default dist name on CentOS 8
+%dist  .el8
+
 # Use xz compression for payload by default
 %_source_payload  w7.xzdio
 %_binary_payload  w7.xzdio

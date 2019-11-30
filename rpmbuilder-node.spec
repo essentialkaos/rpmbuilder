@@ -52,7 +52,7 @@
 Summary:         Configuration package for rpmbuilder node
 Name:            rpmbuilder-node
 Version:         1.4.1
-Release:         0%{?dist}
+Release:         1%{?dist}
 License:         EKOL
 Group:           Development/Tools
 URL:             https://github.com/essentialkaos/rpmbuilder
@@ -98,9 +98,15 @@ install -pm 755 nodeinfo %{buildroot}%{home_dir}/
 install -pm 755 initenv %{buildroot}%{home_dir}/
 install -pm 644 rpmlint %{buildroot}%{home_dir}/.config/
 
-%if 0%{?rhel} >= 7
+%if 0%{?rhel} = 8
+install -pm 755 rpmmacros_centos8 %{buildroot}%{home_dir}/.rpmmacros_rpmbuilder
+%endif
+
+%if 0%{?rhel} = 7
 install -pm 755 rpmmacros_centos7 %{buildroot}%{home_dir}/.rpmmacros_rpmbuilder
-%else
+%endif
+
+%if 0%{?rhel} = 6
 install -pm 755 rpmmacros_centos6 %{buildroot}%{home_dir}/.rpmmacros_rpmbuilder
 %endif
 
@@ -164,6 +170,9 @@ fi
 ################################################################################
 
 %changelog
+* Sat Nov 30 2019 Anton Novojilov <andy@essentialkaos.com> - 1.4.1-1
+- Added rpmmacros file for CentOS 8
+
 * Fri Jan 04 2019 Anton Novojilov <andy@essentialkaos.com> - 1.4.1-0
 - Code refactoring
 

@@ -2,7 +2,7 @@
 
 Summary:         RPM package build helper
 Name:            rpmbuilder
-Version:         2.5.0
+Version:         2.5.1
 Release:         0%{?dist}
 License:         EKOL
 Group:           Development/Tools
@@ -55,6 +55,10 @@ rm -rf %{buildroot}
 ################################################################################
 
 %changelog
+* Sat Nov 30 2019 Anton Novojilov <andy@essentialkaos.com> - 2.5.1-0
+- Added handling of SCRIPT_DEBUG environment variable for enabling debug mode
+- Added handler for script errors
+
 * Thu Aug 08 2019 Anton Novojilov <andy@essentialkaos.com> - 2.5.0-0
 - Automatic SHA-512 CRC generation feature
 

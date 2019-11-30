@@ -1,13 +1,21 @@
 #!/usr/bin/env bash
 # shellcheck disable=SC1117,SC2034,SC2154
 
+################################################################################
+
+if [[ -n "${SCRIPT_DEBUG}" ]] ; then
+  set -x
+fi
+
+################################################################################
+
 # Utility name (String)
 APP="RPMBuilder"
 
 # Utility version (String)
-VER="2.5.0"
+VER="2.5.1"
 
-####################################################################
+################################################################################
 
 NORM=0
 BOLD=1
@@ -61,7 +69,7 @@ CHECKSUM_FILE="checksum.sha512"
 
 SEPARATOR="----------------------------------------------------------------------------------------"
 
-###############################################################################
+################################################################################
 
 # Path to preferencies file
 PREFS_FILE="$HOME/.rpmbuilder"
@@ -93,7 +101,7 @@ MERGEABLE_ARGS="pack with without enable_repo disable_repo exclude_package defin
 
 KEEP_ARGS=true
 
-###############################################################################
+################################################################################
 
 # Path to libexec directory
 LIBEXEC_DIR="/usr/libexec/rpmbuilder"
@@ -161,7 +169,7 @@ TMP_DIR_TEMPLATE="rpmbuilder-XXXXXXXX"
 # Template used for temporary output file name generation (String)
 TMP_OUT_TEMPLATE="rpmbuilder-XXXXXXXX.out"
 
-###############################################################################
+################################################################################
 
 # Path to directory with temporary data (String)
 tmp="/tmp"
@@ -185,13 +193,15 @@ build_end=0
 
 declare -A _requires
 
-###############################################################################
+################################################################################
 
 # Main function
 #
 # Code: No
 # Echo: No
 main() {
+  trap errHandler ERR
+
   if [[ ! -t 1 || -n "$no_colors" ]] ; then
     unset NORM BOLD UNLN RED GREEN YELLOW BLUE MAG CYAN GREY DARK
     unset CL_NORM CL_BOLD CL_UNLN CL_RED CL_GREEN CL_YELLOW CL_BLUE CL_MAG CL_DARK
@@ -355,7 +365,7 @@ showArgWarn() {
   exit 1
 }
 
-###############################################################################
+################################################################################
 
 # Print usage info
 #
@@ -501,7 +511,19 @@ about() {
   show ""
 }
 
-## PREFS PARSING ##############################################################
+# Handler for errors
+#
+# Code: No
+# Echo: No
+errHandler() {
+  while caller $((n++)) ; do
+    true
+  done
+
+  exit 1
+}
+
+## PREFS PARSING ###############################################################
 
 unset arg argn argp
 
@@ -516,7 +538,7 @@ if [[ -n "$PREFS_FILE" && -r "$PREFS_FILE" ]] ; then
   unset arg argn argp
 fi
 
-## ARGUMENTS PARSING 4 #################################################################
+## ARGUMENTS PARSING 4 #########################################################
 
 [[ $# -eq 0 ]] && main && exit $?
 
@@ -623,4 +645,4 @@ unset arg argn argm argk
 # shellcheck disable=SC2015,SC2086
 [[ -n "$KEEP_ARGS" ]] && main $argv || main ${argt:1}
 
-########################################################################################
+################################################################################
