@@ -184,8 +184,8 @@ Other:
 
 | Branch | Status |
 |--------|--------|
-| `master` (_Stable_) | [![Build Status](https://travis-ci.org/essentialkaos/rpmbuilder.svg?branch=master)](https://travis-ci.org/essentialkaos/rpmbuilder) |
-| `develop` (_Unstable_) | [![Build Status](https://travis-ci.org/essentialkaos/rpmbuilder.svg?branch=develop)](https://travis-ci.org/essentialkaos/rpmbuilder) |
+| `master` (_Stable_) | [![Build Status](https://travis-ci.com/essentialkaos/rpmbuilder.svg?branch=master)](https://travis-ci.com/essentialkaos/rpmbuilder) |
+| `develop` (_Unstable_) | [![Build Status](https://travis-ci.com/essentialkaos/rpmbuilder.svg?branch=develop)](https://travis-ci.com/essentialkaos/rpmbuilder) |
 
 ### Contributing
 

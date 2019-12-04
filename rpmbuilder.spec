@@ -2,7 +2,7 @@
 
 Summary:         RPM package build helper
 Name:            rpmbuilder
-Version:         2.5.1
+Version:         2.5.2
 Release:         0%{?dist}
 License:         EKOL
 Group:           Development/Tools
@@ -55,6 +55,9 @@ rm -rf %{buildroot}
 ################################################################################
 
 %changelog
+* Wed Dec 04 2019 Anton Novojilov <andy@essentialkaos.com> - 2.5.2-0
+- Removed handler for script errors
+
 * Sat Nov 30 2019 Anton Novojilov <andy@essentialkaos.com> - 2.5.1-0
 - Added handling of SCRIPT_DEBUG environment variable for enabling debug mode
 - Added handler for script errors
