@@ -13,7 +13,7 @@ fi
 APP="RPMBuilder"
 
 # Utility version (String)
-VER="2.5.1"
+VER="2.5.2"
 
 ################################################################################
 
@@ -200,8 +200,6 @@ declare -A _requires
 # Code: No
 # Echo: No
 main() {
-  trap errHandler ERR
-
   if [[ ! -t 1 || -n "$no_colors" ]] ; then
     unset NORM BOLD UNLN RED GREEN YELLOW BLUE MAG CYAN GREY DARK
     unset CL_NORM CL_BOLD CL_UNLN CL_RED CL_GREEN CL_YELLOW CL_BLUE CL_MAG CL_DARK
@@ -509,18 +507,6 @@ about() {
   show "Copyright (C) 2009-$(date +%Y) ESSENTIAL KAOS" $DARK
   show "Essential Kaos Open Source License <https://essentialkaos.com/ekol>" $DARK
   show ""
-}
-
-# Handler for errors
-#
-# Code: No
-# Echo: No
-errHandler() {
-  while caller $((n++)) ; do
-    true
-  done
-
-  exit 1
 }
 
 ## PREFS PARSING ###############################################################

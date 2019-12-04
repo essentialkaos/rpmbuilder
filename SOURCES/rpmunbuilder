@@ -13,7 +13,7 @@ fi
 APP="RPMUnbuilder"
 
 # Utility version (String)
-VER="1.1.8"
+VER="1.1.9"
 
 ################################################################################
 
@@ -58,8 +58,6 @@ SHORT_ARGS="h:help v:version"
 # Code: No
 # Echo: No
 main() {
-  trap errHandler ERR
-
   if [[ -n "$ver" || -n "$version" ]] ; then
     about
     exit 0
@@ -263,18 +261,6 @@ about() {
   show ""
   show "Copyright (C) 2009-$(date +%Y) ESSENTIAL KAOS" $DARK
   show "Essential Kaos Open Source License <https://essentialkaos.com/ekol>" $DARK
-}
-
-# Handler for errors
-#
-# Code: No
-# Echo: No
-errHandler() {
-  while caller $((n++)) ; do
-    true
-  done
-
-  exit 1
 }
 
 ## ARGUMENTS PARSING 4 #########################################################
