@@ -102,6 +102,11 @@ downloadSource() {
       show "cache feature in this case. Use -dc <path> or --dlcache <path>." $YELLOW
       show ""
     fi
+
+    if ! validateSourceFile "$dir/$file_name" ; then
+      error "Invalid file ${CL_BL_RED}${source_name}${CL_RED} - file type doesn't match to file content"
+      doExit $ERROR_SOURCE
+    fi
   fi
 }
 
