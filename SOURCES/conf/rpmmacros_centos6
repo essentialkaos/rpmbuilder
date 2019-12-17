@@ -12,7 +12,7 @@
 %__arch_install_post  /usr/lib/rpm/check-rpaths /usr/lib/rpm/check-buildroot
 
 # Use xz compression for payload by default
-%_source_payload  w7.xzdio
-%_binary_payload  w7.xzdio
+%_source_payload  w7T.xzdio
+%_binary_payload  w7T.xzdio
 
 ########################################################################################

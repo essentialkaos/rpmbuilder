@@ -2,7 +2,7 @@
 
 Summary:         RPM package build helper
 Name:            rpmbuilder
-Version:         2.5.2
+Version:         2.6.0
 Release:         0%{?dist}
 License:         EKOL
 Group:           Development/Tools
@@ -55,6 +55,9 @@ rm -rf %{buildroot}
 ################################################################################
 
 %changelog
+* Fri Dec 13 2019 Anton Novojilov <andy@essentialkaos.com> - 2.6.0-0
+- Added validation for downloaded files
+
 * Wed Dec 04 2019 Anton Novojilov <andy@essentialkaos.com> - 2.5.2-0
 - Removed handler for script errors
 

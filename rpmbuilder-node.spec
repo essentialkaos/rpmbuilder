@@ -52,7 +52,7 @@
 Summary:         Configuration package for rpmbuilder node
 Name:            rpmbuilder-node
 Version:         1.4.1
-Release:         1%{?dist}
+Release:         2%{?dist}
 License:         EKOL
 Group:           Development/Tools
 URL:             https://github.com/essentialkaos/rpmbuilder
@@ -170,6 +170,9 @@ fi
 ################################################################################
 
 %changelog
+* Mon Dec 16 2019 Anton Novojilov <andy@essentialkaos.com> - 1.4.1-2
+- Added threads usage for payload packing to rpmmacros files
+
 * Sat Nov 30 2019 Anton Novojilov <andy@essentialkaos.com> - 1.4.1-1
 - Added rpmmacros file for CentOS 8
 
