@@ -301,10 +301,10 @@ remoteSpecValidate() {
 remoteBuildProcess() {
   local spec="$1"
 
-  local spec_name build_args build_prfx rpmbuild_dir specs_dir
+  local spec_name build_opts build_prfx rpmbuild_dir specs_dir
 
   spec_name=$(basename "$spec")
-  build_args=$(getBuildOpts)
+  build_opts=$(getBuildOpts)
   build_prfx=$(getBuildPrefix)
   rpmbuild_dir=$(getRPMBuildDir)
   specs_dir="$rpmbuild_dir/SPECS"
@@ -323,9 +323,9 @@ remoteBuildProcess() {
   startStatusObserver
 
   if [[ -n "$verbose" ]] ; then
-    sshCommand "$user@$host" "cd $specs_dir && $build_prfx rpmbuild $spec_name $build_args" | tee "$tmp_output" &> $verb_output
+    sshCommand "$user@$host" "cd $specs_dir && $build_prfx rpmbuild $spec_name $build_opts" | tee "$tmp_output" &> $verb_output
   else
-    sshCommand "$user@$host" "cd $specs_dir && $build_prfx rpmbuild $spec_name $build_args" 1> "$tmp_output" 2> /dev/null
+    sshCommand "$user@$host" "cd $specs_dir && $build_prfx rpmbuild $spec_name $build_opts" 1> "$tmp_output" 2> /dev/null
   fi
 
   stopStatusObserver

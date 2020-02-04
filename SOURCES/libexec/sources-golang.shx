@@ -11,7 +11,7 @@
 # Echo: No
 packGolangSources() {
   local spec="$1"
-  local args sources output status
+  local opts sources output status
 
   IFS=" " read -r -a sources <<< "$(getSources "$spec")"
 
@@ -29,16 +29,16 @@ packGolangSources() {
     output="${sources[0]}"
   fi
 
-  args="-o $output"
+  opts="-o $output"
 
-  [[ -n "$revision" ]] && args="$args -r $revision"
-  [[ -n "$branch" ]]   && args="$args -b $branch"
-  [[ -n "$tag" ]]      && args="$args -t $tag"
-  [[ -n "$verbose" ]]  && args="$args -V"
+  [[ -n "$revision" ]] && opts="$opts -r $revision"
+  [[ -n "$branch" ]]   && opts="$opts -b $branch"
+  [[ -n "$tag" ]]      && opts="$opts -t $tag"
+  [[ -n "$verbose" ]]  && opts="$opts -V"
 
-  args="$args $gopack"
+  opts="$opts $gopack"
 
-  gopack $args
+  gopack $opts
 
   if [[ $? -ne 0 ]] ; then
     showSeparator

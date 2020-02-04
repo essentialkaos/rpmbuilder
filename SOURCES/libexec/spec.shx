@@ -33,17 +33,17 @@ isSpecFile() {
 # Echo: No
 readInspecOptions() {
   local spec="$1"
-  local arg line argn
+  local opt line optn
 
   while read -r line ; do
-    IFS=" " read -ra arg <<< "$line"
+    IFS=" " read -ra opt <<< "$line"
 
-    argn="${arg[0]//-/_}"
+    optn="${opt[0]//-/_}"
 
-    if [[ -z "${!argn}" && $INSPEC_ARGS\  =~ $argn\  ]] ; then
-      eval "$argn=${arg[*]:1:99}"
+    if [[ -z "${!optn}" && $INSPEC_OPTS\  =~ $optn\  ]] ; then
+      eval "$optn=${opt[*]:1:99}"
     fi
-  done < <(grep "$INSPEC_ARG_PREFIX" "$spec" | sed "s/# \?$INSPEC_ARG_PREFIX//g" | tr -s " ")
+  done < <(grep "$INSPEC_OPT_PREFIX" "$spec" | sed "s/# \?$INSPEC_OPT_PREFIX//g" | tr -s " ")
 }
 
 # Get sources

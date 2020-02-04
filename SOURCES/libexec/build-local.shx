@@ -171,10 +171,10 @@ localSpecValidate() {
 localBuildProcess() {
   local spec="$1"
 
-  local spec_name build_args build_prfx rpmbuild_dir specs_dir
+  local spec_name build_opts build_prfx rpmbuild_dir specs_dir
 
   spec_name=$(basename "$spec")
-  build_args=$(getBuildOpts)
+  build_opts=$(getBuildOpts)
   build_prfx=$(getBuildPrefix)
   rpmbuild_dir=$(getRPMBuildDir)
   specs_dir="$rpmbuild_dir/SPECS"
@@ -204,11 +204,11 @@ localBuildProcess() {
 
     if [[ -n "$verbose" ]] ; then
       export build_prfx
-      eval "rpmbuild $build_args $spec_name" | tee "$tmp_output" &> $verb_output
+      eval "rpmbuild $build_opts $spec_name" | tee "$tmp_output" &> $verb_output
       pipe_status=${PIPESTATUS[0]}
     else
       export build_prfx
-      eval "rpmbuild $build_args $spec_name" &> "$tmp_output"
+      eval "rpmbuild $build_opts $spec_name" &> "$tmp_output"
       exit_status=$?
     fi
 
