@@ -686,6 +686,10 @@ sshCommand() {
   local ssh_opts
   ssh_opts=$(getSSHOpts)
 
+  if [[ -n "$key" ]] ; then
+    no_pass=true
+  fi
+
   if [[ -n "$pass" && -z "$no_pass" ]] ; then
     sshpass -p "$pass" ssh $SSH_BASE_OPTS -t -t -q $ssh_opts "$host" "$comm"
   else

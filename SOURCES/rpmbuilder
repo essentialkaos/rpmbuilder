@@ -526,6 +526,11 @@ if [[ -n "$PREFS_FILE" && -r "$PREFS_FILE" ]] ; then
   unset arg argn argp
 fi
 
+# Clear some options read from preferences file for tmux worker
+if [[ "$*" =~ "--tmux-worker" ]] ; then
+  unset remote parallel
+fi
+
 ## OPTIONS PARSING 5 ###################################################################
 
 if [[ $# -eq 0 ]] ; then
