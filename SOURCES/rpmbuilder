@@ -13,7 +13,7 @@ fi
 APP="RPMBuilder"
 
 # Utility version (String)
-VER="2.7.0"
+VER="2.7.1"
 
 ################################################################################
 
@@ -524,6 +524,11 @@ if [[ -n "$PREFS_FILE" && -r "$PREFS_FILE" ]] ; then
   done < <(awk 1 "$PREFS_FILE")
 
   unset arg argn argp
+fi
+
+# Clear some options read from preferences file for tmux worker
+if [[ "$*" =~ "--tmux-worker" ]] ; then
+  unset remote parallel
 fi
 
 ## OPTIONS PARSING 5 ###################################################################

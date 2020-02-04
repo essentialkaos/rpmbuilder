@@ -2,7 +2,7 @@
 
 Summary:         RPM package build helper
 Name:            rpmbuilder
-Version:         2.7.0
+Version:         2.7.1
 Release:         0%{?dist}
 License:         EKOL
 Group:           Development/Tools
@@ -55,6 +55,9 @@ rm -rf %{buildroot}
 ################################################################################
 
 %changelog
+* Wed Feb 05 2020 Anton Novojilov <andy@essentialkaos.com> - 2.7.1-0
+- Fixed handling --download option with predefined options in preferences file
+
 * Tue Feb 04 2020 Anton Novojilov <andy@essentialkaos.com> - 2.7.0-0
 - Updated options parser to the latest version
 - Improved preferences parser
