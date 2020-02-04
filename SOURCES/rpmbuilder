@@ -518,7 +518,8 @@ PREFS_FILE="${PREFS_FILE//\~/$HOME}"
 if [[ -n "$PREFS_FILE" && -r "$PREFS_FILE" ]] ; then
   while read -r arg ; do
     [[ "$arg" =~ ^\# ]] && continue
-    arg="${arg/: /:}" ; argn="${arg%:*}" ; argn="${argn//-/_}" ; argp="${arg#*:}"
+    arg="${arg/: /:}" ; argn="${arg%:*}" ; argn="${argn//-/_}"
+    argp="${arg#*:}" ; argp="${argp/\~/$HOME}"
     [[ "$SUPPORTED_ARGS " =~ $argn\  ]] && declare "$argn=$argp"
   done < <(awk 1 "$PREFS_FILE")
 
