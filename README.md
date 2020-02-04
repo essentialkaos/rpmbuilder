@@ -50,6 +50,7 @@ Build node:
 ### Tips
 
 * You could define rpmbuilder options inside your specs ([example](https://github.com/essentialkaos/kaos-repo/blob/develop/specs/clickhouse/clickhouse.spec#L3-L4)). It very helpful for determining information about external sources.
+* If you have a big bunch of default options, you can define them in the preferences file. [More info](https://github.com/essentialkaos/rpmbuilder/wiki/Preferences-file).
 * Since version 2.5.0 rpmbuilder provides automatic checksum generation feature. [More info](https://github.com/essentialkaos/rpmbuilder/wiki/Automatic-SHA-512-checksum-generation).
 
 ### Usage
