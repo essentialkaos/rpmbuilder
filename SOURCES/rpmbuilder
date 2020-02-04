@@ -13,7 +13,7 @@ fi
 APP="RPMBuilder"
 
 # Utility version (String)
-VER="2.6.0"
+VER="2.6.1"
 
 ################################################################################
 
@@ -517,7 +517,8 @@ PREFS_FILE="${PREFS_FILE//\~/$HOME}"
 
 if [[ -n "$PREFS_FILE" && -r "$PREFS_FILE" ]] ; then
   while read -r arg ; do
-    arg="${arg/: /:}" ; argn="${arg%:*}" ; argp="${arg#*:}"
+    [[ "$arg" =~ ^\# ]] && continue
+    arg="${arg/: /:}" ; argn="${arg%:*}" ; argn="${argn//-/_}" ; argp="${arg#*:}"
     [[ "$SUPPORTED_ARGS " =~ $argn\  ]] && declare "$argn=$argp"
   done < <(awk 1 "$PREFS_FILE")
 
