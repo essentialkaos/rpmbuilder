@@ -157,7 +157,7 @@ Arguments passing:
     rpmbuilder package.spec --with "ssl ldap"
     rpmbuilder package.spec --define "install_dir=/some/dir" --define "service_user=someone"
 
-  More info: http://rpm5.org/docs/api/conditionalbuilds.html
+  More info: https://kaos.sh/rpmbuilder/w/Conditional-Builds
 
 Spec validation:
 
