@@ -472,7 +472,7 @@ usage() {
   show "    rpmbuilder package.spec --with \"ssl ldap\"" $GREY
   show "    rpmbuilder package.spec --define \"install_dir=/some/dir\" --define \"service_user=someone\"" $GREY
   show ""
-  show "  More info: http://rpm5.org/docs/api/conditionalbuilds.html" $DARK
+  show "  More info: https://rpm.org/user_doc/conditional_builds.html" $DARK
   show ""
   show "Spec validation:" $BOLD
   show ""
