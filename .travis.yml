@@ -14,7 +14,7 @@ env:
 
 before_install:
   - wget https://storage.googleapis.com/shellcheck/shellcheck-stable.linux.x86_64.tar.xz
-  - wget -O hadolint "https://github.com/hadolint/hadolint/releases/download/v1.15.0/hadolint-Linux-x86_64"
+  - wget -O hadolint "https://github.com/hadolint/hadolint/releases/download/v1.17.5/hadolint-Linux-x86_64"
   - tar xf shellcheck-stable.linux.x86_64.tar.xz
   - docker pull "$IMAGE"
   - wget https://kaos.sh/perfecto/perfecto-docker
