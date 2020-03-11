@@ -53,7 +53,13 @@ readInspecOptions() {
 # Code: No
 # Echo: Sources list (String)
 getSources() {
-  spectool -n -S "$1" 2>/dev/null | cut -f2 -d" "
+  local opts
+
+  if [[ -n "$define" ]] ; then
+    opts=$(getDefineOpts)
+  fi
+
+  eval "spectool -n -S $opts $1" 2>/dev/null | cut -f2 -d" "
 }
 
 # Get patches
@@ -63,7 +69,13 @@ getSources() {
 # Code: No
 # Echo: Patches list (String)
 getPatches() {
-  spectool -n -P "$1" 2>/dev/null | cut -f2 -d" "
+  local opts
+
+  if [[ -n "$define" ]] ; then
+    opts=$(getDefineOpts)
+  fi
+
+  eval "spectool $opts -n -P $1" 2>/dev/null | cut -f2 -d" "
 }
 
 # Bump version in spec after successful build
