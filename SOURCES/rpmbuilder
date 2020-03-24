@@ -13,7 +13,7 @@ fi
 APP="RPMBuilder"
 
 # Utility version (String)
-VER="2.7.2"
+VER="2.7.3"
 
 ################################################################################
 
@@ -172,7 +172,7 @@ TMP_OUT_TEMPLATE="rpmbuilder-XXXXXXXX.out"
 ################################################################################
 
 # Path to directory with temporary data (String)
-tmp="/tmp"
+tmp="/var/tmp"
 
 # Path to temporary directory for current build (String)
 tmp_dir=""
