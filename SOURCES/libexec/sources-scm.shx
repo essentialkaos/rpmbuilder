@@ -169,7 +169,8 @@ fetchSourcesFromLaunchpad() {
 # Code: No
 # Echo: No
 packSourcesFromGit() {
-  local spec sources source_name source_ext dir_name git_log git_opts abs_dir_path
+  local spec sources source_name source_ext source_size
+  local dir_name git_log git_opts abs_dir_path
 
   spec=$(getAbsPath "$1")
   
@@ -310,7 +311,9 @@ packSourcesFromGit() {
 
   popd &> /dev/null || printErrorAndExit "Can't set working dir"
 
-  show "Source files from ${CL_BOLD}git${CL_NORM} repo packed as ${CL_CYAN}${source_name}.${source_ext}${CL_NORM}"
+  source_size=$(getGraceFileSize "${source_name}.${source_ext}")
+
+  show "Source files from ${CL_BOLD}git${CL_NORM} repo packed as ${CL_CYAN}${source_name}.${source_ext}${CL_NORM} ${CL_DARK}(${source_size})${CL_NORM}"
 }
 
 # Fetch and pack sources from mercurial repo
@@ -320,7 +323,8 @@ packSourcesFromGit() {
 # Code: No
 # Echo: No
 packSourcesFromHg() {
-  local spec sources source_name source_ext dir_name hg_log abs_dir_path
+  local spec sources source_name source_ext source_size
+  local dir_name hg_log abs_dir_path
 
   spec=$(getAbsPath "$1")
   
@@ -452,7 +456,9 @@ packSourcesFromHg() {
 
   popd &> /dev/null || printErrorAndExit "Can't set working dir"
 
-  show "Source files from ${CL_BOLD}hg${CL_NORM} repo packed as ${CL_CYAN}${source_name}.${source_ext}${CL_NORM}"
+  source_size=$(getGraceFileSize "${source_name}.${source_ext}")
+
+  show "Source files from ${CL_BOLD}hg${CL_NORM} repo packed as ${CL_CYAN}${source_name}.${source_ext}${CL_NORM} ${CL_DARK}(${source_size})${CL_NORM}"
 }
 
 # Fetch and pack sources from bazaar repo
@@ -462,7 +468,8 @@ packSourcesFromHg() {
 # Code: No
 # Echo: No
 packSourcesFromBzr() {
-  local spec sources source_name source_ext dir_name bzr_log bzr_opts abs_dir_path
+  local spec sources source_name source_ext source_size
+  local dir_name bzr_log bzr_opts abs_dir_path
 
   spec=$(getAbsPath "$1")
 
@@ -557,7 +564,9 @@ packSourcesFromBzr() {
 
   popd &> /dev/null || printErrorAndExit "Can't set working dir"
 
-  show "Source files from ${CL_BOLD}bzr${CL_NORM} repo packed as ${CL_CYAN}${source_name}.${source_ext}${CL_NORM}"
+  source_size=$(getGraceFileSize "${source_name}.${source_ext}")
+
+  show "Source files from ${CL_BOLD}bzr${CL_NORM} repo packed as ${CL_CYAN}${source_name}.${source_ext}${CL_NORM} ${CL_DARK}(${source_size})${CL_NORM}"
 }
 
 # Fetch and pack sources from SVN repo
@@ -567,7 +576,8 @@ packSourcesFromBzr() {
 # Code: No
 # Echo: No
 packSourcesFromSvn() {
-  local spec sources source_name source_ext svn_opts svn_log abs_dir_path
+  local spec sources source_name source_ext source_size
+  local svn_opts svn_log abs_dir_path
 
   spec=$(getAbsPath "$1")
 
@@ -661,7 +671,9 @@ packSourcesFromSvn() {
 
   popd &> /dev/null || printErrorAndExit "Can't set working dir"
 
-  show "Source files from ${CL_BOLD}svn${CL_NORM} repo packed as ${CL_CYAN}${source_name}.${source_ext}${CL_NORM}"
+  source_size=$(getGraceFileSize "${source_name}.${source_ext}")
+
+  show "Source files from ${CL_BOLD}svn${CL_NORM} repo packed as ${CL_CYAN}${source_name}.${source_ext}${CL_NORM} ${CL_DARK}(${source_size})${CL_NORM}"
 }
 
 # Remove SCM data from directory with data
