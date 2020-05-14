@@ -154,6 +154,23 @@ findSource() {
   echo "" && return 1
 }
 
+# Tries to find directory with sources
+#
+# Code: No
+# Echo: Path to directory (String)
+findSourcesDir() {
+  local dir
+
+  for dir in $SOURCE_PATHS ; do
+    if [[ -e "$dir" && -w "$dir" ]] ; then
+      echo "$dir"
+      return
+    fi
+  done
+
+  echo "."
+}
+
 # Validate source files
 #
 # Code: Yes

@@ -58,6 +58,7 @@ rm -rf %{buildroot}
 * Thu May 14 2020 Anton Novojilov <andy@essentialkaos.com> - 2.8.0-0
 - Speeded up fetching data from git repositories
 - Show info about packaged sources size
+- Automatic directory search for downloads
 
 * Wed Mar 25 2020 Anton Novojilov <andy@essentialkaos.com> - 2.7.3-0
 - Use /var/tmp instead of /tmp for storing temporary data
