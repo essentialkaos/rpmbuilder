@@ -194,7 +194,7 @@ packSourcesFromGit() {
   git_log="$tmp_dir/git.log"
 
   pushd "$tmp_dir" &> /dev/null || printErrorAndExit "Can't set working dir to $tmp_dir"
-    if [[ -z "$revision" ]] ; then
+    if [[ -z "$revision" && -z "$branch" && -z "$tag" ]] ; then
       git_opts="--depth=1"
     fi
 
