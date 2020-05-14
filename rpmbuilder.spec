@@ -2,7 +2,7 @@
 
 Summary:         RPM package build helper
 Name:            rpmbuilder
-Version:         2.7.3
+Version:         2.8.0
 Release:         0%{?dist}
 License:         EKOL
 Group:           Development/Tools
@@ -55,6 +55,9 @@ rm -rf %{buildroot}
 ################################################################################
 
 %changelog
+* Thu May 14 2020 Anton Novojilov <andy@essentialkaos.com> - 2.8.0-0
+- Speeded up fetching data from git repositories
+
 * Wed Mar 25 2020 Anton Novojilov <andy@essentialkaos.com> - 2.7.3-0
 - Use /var/tmp instead of /tmp for storing temporary data
 
