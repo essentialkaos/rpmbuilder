@@ -61,6 +61,10 @@ basicBuild() {
 
   [[ -n "$tmux_worker" ]] && createWorkerLock
 
+  if [[ "$download" == "true" ]] ; then
+    download=$(findSourcesDir)
+  fi
+
   [[ -n "$dest" ]]     && dest_dir="$dest"
   [[ -n "$dest_dir" ]] && dest_dir=$(getAbsPath "$dest_dir")
   [[ -n "$dlcache" ]]  && dlcache=$(getAbsPath "$dlcache")

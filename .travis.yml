@@ -10,27 +10,28 @@ matrix:
 
 env:
   global:
-    - IMAGE=essentialkaos/perfecto:centos7
+    - IMAGE=essentialkaos/perfecto:centos7 SHELLCHECK_VERSION=0.7.1 HADOLINT_VERSION=1.17.6
 
 before_install:
-  - wget https://storage.googleapis.com/shellcheck/shellcheck-stable.linux.x86_64.tar.xz
-  - wget -O hadolint "https://github.com/hadolint/hadolint/releases/download/v1.17.5/hadolint-Linux-x86_64"
-  - tar xf shellcheck-stable.linux.x86_64.tar.xz
+  - wget https://github.com/koalaman/shellcheck/releases/download/v${SHELLCHECK_VERSION}/shellcheck-v${SHELLCHECK_VERSION}.linux.x86_64.tar.xz
+  - wget -O hadolint https://github.com/hadolint/hadolint/releases/download/v${HADOLINT_VERSION}/hadolint-Linux-x86_64
+  - tar xf shellcheck-v${SHELLCHECK_VERSION}.linux.x86_64.tar.xz
+  - mv shellcheck-v${SHELLCHECK_VERSION} shellcheck-latest
   - docker pull "$IMAGE"
   - wget https://kaos.sh/perfecto/perfecto-docker
   - chmod +x perfecto-docker
   - chmod +x hadolint
   - ./perfecto-docker --version
-  - ./shellcheck-stable/shellcheck --version
+  - ./shellcheck-latest/shellcheck --version
   - ./hadolint --version
 
 script:
- - bash -c 'shopt -s globstar; ./shellcheck-stable/shellcheck SOURCES/rpmbuilder SOURCES/libexec/*.shx'
- - bash -c 'shopt -s globstar; ./shellcheck-stable/shellcheck SOURCES/rpmunbuilder'
- - bash -c 'shopt -s globstar; ./shellcheck-stable/shellcheck SOURCES/buildmon'
- - bash -c 'shopt -s globstar; ./shellcheck-stable/shellcheck SOURCES/initenv'
- - bash -c 'shopt -s globstar; ./shellcheck-stable/shellcheck SOURCES/nodeinfo'
- - bash -c 'shopt -s globstar; ./shellcheck-stable/shellcheck SOURCES/docker-entrypoint'
+ - bash -c 'shopt -s globstar; ./shellcheck-latest/shellcheck SOURCES/rpmbuilder SOURCES/libexec/*.shx'
+ - bash -c 'shopt -s globstar; ./shellcheck-latest/shellcheck SOURCES/rpmunbuilder'
+ - bash -c 'shopt -s globstar; ./shellcheck-latest/shellcheck SOURCES/buildmon'
+ - bash -c 'shopt -s globstar; ./shellcheck-latest/shellcheck SOURCES/initenv'
+ - bash -c 'shopt -s globstar; ./shellcheck-latest/shellcheck SOURCES/nodeinfo'
+ - bash -c 'shopt -s globstar; ./shellcheck-latest/shellcheck SOURCES/docker-entrypoint'
  - ./perfecto-docker rpmbuilder.spec
  - ./perfecto-docker rpmbuilder-node.spec
  - ./hadolint centos6.docker

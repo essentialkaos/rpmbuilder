@@ -2,7 +2,7 @@
 
 Summary:         RPM package build helper
 Name:            rpmbuilder
-Version:         2.7.2
+Version:         2.8.0
 Release:         0%{?dist}
 License:         EKOL
 Group:           Development/Tools
@@ -55,6 +55,14 @@ rm -rf %{buildroot}
 ################################################################################
 
 %changelog
+* Thu May 14 2020 Anton Novojilov <andy@essentialkaos.com> - 2.8.0-0
+- Speeded up fetching data from git repositories
+- Show info about packaged sources size
+- Automatic directory search for downloads
+
+* Wed Mar 25 2020 Anton Novojilov <andy@essentialkaos.com> - 2.7.3-0
+- Use /var/tmp instead of /tmp for storing temporary data
+
 * Tue Mar 10 2020 Anton Novojilov <andy@essentialkaos.com> - 2.7.2-0
 - Fixed bug with handling macroses defined through --define option while
   downloading sources and patches

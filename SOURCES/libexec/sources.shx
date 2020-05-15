@@ -34,7 +34,7 @@ packSources() {
     pack=$(cat "$source_list")
   fi
 
-  local src_target sources arch_name arch_ext
+  local src_target sources arch_name arch_ext arch_size
 
   for src_target in $pack ; do
     if [[ ! -a $src_target ]] ; then
@@ -71,7 +71,9 @@ packSources() {
 
   rm -rf "${tmp_dir:?}/$arch_name"
 
-  show "All files packed to ${CL_BL_GREEN}${arch_name}.${arch_ext}" $GREEN
+  arch_size=$(getGraceFileSize "${tmp_dir}/${arch_name}.${arch_ext}")
+
+  show "${CL_GREEN}All files packed to ${CL_BL_GREEN}${arch_name}.${arch_ext}${CL_NORM} ${CL_DARK}(${arch_size})${CL_NORM}"
 }
 
 # Pack directory with source files to archive
@@ -150,6 +152,23 @@ findSource() {
   fi
 
   echo "" && return 1
+}
+
+# Tries to find directory with sources
+#
+# Code: No
+# Echo: Path to directory (String)
+findSourcesDir() {
+  local dir
+
+  for dir in $SOURCE_PATHS ; do
+    if [[ -e "$dir" && -w "$dir" ]] ; then
+      echo "$dir"
+      return
+    fi
+  done
+
+  echo "."
 }
 
 # Validate source files
