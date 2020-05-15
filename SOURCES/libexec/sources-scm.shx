@@ -311,7 +311,7 @@ packSourcesFromGit() {
 
   popd &> /dev/null || printErrorAndExit "Can't set working dir"
 
-  source_size=$(getGraceFileSize "${source_name}.${source_ext}")
+  source_size=$(getGraceFileSize "${tmp_dir}/${source_name}.${source_ext}")
 
   show "Source files from ${CL_BOLD}git${CL_NORM} repo packed as ${CL_CYAN}${source_name}.${source_ext}${CL_NORM} ${CL_DARK}(${source_size})${CL_NORM}"
 }
@@ -456,7 +456,7 @@ packSourcesFromHg() {
 
   popd &> /dev/null || printErrorAndExit "Can't set working dir"
 
-  source_size=$(getGraceFileSize "${source_name}.${source_ext}")
+  source_size=$(getGraceFileSize "${tmp_dir}/${source_name}.${source_ext}")
 
   show "Source files from ${CL_BOLD}hg${CL_NORM} repo packed as ${CL_CYAN}${source_name}.${source_ext}${CL_NORM} ${CL_DARK}(${source_size})${CL_NORM}"
 }
@@ -564,7 +564,7 @@ packSourcesFromBzr() {
 
   popd &> /dev/null || printErrorAndExit "Can't set working dir"
 
-  source_size=$(getGraceFileSize "${source_name}.${source_ext}")
+  source_size=$(getGraceFileSize "${tmp_dir}/${source_name}.${source_ext}")
 
   show "Source files from ${CL_BOLD}bzr${CL_NORM} repo packed as ${CL_CYAN}${source_name}.${source_ext}${CL_NORM} ${CL_DARK}(${source_size})${CL_NORM}"
 }
@@ -671,7 +671,7 @@ packSourcesFromSvn() {
 
   popd &> /dev/null || printErrorAndExit "Can't set working dir"
 
-  source_size=$(getGraceFileSize "${source_name}.${source_ext}")
+  source_size=$(getGraceFileSize "${tmp_dir}/${source_name}.${source_ext}")
 
   show "Source files from ${CL_BOLD}svn${CL_NORM} repo packed as ${CL_CYAN}${source_name}.${source_ext}${CL_NORM} ${CL_DARK}(${source_size})${CL_NORM}"
 }

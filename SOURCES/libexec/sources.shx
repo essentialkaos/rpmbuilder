@@ -71,7 +71,7 @@ packSources() {
 
   rm -rf "${tmp_dir:?}/$arch_name"
 
-  arch_size=$(getGraceFileSize "${arch_name}.${arch_ext}")
+  arch_size=$(getGraceFileSize "${tmp_dir}/${arch_name}.${arch_ext}")
 
   show "${CL_GREEN}All files packed to ${CL_BL_GREEN}${arch_name}.${arch_ext}${CL_NORM} ${CL_DARK}(${arch_size})${CL_NORM}"
 }
