@@ -52,7 +52,7 @@
 Summary:         Configuration package for rpmbuilder node
 Name:            rpmbuilder-node
 Version:         1.4.1
-Release:         2%{?dist}
+Release:         3%{?dist}
 License:         EKOL
 Group:           Development/Tools
 URL:             https://github.com/essentialkaos/rpmbuilder
@@ -120,10 +120,12 @@ getent group %{user_name} >/dev/null || groupadd -r %{user_name}
 getent passwd %{user_name} >/dev/null || useradd -r -g %{user_name} -d %{_home}/%{user_name} -s /bin/bash %{user_name}
 
 %post
-chown %{user_name}:%{user_name} %{home_dir} -R
+chown -h -R %{user_name}:%{user_name} %{home_dir}
 
 if [[ $1 -eq 1 ]] ; then
   touch %{home_dir}/.ssh/authorized_keys
+
+  # perfecto:absolve
   chmod 0600 %{home_dir}/.ssh/authorized_keys
 
   sudo -u %{user_name} rpmdev-setuptree
@@ -134,7 +136,7 @@ if [[ $1 -eq 1 ]] ; then
   %{__service} %{service_name} start &> /dev/null || :
   %{__chkconfig} --add %{service_name}
 
-  chown %{user_name}:%{user_name} %{home_dir} -R
+  chown -h -R %{user_name}:%{user_name} %{home_dir}
 
   # Enable password authentication for build node
   sed -i 's/PasswordAuthentication no/PasswordAuthentication yes/' %{_sysconfdir}/ssh/sshd_config
@@ -170,6 +172,9 @@ fi
 ################################################################################
 
 %changelog
+* Fri May 29 2020 Anton Novojilov <andy@essentialkaos.com> - 1.4.1-3
+- Fixed problems reported by perfecto
+
 * Mon Dec 16 2019 Anton Novojilov <andy@essentialkaos.com> - 1.4.1-2
 - Added threads usage for payload packing to rpmmacros files
 
