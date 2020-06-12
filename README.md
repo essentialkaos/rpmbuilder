@@ -1,5 +1,10 @@
 <p align="center"><a href="#readme"><img src="https://gh.kaos.st/rpmbuilder.svg"/></a></p>
 
+<p align="center">
+  <a href="https://travis-ci.com/essentialkaos/rpmbuilder"><img src="https://travis-ci.com/essentialkaos/rpmbuilder.svg"></a>
+  <a href="https://essentialkaos.com/ekol"><img src="https://gh.kaos.st/ekol.svg"></a>
+</p>
+
 <p align="center"><a href="#usage-demo">Usage demo</a> • <a href="#installation">Installation</a> • <a href="#tips">Tips</a> • <a href="#usage">Usage</a> • <a href="#build-status">Build Status</a> • <a href="#contributing">Contributing</a> • <a href="#license">License</a></p>
 
 <br/>
@@ -14,37 +19,21 @@ Building Redis rpm package for CentOS6 and CentOS7:
 
 ### Installation
 
-#### From ESSENTIAL KAOS Public repo for RHEL6/CentOS6
-```
-[sudo] yum install -y https://yum.kaos.st/kaos-repo-latest.el6.noarch.rpm
-[sudo] yum install rpmbuilder
+#### From [ESSENTIAL KAOS Public Repository](https://yum.kaos.st)
+
+```bash
+sudo yum install -y https://yum.kaos.st/get/$(uname -r).rpm
+sudo yum install rpmbuilder
 ```
 
 Build node:
 
-```
-[sudo] yum install -y https://yum.kaos.st/kaos-repo-latest.el6.noarch.rpm
-[sudo] yum install rpmbuilder-node
-[sudo] passwd builder
-... change builder user password here
-[sudo] service buildmon start
-```
-
-
-#### From ESSENTIAL KAOS Public repo for RHEL7/CentOS7
-```
-[sudo] yum install -y https://yum.kaos.st/kaos-repo-latest.el7.noarch.rpm
-[sudo] yum install rpmbuilder
-```
-
-Build node:
-
-```
-[sudo] yum install -y https://yum.kaos.st/kaos-repo-latest.el7.noarch.rpm
-[sudo] yum install rpmbuilder-node
-[sudo] passwd builder
-... change builder user password here
-[sudo] service buildmon start
+```bash
+sudo yum install -y https://yum.kaos.st/get/$(uname -r).rpm
+sudo yum install rpmbuilder-node
+sudo passwd builder
+# change builder user password here
+sudo service buildmon start
 ```
 
 ### Tips
