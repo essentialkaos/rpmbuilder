@@ -53,7 +53,7 @@ Summary:         Configuration package for rpmbuilder node
 Name:            rpmbuilder-node
 Version:         1.4.1
 Release:         3%{?dist}
-License:         EKOL
+License:         Apache License, Version 2.0
 Group:           Development/Tools
 URL:             https://github.com/essentialkaos/rpmbuilder
 

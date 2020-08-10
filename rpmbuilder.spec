@@ -4,7 +4,7 @@ Summary:         RPM package build helper
 Name:            rpmbuilder
 Version:         2.8.0
 Release:         0%{?dist}
-License:         EKOL
+License:         Apache License, Version 2.0
 Group:           Development/Tools
 URL:             https://kaos.sh/rpmbuilder
 

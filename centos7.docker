@@ -3,7 +3,7 @@ FROM centos:7
 LABEL name="RPMBuilder Image on CentOS 7" \
       vendor="ESSENTIAL KAOS" \
       maintainer="Anton Novojilov" \
-      license="EKOL" \
+      license="Apache-2.0" \
       version="2020.02.08"
 
 RUN yum -y -q install https://yum.kaos.st/kaos-repo-latest.el7.noarch.rpm && \
