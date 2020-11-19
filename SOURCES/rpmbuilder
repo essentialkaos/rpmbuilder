@@ -13,7 +13,7 @@ fi
 APP="RPMBuilder"
 
 # Utility version (String)
-VER="2.8.0"
+VER="2.8.1"
 
 ################################################################################
 
@@ -72,7 +72,7 @@ SEPARATOR="---------------------------------------------------------------------
 ################################################################################
 
 # Path to preferencies file
-PREFS_FILE="$HOME/.rpmbuilder"
+PREFS_FILE="${PREFS_FILE:-$HOME/.rpmbuilder}"
 
 SUPPORTED_OPTS="remote !parallel host user pass key source_dir source_list 
  !sign !no_build !no_clean !no_deps !no_lint !no_source pack !attach 

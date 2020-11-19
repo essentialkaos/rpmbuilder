@@ -1,7 +1,7 @@
 <p align="center"><a href="#readme"><img src="https://gh.kaos.st/rpmbuilder.svg"/></a></p>
 
 <p align="center">
-  <a href="https://travis-ci.com/essentialkaos/rpmbuilder"><img src="https://travis-ci.com/essentialkaos/rpmbuilder.svg"></a>
+  <a href="https://github.com/essentialkaos/rpmbuilder/actions"><img src="https://github.com/essentialkaos/rpmbuilder/workflows/CI/badge.svg" alt="GitHub Actions Status" /></a>
   <a href="#license"><img src="https://gh.kaos.st/apache2.svg"></a>
 </p>
 
@@ -174,8 +174,8 @@ Other:
 
 | Branch | Status |
 |--------|--------|
-| `master` (_Stable_) | [![Build Status](https://travis-ci.com/essentialkaos/rpmbuilder.svg?branch=master)](https://travis-ci.com/essentialkaos/rpmbuilder) |
-| `develop` (_Unstable_) | [![Build Status](https://travis-ci.com/essentialkaos/rpmbuilder.svg?branch=develop)](https://travis-ci.com/essentialkaos/rpmbuilder) |
+| `master` (_Stable_) | [![CI](https://github.com/essentialkaos/rpmbuilder/workflows/CI/badge.svg?branch=master)](https://github.com/essentialkaos/rpmbuilder/actions) |
+| `develop` (_Unstable_) | [![CI](https://github.com/essentialkaos/rpmbuilder/workflows/CI/badge.svg?branch=develop)](https://github.com/essentialkaos/rpmbuilder/actions) |
 
 ### Contributing
 
