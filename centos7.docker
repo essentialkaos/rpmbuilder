@@ -1,20 +1,22 @@
+## FINAL IMAGE #################################################################
+
 FROM centos:7
 
 LABEL name="RPMBuilder Image on CentOS 7" \
       vendor="ESSENTIAL KAOS" \
       maintainer="Anton Novojilov" \
       license="Apache-2.0" \
-      version="2020.11.19"
+      version="2021.05.01"
 
-# hadolint ignore=DL3032,DL3033
+# hadolint ignore=DL3031,DL3033
 RUN yum -y -q install https://yum.kaos.st/kaos-repo-latest.el7.noarch.rpm && \
+    yum -y update && \
     yum -y -q install epel-release centos-release-scl && \
     yum -y -q install sudo make which rpmbuilder && \
     yum clean all && \
-    rm -rf /var/cache/yum
-
-RUN curl -o /usr/local/bin/gosu -sSL "https://github.com/tianon/gosu/releases/download/1.10/gosu-amd64" && \
-		chmod +x /usr/local/bin/gosu
+    rm -rf /var/cache/yum && \
+    curl -o /usr/local/bin/gosu -sSL "https://github.com/tianon/gosu/releases/download/1.12/gosu-amd64" && \
+    chmod +x /usr/local/bin/gosu
 
 COPY SOURCES/conf/builder.sudoers /etc/sudoers.d/rpmbuilder
 COPY SOURCES/conf/rpmmacros_centos7 /home/builder/.rpmmacros
@@ -26,3 +28,5 @@ VOLUME /rpmbuilder
 WORKDIR /rpmbuilder
 
 ENTRYPOINT ["/usr/local/bin/docker-entrypoint"]
+
+################################################################################
