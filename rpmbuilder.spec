@@ -2,7 +2,7 @@
 
 Summary:         RPM package build helper
 Name:            rpmbuilder
-Version:         2.8.0
+Version:         2.9.0
 Release:         0%{?dist}
 License:         Apache License, Version 2.0
 Group:           Development/Tools
@@ -15,7 +15,7 @@ BuildRoot:       %{_tmppath}/%{name}-%{version}-%{release}-root-%(%{__id_u} -n)
 
 Requires:        rpm >= 4.8.0 rpm-build rpmdevtools yum-utils
 Requires:        sshpass coreutils tmux
-Requires:        perfecto >= 2.0 rpmlint
+Requires:        perfecto >= 3.0 rpmlint
 
 Provides:        %{name} = %{version}-%{release}
 
@@ -55,6 +55,9 @@ rm -rf %{buildroot}
 ################################################################################
 
 %changelog
+* Tue Aug 17 2021 Anton Novojilov <andy@essentialkaos.com> - 2.9.0-0
+- Improved sources cleanup process
+
 * Thu May 14 2020 Anton Novojilov <andy@essentialkaos.com> - 2.8.0-0
 - Speeded up fetching data from git repositories
 - Show info about packaged sources size
