@@ -267,3 +267,38 @@ generateChecksumFile() {
 
   return $status
 }
+
+# Remove useless files and directories from directory with data
+#
+# 1: Path to directory with sources (String)
+#
+# Code: No
+# Echo: No
+cleanPackDir() {
+  local dir="$1"
+
+  find "$dir" -type d -name ".git" -exec rm -rf {} \; 2> /dev/null
+  find "$dir" -type d -name ".hg" -exec rm -rf {} \; 2> /dev/null
+  find "$dir" -type d -name ".svn" -exec rm -rf {} \; 2> /dev/null
+  find "$dir" -type d -name ".bzr" -exec rm -rf {} \; 2> /dev/null
+
+  find "$dir" -type f -name ".gitignore" -exec rm -f {} \; 2> /dev/null
+  find "$dir" -type f -name ".hgignore" -exec rm -f {} \; 2> /dev/null
+  find "$dir" -type f -name ".bzrignore" -exec rm -f {} \; 2> /dev/null
+  find "$dir" -type f -name ".gitmodules" -exec rm -f {} \; 2>/dev/null
+
+  # Remove CI service configuration files
+  find "$dir" -type f -name ".github" -exec rm -rf {} \; 2>/dev/null
+  find "$dir" -type f -name ".travis.yml" -exec rm -f {} \; 2>/dev/null
+  find "$dir" -type f -name ".drone.sec" -exec rm -f {} \; 2>/dev/null
+  find "$dir" -type f -name ".drone.yml" -exec rm -f {} \; 2>/dev/null
+  find "$dir" -type f -name ".hound.yml" -exec rm -f {} \; 2>/dev/null
+  find "$dir" -type f -name ".vexor.yml" -exec rm -f {} \; 2>/dev/null
+  find "$dir" -type f -name ".codebeatsettings" -exec rm -f {} \; 2>/dev/null
+
+  # Remove test data
+  find "$dir" -type d -name "testdata" -exec rm -rf {} \; 2>/dev/null
+
+  # Remove empty directories
+  find "$dir" -type d -empty -delete 2>/dev/null
+}

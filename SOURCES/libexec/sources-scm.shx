@@ -675,22 +675,3 @@ packSourcesFromSvn() {
 
   show "Source files from ${CL_BOLD}svn${CL_NORM} repo packed as ${CL_CYAN}${source_name}.${source_ext}${CL_NORM} ${CL_DARK}(${source_size})${CL_NORM}"
 }
-
-# Remove SCM data from directory with data
-#
-# 1: Path to dir with sources (String)
-#
-# Code: No
-# Echo: No
-cleanPackDir() {
-  local dir="$1"
-
-  find "$dir" -type d -name ".git" -exec rm -rf {} \; 2> /dev/null
-  find "$dir" -type d -name ".hg" -exec rm -rf {} \; 2> /dev/null
-  find "$dir" -type d -name ".svn" -exec rm -rf {} \; 2> /dev/null
-  find "$dir" -type d -name ".bzr" -exec rm -rf {} \; 2> /dev/null
-
-  find "$dir" -type f -name ".gitignore" -exec rm -f {} \; 2> /dev/null
-  find "$dir" -type f -name ".hgignore" -exec rm -f {} \; 2> /dev/null
-  find "$dir" -type f -name ".bzrignore" -exec rm -f {} \; 2> /dev/null
-}
