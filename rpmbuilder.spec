@@ -47,7 +47,7 @@ rm -rf %{buildroot}
 
 %files
 %defattr(-,root,root,-)
-%doc LICENSE LICENSE.RU
+%doc LICENSE
 %{_libexecdir}/%{name}
 %{_bindir}/%{name}
 %{_bindir}/rpmunbuilder
