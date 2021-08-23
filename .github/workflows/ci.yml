@@ -21,74 +21,36 @@ jobs:
           username: ${{ secrets.DOCKERHUB_USERNAME }}
           password: ${{ secrets.DOCKERHUB_TOKEN }}
 
-      - name: Run Perfecto docker image
-        uses: docker://essentialkaos/perfecto:micro
+      - name: Check specs with Perfecto
+        uses: essentialkaos/perfecto-action@master
         with:
-          args: --version
-
-      - name: Install perfecto-docker
-        run: |
-          wget https://kaos.sh/perfecto/perfecto-docker
-          chmod +x perfecto-docker
-
-      - name: Run Perfecto check
-        env:
-          IMAGE: essentialkaos/perfecto:micro
-        run: |
-          ./perfecto-docker rpmbuilder.spec
-          ./perfecto-docker rpmbuilder-node.spec
+          files: rpmbuilder.spec rpmbuilder-node.spec
 
   Shellcheck:
     name: Shellcheck
     runs-on: ubuntu-latest
 
-    env:
-      SHELLCHECK_VERSION: 0.7.2
-
     steps:
       - name: Checkout
         uses: actions/checkout@v2
 
-      - name: Install Shellcheck
-        run: |
-          wget https://github.com/koalaman/shellcheck/releases/download/v${SHELLCHECK_VERSION}/shellcheck-v${SHELLCHECK_VERSION}.linux.x86_64.tar.xz
-          tar xf shellcheck-v${SHELLCHECK_VERSION}.linux.x86_64.tar.xz
-          mv shellcheck-v${SHELLCHECK_VERSION} shellcheck-latest
-
-      - name: Print Shellcheck version info
-        run: ./shellcheck-latest/shellcheck --version
-
-      - name: Check scripts
-        run: |
-          bash -c 'shopt -s globstar; ./shellcheck-latest/shellcheck SOURCES/rpmbuilder SOURCES/libexec/*.shx'
-          bash -c 'shopt -s globstar; ./shellcheck-latest/shellcheck SOURCES/rpmunbuilder'
-          bash -c 'shopt -s globstar; ./shellcheck-latest/shellcheck SOURCES/buildmon'
-          bash -c 'shopt -s globstar; ./shellcheck-latest/shellcheck SOURCES/initenv'
-          bash -c 'shopt -s globstar; ./shellcheck-latest/shellcheck SOURCES/nodeinfo'
-          bash -c 'shopt -s globstar; ./shellcheck-latest/shellcheck SOURCES/docker-entrypoint'
+      - name: Check scripts with Shellcheck
+        uses: essentialkaos/shellcheck-action@v1
+        with:
+          files: SOURCES/rpmbuilder SOURCES/libexec/*.shx SOURCES/rpmunbuilder SOURCES/buildmon SOURCES/initenv SOURCES/nodeinfo SOURCES/docker-entrypoint
 
   Hadolint:
     name: Hadolint
     runs-on: ubuntu-latest
 
-    env:
-      HADOLINT_VERSION: 2.6.1
-
     steps:
       - name: Checkout
         uses: actions/checkout@v2
 
-      - name: Install Hadolint
-        run: |
-          wget -O hadolint https://github.com/hadolint/hadolint/releases/download/v${HADOLINT_VERSION}/hadolint-Linux-x86_64
-          chmod +x hadolint
-      
-      - name: Print Hadolint version info
-        run: ./hadolint --version
-
-      - name: Check Docker files
-        run: |
-          ./hadolint centos7.docker
+      - name: Check dockerfiles with Hadolint
+        uses: essentialkaos/hadolint-action@v1
+        with:
+          files: centos7.docker
 
   DockerBuild:
     name: Docker Build Check
