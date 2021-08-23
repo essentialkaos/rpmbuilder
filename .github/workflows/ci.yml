@@ -21,22 +21,10 @@ jobs:
           username: ${{ secrets.DOCKERHUB_USERNAME }}
           password: ${{ secrets.DOCKERHUB_TOKEN }}
 
-      - name: Run Perfecto docker image
-        uses: docker://essentialkaos/perfecto:micro
+      - name: Check specs with Perfecto
+        uses: essentialkaos/perfecto-action@master
         with:
-          args: --version
-
-      - name: Install perfecto-docker
-        run: |
-          wget https://kaos.sh/perfecto/perfecto-docker
-          chmod +x perfecto-docker
-
-      - name: Run Perfecto check
-        env:
-          IMAGE: essentialkaos/perfecto:micro
-        run: |
-          ./perfecto-docker rpmbuilder.spec
-          ./perfecto-docker rpmbuilder-node.spec
+          files: rpmbuilder.spec rpmbuilder-node.spec
 
   Shellcheck:
     name: Shellcheck
@@ -60,7 +48,7 @@ jobs:
         uses: actions/checkout@v2
 
       - name: Check dockerfiles with Hadolint
-        uses: essentialkaos/hadolint-action@master
+        uses: essentialkaos/hadolint-action@v1
         with:
           files: centos7.docker
 
