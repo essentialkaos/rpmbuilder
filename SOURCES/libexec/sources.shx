@@ -28,11 +28,13 @@ packRemoteSources() {
   local spec="$1"
   local sources
 
-  IFS=" " read -r -a sources <<< "$(getSources "$spec")"
+  if [[ -n "${git}${svn}${bzr}${hg}${gopack}" ]] ; then
+    IFS=" " read -r -a sources <<< "$(getSources "$spec")"
 
-  if isURL "${sources[0]}" ; then
-    error "The sources section cannot contain the URL to the sources when downloading with git/svn/hg/bzr/gopack is used"
-    doExit $ERROR_SOURCE
+    if isURL "${sources[0]}" ; then
+      error "The sources section cannot contain the URL to the sources when downloading with git/svn/hg/bzr/gopack is used"
+      doExit $ERROR_SOURCE
+    fi
   fi
 
   if [[ -n "$git" ]] ; then
