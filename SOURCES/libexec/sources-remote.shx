@@ -28,11 +28,7 @@ downloadRemoteSources() {
     doExit $ERROR_ARGS
   fi
 
-  [[ -n "$git" ]]    && packSourcesFromGit "$spec"
-  [[ -n "$svn" ]]    && packSourcesFromSvn "$spec"
-  [[ -n "$bzr" ]]    && packSourcesFromBzr "$spec"
-  [[ -n "$hg" ]]     && packSourcesFromHg  "$spec"
-  [[ -n "$gopack" ]] && packGolangSources  "$spec"
+  packRemoteSources "$spec"
 
   local source_file sources_list source_file_name patches_list files
 
@@ -42,7 +38,7 @@ downloadRemoteSources() {
   files="$sources_list $patches_list"
 
   for source_file in $files ; do
-    if [[ "$source_file" =~ ^(http|https|ftp) ]] ; then
+    if isURL "$source_file" ; then
       source_file_name=$(basename "$source_file")
 
       if [[ -f "$dlcache/$source_file_name" ]] ; then
@@ -135,4 +131,18 @@ isAccessibleURL() {
   else
     return 1
   fi
+}
+
+# Checks if given string is URL (http/https/ftp)
+#
+# 1: Data (String)
+#
+# Code: Yes
+# Echo: No
+isURL() {
+  if [[ "$1" =~ ^(http|https|ftp) ]] ; then
+    return 0
+  fi
+
+  return 1
 }

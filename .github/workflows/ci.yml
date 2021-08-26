@@ -22,7 +22,7 @@ jobs:
           password: ${{ secrets.DOCKERHUB_TOKEN }}
 
       - name: Check specs with Perfecto
-        uses: essentialkaos/perfecto-action@master
+        uses: essentialkaos/perfecto-action@v1
         with:
           files: rpmbuilder.spec rpmbuilder-node.spec
 
