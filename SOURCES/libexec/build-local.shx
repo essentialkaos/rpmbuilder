@@ -26,16 +26,7 @@ localBuild() {
     $($pre)
   fi
 
-  [[ -n "$git" ]]    && packSourcesFromGit "$spec"
-  [[ -n "$svn" ]]    && packSourcesFromSvn "$spec"
-  [[ -n "$bzr" ]]    && packSourcesFromBzr "$spec"
-  [[ -n "$hg" ]]     && packSourcesFromHg  "$spec"
-  [[ -n "$gopack" ]] && packGolangSources  "$spec"
-
-  [[ -n "$repo_spec" ]] && spec="$repo_spec"
-
-  [[ -n "$pack" || -n "$source_list" ]] && packSources "$spec" && show ""
-
+  packSources "$spec"
   processSpec "$spec"
 
   show ""

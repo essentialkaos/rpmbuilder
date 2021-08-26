@@ -9,13 +9,60 @@ require "sources-scm"
 
 ################################################################################
 
+packSources() {
+  local spec="$1"
+
+  packRemoteSources "$spec"
+
+  if [[ -n "$repo_spec" ]] ; then
+    spec="$repo_spec"
+  fi
+
+  if [[ -n "$pack" || -n "$source_list" ]] ; then
+    packLocalSources "$spec"
+    show ""
+  fi
+}
+
+packRemoteSources() {
+  local spec="$1"
+  local sources
+
+  IFS=" " read -r -a sources <<< "$(getSources "$spec")"
+
+  if isURL "${sources[0]}" ; then
+    error "The sources section cannot contain the URL to the sources when downloading with git/svn/hg/bzr/gopack is used"
+    doExit $ERROR_SOURCE
+  fi
+
+  if [[ -n "$git" ]] ; then
+    packSourcesFromGit "$spec"
+  fi
+
+  if [[ -n "$svn" ]] ; then
+    packSourcesFromSvn "$spec"
+  fi
+
+  if [[ -n "$bzr" ]] ; then
+    packSourcesFromBzr "$spec"
+  fi
+
+  if [[ -n "$hg" ]] ; then
+    packSourcesFromHg  "$spec"
+  fi
+
+  if [[ -n "$gopack" ]] ; then
+    packGolangSources  "$spec"
+  fi
+}
+
 # Pack sources to archive file
 #
 # 1: Path to spec file (String)
 #
 # Code: No
 # Echo: No
-packSources() {
+packLocalSources() {
   show "Packing source files to archive…"
 
   local spec="$1"
