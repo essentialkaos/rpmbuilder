@@ -246,7 +246,7 @@ localBuildProcess() {
 
       local grc_time package packages package_name package_file
 
-      grc_time=$(getGraceDuration "$build_start" "$(now)")
+      grc_time=$(getGraceDuration "$build_start")
 
       show "Build complete! The build took $grc_time." $GREEN
 
