@@ -323,14 +323,12 @@ remoteBuildProcess() {
 
   show ""
 
-  local has_errors bld_time grc_time packages package_name package_file
+  local has_errors dl_start grc_time packages package_name package_file
 
   has_errors=$(tail -1 "$tmp_output" | grep -v "exit 0")
 
   if [[ -z "$has_errors" ]] ; then
-    build_end=$(now)
-    bld_time=$(( build_end - build_start ))
-    grc_time=$(getGraceDuration "$bld_time")
+    grc_time=$(getGraceDuration "$build_start")
 
     show "Build complete! The build took $grc_time." $GREEN
 
@@ -347,17 +345,25 @@ remoteBuildProcess() {
         remoteSign "$package"
       fi
 
+      dl_start=$(now)
+
+      showt "${CL_BLNK_YELLOW}↓ ${CL_NORM} ${package_name}"
+
       if [[ -n "$dest_dir" ]] ; then
         downloadFromRemoteHost "$package" "$dest_dir"
       else
         downloadFromRemoteHost "$package"
       fi
 
+      grc_time=$(getGraceDurationShort "$dl_start")
+
       if [[ $? -eq 0 ]] ; then
-        show "${CL_GREY}+${CL_NORM} ${CL_CYAN}$package_name${CL_NORM}"
+        showt "${CL_GREEN}✔ ${CL_NORM} ${package_name} ${CL_DARK}${grc_time}${CL_NORM}"
       else
-        show "${CL_GREY}+${CL_NORM} ${CL_CYAN}$package_name${CL_NORM} ${CL_DARK}(ALREADY EXIST)${CL_NORM}"
+        showt "${CL_GREEN}✔ ${CL_NORM} ${package_name} ${CL_DARK}${grc_time} (ALREADY EXIST)${CL_NORM}"
       fi
+
+      show ""
     done
 
     showSeparator "PACKAGE VALIDATION"
@@ -438,22 +444,29 @@ remoteBuildProcess() {
 uploadSourcesToRemoteHost() {
   local spec="$1"
 
-  local source_file source_files rmpbuild_dir
+  local source_file source_file_name source_files rmpbuild_dir
+  local copy_start grc_time
 
   rmpbuild_dir=$(getRPMBuildDir)
   source_files=$(find "$tmp_dir" -maxdepth 1 -type f)
 
   for source_file in $source_files ; do
     source_file_name=$(basename "$source_file")
+    copy_start=$(now)
 
-    showt "${CL_CYAN}${source_file_name}${CL_NORM}" 4
+    showt "${CL_BLNK_YELLOW}↑ ${CL_NORM} ${source_file_name}"
 
     scpCommand "$source_file" "$user@$host:$rmpbuild_dir/SOURCES/" &> $verb_output
 
-    show "DONE" $GREEN
+    grc_time=$(getGraceDurationShort "$copy_start")
+    
+    showt "${CL_GREEN}✔ ${CL_NORM} ${source_file_name} ${CL_DARK}${grc_time}${CL_NORM}"
+    show ""
   done
 
-  showt "${CL_CYAN}${spec}${CL_NORM}" 4
+  copy_start=$(now)
+
+  showt "${CL_BLNK_YELLOW}↑ ${CL_NORM} ${spec}"
 
   if [[ -n "$bump" ]] ; then
     cp "$spec" "$tmp"
@@ -466,7 +479,9 @@ uploadSourcesToRemoteHost() {
     scpCommand "$spec" "$user@$host:$rmpbuild_dir/SPECS/" &> $verb_output
   fi
 
-  show "DONE" $GREEN
+  grc_time=$(getGraceDurationShort "$copy_start")
+  showt "${CL_GREEN}✔ ${CL_NORM} ${spec} ${CL_DARK}${grc_time}${CL_NORM}"
+  show ""
 }
 
 # Download packages from remote build host
@@ -509,20 +524,20 @@ checkRemoteAvailability() {
   remote_available=$(sshCommand "$user@$host" "stat $BUILD_LOCK &> /dev/null || echo 1")
 
   if [[ -z "$remote_available" ]] ; then
-    showt "\r${CL_GREEN}Executing:${CL_NORM} ${CL_YELLOW}waiting in queue${CL_NORM}"
+    showt "${CL_GREEN}Executing:${CL_NORM} ${CL_YELLOW}waiting in queue${CL_NORM}"
 
     while : ; do
       sleep $CHECK_REMOTE_QUEUE_DELAY
 
-      showt "\r${CL_GREEN}Executing:${CL_NORM} ${CL_CYAN}checking queue${CL_NORM}"
+      showt "${CL_GREEN}Executing:${CL_NORM} ${CL_CYAN}checking queue${CL_NORM}"
 
       remote_available=$(sshCommand "$user@$host" "stat $BUILD_LOCK &> /dev/null || echo 1")
 
       if [[ -n "$remote_available" ]] ; then
-        showt "\r${CL_GREEN}Executing:${CL_NORM} ${CL_YELLOW}~${CL_NORM}"
+        showt "${CL_GREEN}Executing:${CL_NORM} ${CL_YELLOW}~${CL_NORM}"
         break
       else
-        showt "\r${CL_GREEN}Executing:${CL_NORM} ${CL_YELLOW}waiting in queue${CL_NORM}"
+        showt "${CL_GREEN}Executing:${CL_NORM} ${CL_YELLOW}waiting in queue${CL_NORM}"
       fi
     done
   fi

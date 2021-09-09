@@ -244,11 +244,9 @@ localBuildProcess() {
 
       show ""
 
-      local bld_time grc_time package packages package_name package_file
+      local grc_time package packages package_name package_file
 
-      build_end=$(now)
-      bld_time=$(( build_end - build_start ))
-      grc_time=$(getGraceDuration "$bld_time")
+      grc_time=$(getGraceDuration "$build_start" "$(now)")
 
       show "Build complete! The build took $grc_time." $GREEN
 
@@ -350,13 +348,13 @@ checkLocalBuildAvailability() {
     show ""
   fi
 
-  showt "\r${CL_GREEN}Executing:${CL_NORM} ${CL_YELLOW}waiting in queue${CL_NORM}"
+  showt "${CL_GREEN}Executing:${CL_NORM} ${CL_YELLOW}waiting in queue${CL_NORM}"
 
   while : ; do
     sleep $CHECK_LOCAL_QUEUE_DELAY
 
     if ! hasLocalLock ; then
-      showt "\r${CL_GREEN}Executing:${CL_NORM} ${CL_YELLOW}~${CL_NORM}"
+      showt "${CL_GREEN}Executing:${CL_NORM} ${CL_YELLOW}~${CL_NORM}"
       break
     fi
   done

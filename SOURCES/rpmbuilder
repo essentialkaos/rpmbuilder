@@ -13,7 +13,7 @@ fi
 APP="RPMBuilder"
 
 # Utility version (String)
-VER="2.10.0"
+VER="2.11.0"
 
 ################################################################################
 
@@ -47,6 +47,7 @@ CL_BL_BLUE="\e[1;${BLUE};49m"
 CL_BL_MAG="\e[1;${MAG};49m"
 CL_BL_CYAN="\e[1;${CYAN};49m"
 CL_BL_GREY="\e[1;${GREY};49m"
+CL_BLNK_YELLOW="\e[5;${YELLOW};49m"
 
 ERROR_UNKNOWN=1
 ERROR_ARGS=2
@@ -299,15 +300,14 @@ showm() {
 # Code: No
 # Echo: No
 showt() {
-  local message offset spaces adds
+  local message spaces adds
 
   message=$(echo "$1" | sed -r "s/\\\e\[([0-9;]{1,12}m)//g")
-  offset="${2-0}"
   spaces="                                                                                      "
 
-  adds=$((${#SEPARATOR} - ${#message} - offset))
+  adds=$((${#SEPARATOR} - ${#message}))
 
-  echo -e -n "${1}${spaces:0:$adds}"
+  echo -e -n "\r${1}${spaces:0:$adds}"
 }
 
 # Print option usage info
