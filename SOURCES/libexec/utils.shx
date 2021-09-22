@@ -49,13 +49,18 @@ getLogDate() {
 
 # Prints duration in pretty format
 #
-# 1: Duration in seconds (Number)
+# 1: Action start timestamp (Number)
+# 2: Action end timestamp (Number)
 #
 # Code: No
 # Echo: Duration (String)
 getGraceDuration() {
-  local dur="$1"
-  local sec min
+  local action_start="$1"
+  local action_end="${2:-$(now)}"
+
+  local sec min dur
+
+  dur=$(( action_end - action_start ))
 
   if [[ -z "$dur" || "$dur" == "0" ]] ; then
     echo "< 1 sec"
@@ -72,6 +77,39 @@ getGraceDuration() {
   fi
 }
 
+
+# Prints duration in pretty, short format
+#
+# 1: Action start timestamp (Number)
+# 2: Action end timestamp (Number)
+#
+# Code: No
+# Echo: Duration (String)
+getGraceDurationShort() {
+  local action_start="$1"
+  local action_end="${2:-$(now)}"
+
+  local sec min dur
+
+  dur=$(( action_end - action_start ))
+
+  if [[ -z "$dur" || "$dur" == "0" ]] ; then
+    echo "[0:01]"
+    return 0
+  fi
+
+  sec=$(( dur % 60 ))
+  min=$(( ( dur - sec ) / 60 ))
+
+  sec=$(printf "%02d" $sec)
+
+  if [[ $min -eq 0 ]] ; then
+    echo "[0:$sec]"
+  else
+    echo "[$min:$sec]"
+  fi
+}
+
 # Prints grace file size
 #
 # 1: Path to file (String)
@@ -83,8 +121,16 @@ getGraceFileSize() {
     return
   fi
 
+  local size
+
   # shellcheck disable=SC2012
-  ls -lah "$1" | awk -F " " '{print $5}'
+  size=$(ls -lah "$1" | awk -F " " '{print $5}')
+
+  if [[ $size =~ ^[0-9]+$ ]] ; then
+    echo "${size}B"
+  else
+    echo "$size"
+  fi
 }
 
 # Shows separator

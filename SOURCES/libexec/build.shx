@@ -132,14 +132,14 @@ processSpec() {
       found_source=$(findSource "$file_name")
 
       if [[ -n "$found_source" ]] ; then
-        show "File ${CL_CYAN}$file_name${CL_NORM} listed in spec and will be used for the build"
         cp "$found_source" "$tmp_dir"
+        show "${CL_GREY}+${CL_NORM} $file_name ${CL_DARK}($(getGraceFileSize "$tmp_dir/$file_name"))${CL_NORM}"
       elif [[ -f "$tmp_dir/$file_name" ]] ; then
-        show "File ${CL_CYAN}$file_name${CL_NORM} listed in spec and will be used for the build"
+        show "${CL_GREY}+${CL_NORM} $file_name ${CL_DARK}($(getGraceFileSize "$tmp_dir/$file_name"))${CL_NORM}"
       elif [[ -n "$dlcache" ]] ; then
         if [[ -f "$dlcache/$file_name" ]] ; then
-          show "File ${CL_CYAN}$file_name${CL_NORM} listed in spec and will be used for the build"
           cp "$dlcache/$file_name" "$tmp_dir"
+          show "${CL_GREY}+${CL_NORM} $file_name ${CL_DARK}($(getGraceFileSize "$tmp_dir/$file_name"))${CL_NORM}"
         else
           show "Downloading source file ${CL_CYAN}${source_file}${CL_NORM}…"
 
@@ -151,6 +151,8 @@ processSpec() {
           fi
 
           cp "$dlcache/$file_name" "$tmp_dir"
+
+          show "${CL_GREY}+${CL_NORM} ${file_name} ${CL_DARK}($(getGraceFileSize "$tmp_dir/$file_name"))${CL_NORM}"
         fi
       else
         show "Downloading source file ${CL_CYAN}${source_file}${CL_NORM}…"
@@ -161,11 +163,14 @@ processSpec() {
           error "Error! Can't download file ${CL_BL_RED}${source_file}${CL_RED}."
           doExit $ERROR_SOURCE
         fi
+
+        show "${CL_GREY}+${CL_NORM} ${file_name} ${CL_DARK}($(getGraceFileSize "$tmp_dir/$file_name"))${CL_NORM}"
       fi
     else
       if [[ -f "$tmp_dir/$source_file" ]] ; then
-        show "File ${CL_CYAN}${source_file}${CL_NORM} listed in spec and will be used for the build"
-        source_num=$(( source_num + 1 )) && continue
+        show "${CL_GREY}+${CL_NORM} ${source_file} ${CL_DARK}($(getGraceFileSize "$tmp_dir/$source_file"))${CL_NORM}"
+        source_num=$(( source_num + 1 ))
+        continue
       fi
 
       local source_ext source_name found_dir found_source
@@ -181,16 +186,15 @@ processSpec() {
       fi
 
       if [[ -n "$source_ext" && -n "$found_dir" ]] ; then
-        show "File ${CL_CYAN}${source_file}${CL_NORM} listed in spec and will be created from sources directory"
-
         packDir "$found_dir/$source_name" "$source_ext"
         mv "$found_dir/$source_file" "$tmp_dir"
 
+        show "${CL_GREY}+${CL_NORM} ${source_file} ${CL_DARK}($(getGraceFileSize "$tmp_dir/$source_file"))${CL_NORM}"
+
         source_num=$(( source_num + 1 )) && continue
       elif [[ -n "$found_source" ]] ; then
-        show "File ${CL_CYAN}${source_file}${CL_NORM} listed in spec and will be used for build"
-
         cp "$found_source" "$tmp_dir"
+        show "${CL_GREY}+${CL_NORM} ${source_file} ${CL_DARK}($(getGraceFileSize "$tmp_dir/$source_file"))${CL_NORM}"
 
         source_num=$(( source_num + 1 )) && continue
       else
