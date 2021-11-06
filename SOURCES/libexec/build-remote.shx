@@ -8,7 +8,7 @@ require "upload"
 
 ################################################################################
 
-# Start parallel build in tmux
+# Starts parallel build in tmux
 #
 # *: All options passed to utility 
 #
@@ -79,7 +79,7 @@ parallelBuild() {
   show "Parallel build complete" $GREEN
 }
 
-# Process sources and run build on remote hosts
+# Prepares sources and run build on remote hosts
 #
 # 1: Path to spec file (String)
 #
@@ -109,7 +109,7 @@ remoteBuild() {
   fi
 }
 
-# Run build on different build nodes
+# Runs build on different build nodes
 #
 # 1: Path to spec file (String)
 #
@@ -140,7 +140,7 @@ remoteRunMultibuild() {
   done
 }
 
-# Run build on remote host
+# Runs build on remote host
 #
 # 1: Path to spec file (String)
 #
@@ -195,7 +195,7 @@ remoteRunBuild() {
   remoteBuildProcess "$spec"
 }
 
-# Check build environment on remote host
+# Checks build environment on remote host
 #
 # Code: No
 # Echo: No
@@ -206,7 +206,7 @@ remoteCheckEnv() {
 
   if isRemoteServerReachable "$host" ; then
     if ! isSSHConnectionWorks "$user" "$host" ; then
-      error "Can't connect to host ${CL_BL_RED}${host}${CL_RED}"
+      error "Can't connect to host ${CL_BL_RED}${host}${CL_RED} (server is reachable but SSH command returned an error)"
       doExit $ERROR_REMOTE
     fi
   else
@@ -221,7 +221,7 @@ remoteCheckEnv() {
   sshCommand "$user@$host" "$BUILDER_HOME/initenv" &> /dev/null
 }
 
-# Install build dependencies on remote host
+# Installs build dependencies on remote host
 #
 # 1: Path to spec file (String)
 #
@@ -251,7 +251,7 @@ remoteDepsInstall() {
   show "All required packages installed" $GREEN
 }
 
-# Validate spec on remote host
+# Validates spec on remote host
 #
 # 1: Path to spec file (String)
 #
@@ -283,7 +283,7 @@ remoteSpecValidate() {
   [[ -n "$verbose" ]] && sleep $LINT_WAIT
 }
 
-# Execute build commands on remote host
+# Executes build commands on remote host
 #
 # 1: Path to spec file (String)
 #
@@ -435,7 +435,7 @@ remoteBuildProcess() {
   fi
 }
 
-# Upload sources to remote build host
+# Uploads sources to remote build host
 #
 # 1: Path to spec file (String)
 #
@@ -484,7 +484,7 @@ uploadSourcesToRemoteHost() {
   show ""
 }
 
-# Download packages from remote build host
+# Downloads packages from remote build host
 #
 # 1: Package file (String)
 # 2: Output directory (String)
@@ -543,7 +543,7 @@ checkRemoteAvailability() {
   fi
 }
 
-# Sign packages on remote host
+# Signs packages on remote host
 #
 # *: Packages (String)
 #
@@ -596,9 +596,11 @@ checkParallelBuildAvailability() {
 # Code: Yes
 # Echo: No
 isSSHConnectionWorks() {
-  sshCommand "$1@$2" "echo 2>&1" &> /dev/null
+  if ! sshCommand "$1@$2" "echo 2>&1" &> /dev/null ; then
+    return 1
+  fi
 
-  [[ $? -eq 0 ]] && return 0 || return 1
+  return 0
 }
 
 # Checks if host is reachable
@@ -610,12 +612,14 @@ isSSHConnectionWorks() {
 isRemoteServerReachable() {
   local host="$1"
 
-  ping -c 1 -w 5 "$host" &> /dev/null
+  if ! ping -c 1 -w 5 "$host" &> /dev/null ; then
+    return 1
+  fi
 
-  [[ $? -eq 0 ]] && return 0 || return 1
+  return 0
 }
 
-# Get options for SSH commands
+# Returns options for SSH/SCP commands
 #
 # Code: No
 # Echo: Options (String)
@@ -650,7 +654,7 @@ hasParalellLock() {
   return 0
 }
 
-# Create parallel build lock file
+# Creates lock file for parallel build
 #
 # Code: No
 # Echo: No
@@ -676,14 +680,14 @@ removeParalellLock() {
   fi
 }
 
-# Execute SSH command on remote host
+# Executes SSH command on remote host
 #
 # 1: Host (String)
 # 2: Command (String)
 # 3: Don't use password auth (String) [Optional]
 #
 # Code: No
-# Echo: No
+# Echo: SSH command output (String)
 sshCommand() {
   local host="$1"
   local comm="$2"
@@ -706,7 +710,7 @@ sshCommand() {
   return $?
 }
 
-# Copy file through SCP command
+# Copies file using SCP
 #
 # 1: From (String)
 # 2: To (String)
@@ -729,7 +733,7 @@ scpCommand() {
   return $?
 }
 
-# Parse URL to remote host
+# Parses URL to remote host options
 #
 # 1: URL (String)
 #
