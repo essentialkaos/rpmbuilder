@@ -612,11 +612,21 @@ isSSHConnectionWorks() {
 isRemoteServerReachable() {
   local host="$1"
 
-  if ! ping -c 1 -w 5 "$host" &> /dev/null ; then
-    return 1
+  # Check remote server using ping
+  if ! type -P ping &>/dev/null ; then
+    if ping -c 1 -w 5 "$host" &> /dev/null ; then
+      return 0
+    fi
   fi
 
-  return 0
+  # If ICMP is blocked, use nc for check
+  if ! type -P nc &>/dev/null ; then
+    if nc -z "$host" 22 ; then
+      return 0
+    fi
+  fi
+
+  return 1
 }
 
 # Returns options for SSH/SCP commands

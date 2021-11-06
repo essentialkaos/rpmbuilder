@@ -57,6 +57,7 @@ rm -rf %{buildroot}
 %changelog
 * Sat Nov 06 2021 Anton Novojilov <andy@essentialkaos.com> - 2.11.1-0
 - Code refactoring
+- Added fallback accessibility check using nc
 
 * Thu Sep 09 2021 Anton Novojilov <andy@essentialkaos.com> - 2.11.0-0
 - Improved UI
