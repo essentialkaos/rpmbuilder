@@ -73,7 +73,7 @@ parallelBuild() {
     tmux attach-session -t "$TMUX_SESSION_NAME" >/dev/null 2>&1
   fi
 
-  waitTillWorkersComplete ${wids[*]}
+  waitTillWorkersComplete "${wids[@]}"
   removeParalellLock
 
   show "Parallel build complete" $GREEN
