@@ -2,7 +2,7 @@
 
 Summary:         RPM package build helper
 Name:            rpmbuilder
-Version:         2.11.1
+Version:         2.11.2
 Release:         0%{?dist}
 License:         Apache License, Version 2.0
 Group:           Development/Tools
@@ -55,6 +55,9 @@ rm -rf %{buildroot}
 ################################################################################
 
 %changelog
+* Mon Nov 15 2021 Anton Novojilov <andy@essentialkaos.com> - 2.11.2-0
+- Fixed problems reported by shellcheck
+
 * Sat Nov 06 2021 Anton Novojilov <andy@essentialkaos.com> - 2.11.1-0
 - Code refactoring
 - Added fallback accessibility check using nc
