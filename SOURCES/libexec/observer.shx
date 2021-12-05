@@ -10,7 +10,7 @@
 startStatusObserver() {
   [[ -n "$verbose" ]] && return 0
 
-  showt "${CL_GREEN}Executing:${CL_NORM} ${CL_CYAN}~${CL_NORM}"
+  showt "${CL_GREEN}Executing:${CL_NORM} ${CL_DARK}~${CL_NORM}"
 
   statusObserver &
   observer_pid=$!
@@ -26,7 +26,7 @@ stopStatusObserver() {
   kill "$observer_pid" &> /dev/null
   wait "$observer_pid" &> /dev/null
 
-  showm "${CL_GREEN}Executing:${CL_NORM} ${CL_CYAN}clean${CL_NORM}                                                               "
+  showt "${CL_GREEN}Executing:${CL_NORM} ${CL_CYAN}clean${CL_NORM}                                                               "
   show ""
 
   unset observer_pid
@@ -51,7 +51,7 @@ statusObserver() {
       fi
     fi
 
-    if [[ "$status" != "$prev_status+$bld_time" ]] ; then
+    if [[ "$status" != "$prev_status+$bld_time" && -n "$status" ]] ; then
       grc_time=$(getGraceDuration "$build_start" "$cur_time")
       showt "${CL_GREEN}Executing:${CL_NORM} ${CL_CYAN}$status${CL_NORM} ${CL_DARK}($grc_time)${CL_NORM}"
       prev_status="$status+$bld_time"
