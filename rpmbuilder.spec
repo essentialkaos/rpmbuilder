@@ -2,7 +2,7 @@
 
 Summary:         RPM package build helper
 Name:            rpmbuilder
-Version:         2.11.3
+Version:         2.11.4
 Release:         0%{?dist}
 License:         Apache License, Version 2.0
 Group:           Development/Tools
@@ -55,6 +55,10 @@ rm -rf %{buildroot}
 ################################################################################
 
 %changelog
+* Mon Dec 06 2021 Anton Novojilov <andy@essentialkaos.com> - 2.11.4-0
+- Fixed minor bug with printing build stage
+- Code refactoring
+
 * Wed Nov 17 2021 Anton Novojilov <andy@essentialkaos.com> - 2.11.3-0
 - Fixed major bug with checking the availability of utilities for checking
   remote node accessibility
