@@ -56,7 +56,7 @@ rm -rf %{buildroot}
 
 %changelog
 * Tue Feb 15 2022 Anton Novojilov <andy@essentialkaos.com> - 2.11.5-0
-- Fixed bug with downloading files for GitHub
+- Fixed bug with downloading files from GitHub
 
 * Mon Dec 06 2021 Anton Novojilov <andy@essentialkaos.com> - 2.11.4-0
 - Fixed minor bug with printing build stage
