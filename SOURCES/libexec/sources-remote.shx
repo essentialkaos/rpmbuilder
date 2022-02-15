@@ -113,21 +113,15 @@ downloadSource() {
 # Code: Yes
 # Echo: No
 isAccessibleURL() {
-  local status code nosniff size
+  local status code size
 
   if [[ "$1" =~ http:|https: ]] ; then
-    status=$(curl -A "$USER_AGENT" -LIs --max-redirs 10 -X GET "$1")
-    code=$(echo -e "$status" | grep "HTTP" | cut -f2 -d" " | tail -1)
-    nosniff=$(echo -e "$status" | grep "X-Content-Type-Options: nosniff")
-
-    # Nosniff mode works on Google Code and if we simply try to check status server
-    # return code 404, but we can download this file
-    [[ -n "$nosniff" || "$code" == "200" ]] && return 0 || return 1
+    code=$(curl -A "$USER_AGENT" -LIs --max-redirs 10 -X GET -w '%{http_code}' -o /dev/null "$1")
+    [[ "$code" == "200" ]] && return 0 || return 1
   elif [[ "$1" =~ ftp: ]] ; then
     status=$(curl -A "$USER_AGENT" "$1" -Is)
     size=$(echo "$status" | grep "Content-Length" | cut -f2 -d" ")
-
-    [[ -n "$size" ]] && return 0 || return 1
+    [[ -n "$size" && "$size" != "0" ]] && return 0 || return 1
   else
     return 1
   fi
