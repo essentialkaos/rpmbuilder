@@ -1,5 +1,9 @@
 ################################################################################
 
+%global crc_check pushd ../SOURCES ; sha512sum -c %{SOURCE100} ; popd
+
+################################################################################
+
 Summary:         RPM package build helper
 Name:            rpmbuilder
 Version:         2.11.5
@@ -9,6 +13,8 @@ Group:           Development/Tools
 URL:             https://kaos.sh/rpmbuilder
 
 Source0:         https://source.kaos.st/%{name}/%{name}-%{version}.tar.bz2
+
+Source100:       checksum.sha512
 
 BuildArch:       noarch
 BuildRoot:       %{_tmppath}/%{name}-%{version}-%{release}-root-%(%{__id_u} -n)
@@ -27,6 +33,8 @@ RPM package build helper.
 ################################################################################
 
 %prep
+%{crc_check}
+
 %setup -q
 
 %build
