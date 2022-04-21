@@ -1,7 +1,7 @@
 <p align="center"><a href="#readme"><img src="https://gh.kaos.st/rpmbuilder.svg"/></a></p>
 
 <p align="center">
-  <a href="https://github.com/essentialkaos/rpmbuilder/actions"><img src="https://github.com/essentialkaos/rpmbuilder/workflows/CI/badge.svg" alt="GitHub Actions Status" /></a>
+  <a href="https://kaos.sh/w/rpmbuilder/ci"><img src="https://kaos.sh/w/rpmbuilder/ci.svg" alt="GitHub Actions CI Status" /></a>
   <a href="#license"><img src="https://gh.kaos.st/apache2.svg"></a>
 </p>
 
@@ -38,7 +38,7 @@ sudo service buildmon start
 
 ### Tips
 
-* You could define rpmbuilder options inside your specs ([example](https://github.com/essentialkaos/kaos-repo/blob/develop/specs/clickhouse/clickhouse.spec#L3-L4)). It very helpful for determining information about external sources.
+* You could define rpmbuilder options inside your specs ([example](https://github.com/essentialkaos/kaos-repo/blob/develop/specs/libnut/libnut.spec#L3-L4)). It very helpful for determining information about external sources.
 * If you have a big bunch of default options, you can define them in the preferences file. [More info](https://github.com/essentialkaos/rpmbuilder/wiki/Preferences-file).
 * Since version 2.5.0 rpmbuilder provides automatic checksum generation feature. [More info](https://github.com/essentialkaos/rpmbuilder/wiki/Automatic-SHA-512-checksum-generation).
 
@@ -174,8 +174,8 @@ Other:
 
 | Branch | Status |
 |--------|--------|
-| `master` (_Stable_) | [![CI](https://github.com/essentialkaos/rpmbuilder/workflows/CI/badge.svg?branch=master)](https://github.com/essentialkaos/rpmbuilder/actions) |
-| `develop` (_Unstable_) | [![CI](https://github.com/essentialkaos/rpmbuilder/workflows/CI/badge.svg?branch=develop)](https://github.com/essentialkaos/rpmbuilder/actions) |
+| `master` | [![CI](https://kaos.sh/w/rpmbuilder/ci.svg?branch=master)](https://kaos.sh/w/rpmbuilder/ci?query=branch:master) |
+| `develop` | [![CI](https://kaos.sh/w/rpmbuilder/ci.svg?branch=master)](https://kaos.sh/w/rpmbuilder/ci?query=branch:develop) |
 
 ### Contributing
 
