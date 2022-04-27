@@ -56,7 +56,7 @@ jobs:
     name: Docker Build Check
     runs-on: ubuntu-latest
 
-    needs: Hadolint
+    needs: [Hadolint, Shellcheck, Perfecto]
 
     steps:
       - name: Checkout
@@ -71,3 +71,8 @@ jobs:
       - name: Build CentOS 7 image
         run: |
           docker build -f centos7.docker -t centos7 .
+
+      - name: Measure images size
+        run: |
+          image_size=$(docker inspect -f "{{ .Size }}" centos7)
+          printf "\033[1mUncompressed image size:\033[0m %d (%s)\n" $image_size $(echo "$image_size" | numfmt --to=si)
