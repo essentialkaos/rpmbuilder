@@ -74,7 +74,7 @@ fetchSourcesFromGithub() {
     [[ -z "$github_user" || -z "$github_repo" ]] && return
   fi
 
-  git="git://github.com/${github_user}/${github_repo}.git"
+  git="https://github.com/${github_user}/${github_repo}.git"
 }
 
 # Configure utility for downloading sources from bitbucket.org
