@@ -51,11 +51,11 @@
 
 Summary:         Configuration package for rpmbuilder node
 Name:            rpmbuilder-node
-Version:         1.4.1
-Release:         3%{?dist}
+Version:         1.4.2
+Release:         0%{?dist}
 License:         Apache License, Version 2.0
 Group:           Development/Tools
-URL:             https://github.com/essentialkaos/rpmbuilder
+URL:             https://kaos.sh/rpmbuilder
 
 Source0:         %{name}-%{version}.tar.bz2
 
@@ -106,10 +106,6 @@ install -pm 755 rpmmacros_centos8 %{buildroot}%{home_dir}/.rpmmacros_rpmbuilder
 install -pm 755 rpmmacros_centos7 %{buildroot}%{home_dir}/.rpmmacros_rpmbuilder
 %endif
 
-%if 0%{?rhel} == 6
-install -pm 755 rpmmacros_centos6 %{buildroot}%{home_dir}/.rpmmacros_rpmbuilder
-%endif
-
 %clean
 rm -rf %{buildroot}
 
@@ -138,14 +134,7 @@ if [[ $1 -eq 1 ]] ; then
 
   chown -h -R %{user_name}:%{user_name} %{home_dir}
 
-  # Enable password authentication for build node
-  sed -i 's/PasswordAuthentication no/PasswordAuthentication yes/' %{_sysconfdir}/ssh/sshd_config
-
-  %if 0%{?rhel} >= 7
   %{__systemctl} restart sshd.service &>/dev/null || :
-  %else
-  %{__service} sshd restart &>/dev/null || :
-  %endif
 fi
 
 %preun
@@ -164,7 +153,7 @@ fi
 
 %files
 %defattr(-,root,root,-)
-%doc LICENSE LICENSE.RU
+%doc LICENSE
 %{_initddir}/%{service_name}
 %{_sysconfdir}/sudoers.d/%{user_name}
 %{home_dir}
@@ -172,6 +161,9 @@ fi
 ################################################################################
 
 %changelog
+* Fri Apr 29 2022 Anton Novojilov <andy@essentialkaos.com> - 1.4.2-0
+- Dropped CentOS 6 support
+
 * Fri May 29 2020 Anton Novojilov <andy@essentialkaos.com> - 1.4.1-3
 - Fixed problems reported by perfecto
 
