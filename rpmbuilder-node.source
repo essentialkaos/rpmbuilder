@@ -1,5 +1,4 @@
 SOURCES/conf/builder.sudoers
-SOURCES/conf/rpmmacros_centos6
 SOURCES/conf/rpmmacros_centos7
 SOURCES/conf/rpmmacros_centos8
 SOURCES/conf/rpmlint
@@ -8,4 +7,3 @@ SOURCES/initenv
 SOURCES/buildmon
 SOURCES/buildmon.init
 LICENSE
-SOURCES/LICENSE

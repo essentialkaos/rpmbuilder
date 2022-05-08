@@ -16,7 +16,7 @@ jobs:
         uses: actions/checkout@v3
 
       - name: Login to DockerHub
-        uses: docker/login-action@v1
+        uses: docker/login-action@v2
         with:
           username: ${{ secrets.DOCKERHUB_USERNAME }}
           password: ${{ secrets.DOCKERHUB_TOKEN }}
@@ -63,7 +63,7 @@ jobs:
         uses: actions/checkout@v3
 
       - name: Login to DockerHub
-        uses: docker/login-action@v1
+        uses: docker/login-action@v2
         with:
           username: ${{ secrets.DOCKERHUB_USERNAME }}
           password: ${{ secrets.DOCKERHUB_TOKEN }}
@@ -72,7 +72,8 @@ jobs:
         run: |
           docker build -f centos7.docker -t centos7 .
 
-      - name: Measure images size
-        run: |
-          image_size=$(docker inspect -f "{{ .Size }}" centos7)
-          printf "\033[1mUncompressed image size:\033[0m %d (%s)\n" $image_size $(echo "$image_size" | numfmt --to=si)
+      - name: Show info about built Docker image
+        uses: essentialkaos/docker-info-action@v1
+        with:
+          image: centos7
+          show-labels: true

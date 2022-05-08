@@ -74,7 +74,7 @@ fetchSourcesFromGithub() {
     [[ -z "$github_user" || -z "$github_repo" ]] && return
   fi
 
-  git="git://github.com/${github_user}/${github_repo}.git"
+  git="https://github.com/${github_user}/${github_repo}.git"
 }
 
 # Configure utility for downloading sources from bitbucket.org
@@ -194,8 +194,14 @@ packSourcesFromGit() {
   git_log="$tmp_dir/git.log"
 
   pushd "$tmp_dir" &> /dev/null || printErrorAndExit "Can't set working dir to $tmp_dir"
-    if [[ -z "$revision" && -z "$branch" && -z "$tag" ]] ; then
+    if [[ -z "$revision"  ]] ; then
       git_opts="--depth=1"
+    fi
+
+    if [[ -n "$branch" ]] ; then
+      git_opts="$git_opts --branch=$branch"
+    elif [[ -n "$tag" ]] ; then
+      git_opts="$git_opts --branch=$tag"
     fi
 
     if [[ -n "$verbose" ]] ; then
@@ -218,27 +224,6 @@ packSourcesFromGit() {
     fi
 
     pushd "$tmp_dir/$dir_name" &> /dev/null  || printErrorAndExit "Can't set working dir to $tmp_dir/$dir_name"
-      if [[ -n "$branch" ]] ; then
-        if [[ -n "$verbose" ]] ; then
-          git checkout "$branch" | tee -a "$git_log"
-        else
-          git checkout "$branch" &> "$git_log"
-        fi
-
-        if [[ $? -ne 0 ]] ; then
-          error "Can't switch branch to ${CL_BL_RED}${branch}${CL_RED}:"
-
-          if [[ -z "$verbose" ]] ; then
-            error ""
-            error "Last ${REPO_LOG_QUOTE_SIZE} lines from log ($git_log):"
-            tail -${REPO_LOG_QUOTE_SIZE} "$git_log" 1>&2
-            error ""
-          fi
-
-          doExit $ERROR_SOURCE
-        fi
-      fi
-
       if [[ -n "$revision" ]] ; then
         if [[ -n "$verbose" ]] ; then
           git checkout "$revision" | tee -a "$git_log"
@@ -258,30 +243,11 @@ packSourcesFromGit() {
 
           doExit $ERROR_SOURCE
         fi
-      elif [[ -n "$tag" ]] ; then
-        if [[ -n "$verbose" ]] ; then
-          git checkout "$tag" | tee -a "$git_log"
-        else
-          git checkout "$tag" &> "$git_log"
-        fi
-
-        if [[ $? -ne 0 ]] ; then
-          error "Can't checkout tag ${CL_BL_RED}${tag}${CL_RED}:"
-
-          if [[ -z "$verbose" ]] ; then
-            error ""
-            error "Last ${REPO_LOG_QUOTE_SIZE} lines from log ($git_log):"
-            tail -${REPO_LOG_QUOTE_SIZE} "$git_log" 1>&2
-            error ""
-          fi
-
-          doExit $ERROR_SOURCE
-        fi
       fi
 
       # Fetch submodules if exist
       if [[ -f .gitmodules ]] ; then
-        git submodule update --init --recursive
+        git submodule update --init --recursive --depth=1
       fi
 
       rm -rf .git .gitignore .gitmodules "$git_log" &> /dev/null
