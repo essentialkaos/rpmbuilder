@@ -36,6 +36,10 @@ sudo passwd builder
 sudo service buildmon start
 ```
 
+#### Using Docker
+
+Official `rpmbuilder` images available on [Docker Hub](http://kaos.sh/d/rpmbuilder) and [GitHub Container Registry](https://kaos.sh/p/rpmbuilder).
+
 ### Tips
 
 * You could define rpmbuilder options inside your specs ([example](https://github.com/essentialkaos/kaos-repo/blob/develop/specs/libnut/libnut.spec#L3-L4)). It very helpful for determining information about external sources.
