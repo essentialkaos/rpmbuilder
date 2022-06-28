@@ -6,7 +6,7 @@
 
 Summary:         RPM package build helper
 Name:            rpmbuilder
-Version:         2.12.0
+Version:         2.12.1
 Release:         0%{?dist}
 License:         Apache License, Version 2.0
 Group:           Development/Tools
@@ -63,6 +63,9 @@ rm -rf %{buildroot}
 ################################################################################
 
 %changelog
+* Tue Jun 28 2022 Anton Novojilov <andy@essentialkaos.com> - 2.12.1-0
+- Minor UI improvements
+
 * Thu Apr 28 2022 Anton Novojilov <andy@essentialkaos.com> - 2.12.0-0
 - Fixed bug with fetching sources from GitHub using git
 - Much faster data fetching from git repositories

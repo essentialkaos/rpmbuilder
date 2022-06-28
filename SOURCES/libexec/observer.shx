@@ -52,7 +52,7 @@ statusObserver() {
     fi
 
     if [[ "$status" != "$prev_status+$bld_time" && -n "$status" ]] ; then
-      grc_time=$(getGraceDuration "$build_start" "$cur_time")
+      grc_time=$(getGraceDurationShort "$build_start" "$cur_time")
       showt "${CL_GREEN}Executing:${CL_NORM} ${CL_CYAN}$status${CL_NORM} ${CL_DARK}($grc_time)${CL_NORM}"
       prev_status="$status+$bld_time"
     fi
