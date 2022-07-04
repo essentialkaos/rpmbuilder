@@ -300,7 +300,7 @@ showm() {
 # Code: No
 # Echo: No
 showt() {
-  printf "\e[2K\r$*"
+  echo -e -n "\e[2K\r$*"
 }
 
 # Print option usage info
