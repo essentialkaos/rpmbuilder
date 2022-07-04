@@ -13,7 +13,7 @@ fi
 APP="RPMBuilder"
 
 # Utility version (String)
-VER="2.12.1"
+VER="2.12.2"
 
 ################################################################################
 
@@ -300,14 +300,7 @@ showm() {
 # Code: No
 # Echo: No
 showt() {
-  local message spaces adds
-
-  message=$(echo "$1" | sed -r "s/\\\e\[([0-9;]{1,12}m)//g")
-  spaces="                                                                                      "
-
-  adds=$((${#SEPARATOR} - ${#message}))
-
-  echo -e -n "\r${1}${spaces:0:$adds}"
+  printf "\e[2K\r$*"
 }
 
 # Print option usage info
