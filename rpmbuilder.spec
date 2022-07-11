@@ -6,7 +6,7 @@
 
 Summary:         RPM package build helper
 Name:            rpmbuilder
-Version:         2.12.1
+Version:         2.12.2
 Release:         0%{?dist}
 License:         Apache License, Version 2.0
 Group:           Development/Tools
@@ -63,6 +63,10 @@ rm -rf %{buildroot}
 ################################################################################
 
 %changelog
+* Mon Jul 04 2022 Anton Novojilov <andy@essentialkaos.com> - 2.12.2-0
+- Fixed UI bugs
+- Code refactoring
+
 * Tue Jun 28 2022 Anton Novojilov <andy@essentialkaos.com> - 2.12.1-0
 - Minor UI improvements
 
