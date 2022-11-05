@@ -22,23 +22,73 @@ Building Redis rpm package for CentOS6 and CentOS7:
 #### From [ESSENTIAL KAOS Public Repository](https://yum.kaos.st)
 
 ```bash
-sudo yum install -y https://yum.kaos.st/get/$(uname -r).rpm
+sudo yum install -y https://yum.kaos.st/kaos-repo-latest.el$(grep 'CPE_NAME' /etc/os-release | tr -d '"' | cut -d':' -f5).noarch.rpm
 sudo yum install rpmbuilder
 ```
 
 Build node:
 
 ```bash
-sudo yum install -y https://yum.kaos.st/get/$(uname -r).rpm
+sudo yum install -y https://yum.kaos.st/kaos-repo-latest.el$(grep 'CPE_NAME' /etc/os-release | tr -d '"' | cut -d':' -f5).noarch.rpm
 sudo yum install rpmbuilder-node
-sudo passwd builder
-# change builder user password here
-sudo service buildmon start
 ```
 
 #### Using Docker
 
-Official `rpmbuilder` images available on [Docker Hub](http://kaos.sh/d/rpmbuilder) and [GitHub Container Registry](https://kaos.sh/p/rpmbuilder).
+We provide a big variety of Docker images available on [Docker Hub](http://kaos.sh/d/rpmbuilder) and [GitHub Container Registry](https://kaos.sh/p/rpmbuilder).
+
+<details><summary><b>Official images</b></summary><p>
+
+Basic images:
+
+- `essentialkaos/rpmbuilder:centos7` (_CentOS 7_)
+- `essentialkaos/rpmbuilder:ol7` (_OracleLinux 7_)
+- `essentialkaos/rpmbuilder:ol8` (_OracleLinux 8_)
+- `essentialkaos/rpmbuilder:ol9` (_OracleLinux 9_)
+- `ghcr.io/essentialkaos/rpmbuilder:centos7` (_CentOS 7_)
+- `ghcr.io/essentialkaos/rpmbuilder:ol7` (_OracleLinux 7_)
+- `ghcr.io/essentialkaos/rpmbuilder:ol8` (_OracleLinux 8_)
+- `ghcr.io/essentialkaos/rpmbuilder:ol9` (_OracleLinux 9_)
+
+Build node images:
+
+- `essentialkaos/rpmbuilder:node-centos7` (_CentOS 7_)
+- `essentialkaos/rpmbuilder:node-ol7` (_OracleLinux 7_)
+- `essentialkaos/rpmbuilder:node-ol8` (_OracleLinux 8_)
+- `essentialkaos/rpmbuilder:node-ol9` (_OracleLinux 9_)
+- `ghcr.io/essentialkaos/rpmbuilder:node-centos7` (_CentOS 7_)
+- `ghcr.io/essentialkaos/rpmbuilder:node-ol7` (_OracleLinux 7_)
+- `ghcr.io/essentialkaos/rpmbuilder:node-ol8` (_OracleLinux 8_)
+- `ghcr.io/essentialkaos/rpmbuilder:node-ol9` (_OracleLinux 9_)
+
+</p></details>
+
+Package build using basic image:
+
+```bash
+# Download and install rpmbuilder-docker script
+curl -fL# -o rpmbuilder-docker https://kaos.sh/rpmbuilder/rpmbuilder-docker
+chmod +x rpmbuilder-docker
+sudo mv rpmbuilder-docker /usr/bin/
+
+# Pull image
+docker pull essentialkaos/rpmbuilder:ol8
+export IMAGE=essentialkaos/rpmbuilder:ol8
+
+# Build package
+cd my-package-dir
+rpmbuilder-docker my-package.spec
+```
+
+Package build using build node image:
+
+```bash
+docker pull essentialkaos/rpmbuilder:node-ol8
+docker run -e PUB_KEY="ssh-ed25519 AAAAC3NzaC1lZDI1NTF5AABBII/TFh3Egacpn+NjNHSN3dl6OifEBHNtbP7wW9L0cUIb" -p 2022:2022 -d essentialkaos/rpmbuilder:node-ol8
+
+cd my-package-dir
+rpmbuilder my-package.spec -r builder@localhost:2022 -kk ~/.ssh/my-private-key
+```
 
 ### Tips
 
@@ -49,12 +99,13 @@ Official `rpmbuilder` images available on [Docker Hub](http://kaos.sh/d/rpmbuild
 ### Usage
 
 ```
+
 Usage: rpmbuilder {spec-file} {options}
 
 Spec file:
 
   You can define absolute or relative path to spec file. You also can define only spec name (without extension).
-  In this case, rpmbuilder try use {name}.spec file for build and try to find {name}.source file and use as 
+  In this case, rpmbuilder try use {name}.spec file for build and try to find {name}.source file and use as
   sources list.
 
 Source packaging:
@@ -117,14 +168,15 @@ Remote build:
   --remote, -r file                Build rpm package on the remote servers listed in specified file
   --host, -hh host                 Remote host IP or domain name
   --user, -uu username             Remote host user
-  --pass, -pp password             Password for specified user
+  --pass, -ss password             Password for specified user
+  --port, -pp port                 Remote host SSH daemon port
   --key, -kk file                  Path to the private key for specified user
   --attach, -A                     Attach to parallel build session in tmux
 
   Examples:
 
-    rpmbuilder package.spec --remote -ru builder -rp mypass -rh 127.0.0.1
-    rpmbuilder package.spec -r builder:mypass@127.0.0.1 -i ~/.ssh/id_dsa
+    rpmbuilder package.spec --remote -uu builder -ss mypass -hh 127.0.0.1
+    rpmbuilder package.spec -r builder:mypass@127.0.0.1:2022 -i ~/.ssh/id_dsa
     rpmbuilder package.spec --remote ~/servers.list --key ~/.ssh/id_dsa
 
 Build options:
@@ -171,7 +223,6 @@ Other:
   --no-color, -C                   Disable colors in output
   --help, -h                       Show this help message
   --version, -v                    Show information about version
-
 ```
 
 ### Build Status

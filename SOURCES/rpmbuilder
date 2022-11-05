@@ -213,7 +213,7 @@ main() {
     unset NORM BOLD UNLN RED GREEN YELLOW BLUE MAG CYAN GREY DARK
     unset CL_NORM CL_BOLD CL_UNLN CL_RED CL_GREEN CL_YELLOW CL_BLUE CL_MAG CL_DARK
     unset CL_CYAN CL_GREY CL_DARK CL_BL_RED CL_BL_GREEN CL_BL_YELLOW CL_BL_BLUE
-    unset CL_BL_MAG CL_BL_CYAN CL_BL_GREY
+    unset CL_BL_MAG CL_BL_CYAN CL_BL_GREY CL_BLNK_YELLOW CL_PODMAN CL_DOCKER
   fi
 
   [[ -n "$raw_version" ]] && echo $VER && exit 0
@@ -459,7 +459,7 @@ usage() {
   showo "--no-binary, -NR" "Don't build binary packages"
   showo "--no-source, -NS" "Don't build source package"
   showo "--arch, -a" "Override target arch for a build" "arch"
-  showo "--qa-rpaths" "Ignoring rpaths check" "\"<value>,…\""
+  showo "--qa-rpaths" "  Ignoring rpaths check" '"<value>,…"'
   show ""
   show "Arguments passing:" $BOLD
   show ""
