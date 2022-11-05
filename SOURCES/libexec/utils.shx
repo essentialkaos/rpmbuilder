@@ -146,7 +146,7 @@ showSeparator() {
   if [[ -n "$tmux_worker" ]] ; then
     cols=$(tmux display-message -p "#{window_width}")
   else
-    cols=$(tput cols)
+    cols=$(tput -T xterm-256color cols)
   fi
 
   for i in $(seq 1 $cols) ; do

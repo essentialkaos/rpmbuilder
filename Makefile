@@ -20,6 +20,9 @@ test: ## Run shellcheck tests
 	shellcheck SOURCES/buildmon
 	shellcheck SOURCES/initenv
 	shellcheck SOURCES/nodeinfo
+	shellcheck .docker/entrypoint
+	shellcheck .docker/node-entrypoint
+	shellcheck rpmbuilder-docker
 
 help: ## Show this info
 	@echo -e '\nSupported targets:\n'

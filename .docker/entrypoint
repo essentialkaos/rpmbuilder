@@ -1,0 +1,18 @@
+#!/usr/bin/env bash
+
+set -e
+
+chmod 777 /dev/stdout
+
+user_id=${LOCAL_USER_ID:-9001}
+
+# Create builder user
+useradd -s /bin/bash -u "$user_id" -M -d /home/builder builder
+
+# Unlock user account
+passwd -fu builder &> /dev/null
+
+# Change permissions for builder files and directories
+chown -R builder:builder /home/builder
+
+exec /usr/local/bin/gosu builder "$@"

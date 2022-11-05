@@ -10,6 +10,10 @@
 # Code: Yes
 # Echo: No
 isSpecFile() {
+  if [[ ! -f "$1" ]] ; then
+    return 1
+  fi
+
   if [[ ! -r "$1" ]] ; then
     return 1
   fi

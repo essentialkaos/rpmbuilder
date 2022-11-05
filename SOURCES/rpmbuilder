@@ -13,7 +13,10 @@ fi
 APP="RPMBuilder"
 
 # Utility version (String)
-VER="2.12.2"
+VER="2.13.0"
+
+# Utility description (String)
+DESC="RPM package build helper"
 
 ################################################################################
 
@@ -48,6 +51,8 @@ CL_BL_MAG="\e[1;${MAG};49m"
 CL_BL_CYAN="\e[1;${CYAN};49m"
 CL_BL_GREY="\e[1;${GREY};49m"
 CL_BLNK_YELLOW="\e[5;${YELLOW};49m"
+CL_PODMAN="\033[38;5;91m"
+CL_DOCKER="\033[38;5;32m"
 
 ERROR_UNKNOWN=1
 ERROR_ARGS=2
@@ -75,7 +80,7 @@ SEPARATOR="---------------------------------------------------------------------
 # Path to preferencies file
 PREFS_FILE="${PREFS_FILE:-$HOME/.rpmbuilder}"
 
-SUPPORTED_OPTS="remote !parallel host user pass key source_dir source_list 
+SUPPORTED_OPTS="remote !parallel host user pass port key source_dir source_list 
  !sign !no_build !no_clean !no_deps !no_lint !no_source pack !attach 
  pre post dest dest_dir upload git svn hg bzr branch revision tag svn_user 
  svn_pass path !bump bump_comment tmp dlcache !depinstall !dep_install github 
@@ -84,15 +89,15 @@ SUPPORTED_OPTS="remote !parallel host user pass key source_dir source_list
  arch download !relative_pack enable_repo disable_repo exclude_package gopack 
  !no_validate !strict !pedantic !perfect"
 
-SHORT_OPTS="r:remote P:!parallel hh:host uu:user pp:pass kk:key sd:source_dir 
- sl:source_list NB:!no_build NC:!no_clean ND:!no_deps NR:!no_binary NS:!no_source 
- p:pack 0:!no_lint 1:!strict 2:!pedantic 3:!perfect pr:pre ps:post d:dest u:upload 
- su:svn_user sp:svn_pass rp:path b:!bump bc:bump_comment dc:dlcache 
- di:!depinstall rb:branch rt:tag rr:revision gh:github bb:bitbucket lp:launchpad 
- w:with W:without s:!sign D:define O:output V:!verbose h:help v:!version 
- nv:!no_validate nc:!no_colors kl:!keep_log n:!notify a:arch dl:download 
- R:relative_pack ER:enable_repo DR:disable_repo EX:exclude_package G:gopack 
- A:!attach"
+SHORT_OPTS="r:remote P:!parallel hh:host uu:user ss:pass pp:port kk:key 
+ sd:source_dir sl:source_list NB:!no_build NC:!no_clean ND:!no_deps 
+ NR:!no_binary NS:!no_source p:pack 0:!no_lint 1:!strict 2:!pedantic 3:!perfect 
+ pr:pre ps:post d:dest u:upload su:svn_user sp:svn_pass rp:path b:!bump 
+ bc:bump_comment dc:dlcache di:!depinstall rb:branch rt:tag rr:revision 
+ gh:github bb:bitbucket lp:launchpad w:with W:without s:!sign D:define 
+ O:output V:!verbose h:help v:!version nv:!no_validate nc:!no_colors 
+ kl:!keep_log n:!notify a:arch dl:download R:relative_pack ER:enable_repo 
+ DR:disable_repo EX:exclude_package G:gopack A:!attach"
 
 INSPEC_OPTS="git svn hg bzr branch revision tag svn_user svn_pass github 
  bitbucket launchpad qa_rpaths no_lint no_validate relative_pack gopack strict 
@@ -152,13 +157,13 @@ CHECK_LOCAL_QUEUE_DELAY=2
 # Remote build queue check delay in seconds (Number)
 CHECK_REMOTE_QUEUE_DELAY=15
 
-# Max log quote size in lunes (Number)
+# Max log quote size in lines (Number)
 LOG_QUOTE_SIZE=50
 
-# Max repository (git/svn/hg/bzr) log quote size in lunes (Number)
+# Max repository (git/svn/hg/bzr) log quote size in lines (Number)
 REPO_LOG_QUOTE_SIZE=25
 
-# List of possible used directory names for sources (String)
+# List of possible directory names with sources (String)
 SOURCE_PATHS=". SOURCES SOURCE sources source src"
 
 # Current working dir (String)
@@ -201,7 +206,7 @@ declare -A _requires
 # Code: No
 # Echo: No
 main() {
-  if [[ ! -t 1 || -n "$no_colors" ]] ; then
+  if [[ -n "$no_colors" ]] ; then
     unset NORM BOLD UNLN RED GREEN YELLOW BLUE MAG CYAN GREY DARK
     unset CL_NORM CL_BOLD CL_UNLN CL_RED CL_GREEN CL_YELLOW CL_BLUE CL_MAG CL_DARK
     unset CL_CYAN CL_GREY CL_DARK CL_BL_RED CL_BL_GREEN CL_BL_YELLOW CL_BL_BLUE
@@ -213,7 +218,7 @@ main() {
   [[ $# -eq 0 || -n "$help" || -n "$usage" ]] && usage && exit 0
 
   if [[ $(id -u) == "0" ]] ; then
-    show "You should not be building packages as the superuser!" $YELLOW
+    show "It's not a good idea to run the build as a superuser." $YELLOW
     exit 1
   fi
 
@@ -432,14 +437,15 @@ usage() {
   showo "--remote, -r" "Build rpm package on the remote servers listed in specified file" "file"
   showo "--host, -hh" "Remote host IP or domain name" "host"
   showo "--user, -uu" "Remote host user" "username"
-  showo "--pass, -pp" "Password for specified user" "password"
+  showo "--pass, -ss" "Password for specified user" "password"
+  showo "--port, -pp" "Remote host SSH daemon port" "port"
   showo "--key, -kk" "Path to the private key for specified user" "file"
   showo "--attach, -A" "Attach to parallel build session in tmux"
   show ""
   show "  Examples:" $BOLD
   show ""
-  show "    rpmbuilder package.spec --remote -ru builder -rp mypass -rh 127.0.0.1" $GREY
-  show "    rpmbuilder package.spec -r builder:mypass@127.0.0.1 -i ~/.ssh/id_dsa" $GREY
+  show "    rpmbuilder package.spec --remote -uu builder -ss mypass -hh 127.0.0.1" $GREY
+  show "    rpmbuilder package.spec -r builder:mypass@127.0.0.1:2022 -i ~/.ssh/id_dsa" $GREY
   show "    rpmbuilder package.spec --remote ~/servers.list --key ~/.ssh/id_dsa" $GREY
   show ""
   show "Build options:" $BOLD
@@ -495,7 +501,13 @@ usage() {
 # Echo: No
 about() {
   show ""
-  show "${CL_BL_CYAN}$APP${CL_NORM} ${CL_CYAN}$VER${CL_NORM} - RPM package build helper"
+  if [[ -f "/.dockerenv" ]] ; then
+    show "${CL_BL_CYAN}$APP${CL_NORM} ${CL_CYAN}$VER${CL_NORM} × ${CL_DOCKER}Docker${CL_NORM} — $DESC"
+  elif [[ -f "/run/.containerenv" ]] ; then
+    show "${CL_BL_CYAN}$APP${CL_NORM} ${CL_CYAN}$VER${CL_NORM} × ${CL_PODMAN}Podman${CL_NORM} — $DESC"
+  else
+    show "${CL_BL_CYAN}$APP${CL_NORM} ${CL_CYAN}$VER${CL_NORM} — $DESC"
+  fi
   show ""
   show "Copyright (C) 2009-$(date +%Y) ESSENTIAL KAOS" $DARK
   show "Apache License, Version 2.0 <https://www.apache.org/licenses/LICENSE-2.0>" $DARK

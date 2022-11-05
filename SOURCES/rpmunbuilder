@@ -13,14 +13,14 @@ fi
 APP="RPMUnbuilder"
 
 # Utility version (String)
-VER="1.2.0"
+VER="1.2.1"
 
 ################################################################################
 
 NORM=0
 BOLD=1
 UNLN=4
-RED=31
+RED=31s
 GREEN=32
 YELLOW=33
 BLUE=34
@@ -249,7 +249,7 @@ showOptWarn() {
 # Code: No
 # Echo: No
 usage() {
-  show "${CL_BOLD}Usage:${CL_NORM} rpmunbuilder ${CL_BROWN}{rpm-file}${CL_NORM} ${CL_GREEN}{path}${CL_NORM}"
+  show "${CL_BOLD}Usage:${CL_NORM} rpmunbuilder rpm-file path"
 }
 
 # Print version info
@@ -257,7 +257,7 @@ usage() {
 # Code: No
 # Echo: No
 about() {
-  show "${CL_BL_CYAN}$APP${CL_NORM} ${CL_CYAN}$VER${CL_NORM} - Source RPM unbuilder"
+  show "${CL_BL_CYAN}$APP${CL_NORM} ${CL_CYAN}$VER${CL_NORM} — Source RPM unbuilder"
   show ""
   show "Copyright (C) 2009-$(date +%Y) ESSENTIAL KAOS" $DARK
   show "Apache License, Version 2.0 <https://www.apache.org/licenses/LICENSE-2.0>" $DARK

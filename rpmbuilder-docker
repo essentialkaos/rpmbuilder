@@ -1,0 +1,63 @@
+#!/usr/bin/env bash
+
+################################################################################
+
+# Default image name
+DEFAULT_IMAGE="essentialkaos/rpmbuilder:centos7"
+
+################################################################################
+
+# Main function
+#
+# Code: No
+# Echo: No
+main() {
+  if ! hasApp "docker" ; then
+    echo "You must install Docker runtime first"
+    exit 1
+  fi
+
+  if [[ $# -eq 0 ]] ; then
+    usage
+    exit 0
+  fi
+
+  run "$@"
+
+  exit $?
+}
+
+# Run docker image
+#
+# Code: Yes
+# Echo: No
+run() {
+  local image="${IMAGE:-$DEFAULT_IMAGE}" 
+  local user_id
+
+  user_id=$(id -u)
+
+  if [[ $user_id -eq 0 ]] ; then
+    user_id="$SUDO_UID"
+  fi
+
+  docker run --rm -e LOCAL_USER_ID="$user_id" -v "$(pwd):/rpmbuilder" "$image" rpmbuilder "$@"
+
+  return $?
+}
+
+# Check if some app is installed
+#
+# 1: Binray name (String)
+#
+# Code: Yes
+# Echo: No
+hasApp() {
+  type "$1" &> /dev/null
+  return $?
+}
+
+
+################################################################################
+
+main "$@"

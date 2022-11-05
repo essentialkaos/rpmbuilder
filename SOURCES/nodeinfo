@@ -20,12 +20,23 @@ main() {
   pkg_ver=$(getNodePackageVersion)
 
   echo ""
-  echo "  CPU:      ${proc_num:-1} × ${cpu_model:--}"
-  echo "  Memory:   ${mem_usage:--}"
-  echo "  Swap:     ${swap_usage:--}"
-  echo "  OS:       ${os_version:--}"
-  echo "  Kernel:   ${kernel:--}"
-  echo "  Package:  ${pkg_ver:--}"
+  echo "  CPU:       ${proc_num:-1} × ${cpu_model:--}"
+  echo "  Memory:    ${mem_usage:--}"
+  echo "  Swap:      ${swap_usage:--}"
+  echo "  OS:        ${os_version:--}"
+  echo "  Kernel:    ${kernel:--}"
+
+  if [[ -n "$pkg_ver" ]] ; then
+    echo "  Package:   ${pkg_ver}"
+  fi
+
+  if [[ -f "/.dockerenv" ]] ; then
+    echo "  Container: Yes (Docker)"
+  elif [[ -f "/run/.containerenv" ]] ; then
+    echo "  Container: Yes (Podman)"
+  else
+    echo "  Container: No"
+  fi
 }
 
 getProcNum() {
@@ -91,7 +102,9 @@ getOSVersion() {
 }
 
 getNodePackageVersion() {
-  rpm -q rpmbuilder-node
+  if rpm -q rpmbuilder-node &> /dev/null ; then
+    rpm -q rpmbuilder-node
+  fi
 }
 
 ################################################################################

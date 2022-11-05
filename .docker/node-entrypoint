@@ -1,0 +1,25 @@
+#!/usr/bin/env bash
+
+set -e
+
+USER_ID=9001
+
+chmod 777 /dev/stdout
+
+# Create builder user
+useradd -s /bin/bash -u "$USER_ID" -M -d /home/builder builder
+
+# Unlock user account
+passwd -fu builder
+
+# Export public key to authorized_keys file
+echo "$PUB_KEY" > /home/builder/.ssh/authorized_keys
+
+# Change permissions for builder files and directories
+chown -R builder:builder /home/builder
+
+# Generate host keys
+ssh-keygen -A &> /dev/null
+
+# Start SSH daemon
+/usr/sbin/sshd -D -E /var/log/secure

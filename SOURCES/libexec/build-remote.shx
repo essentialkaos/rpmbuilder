@@ -118,23 +118,24 @@ remoteBuild() {
 remoteRunMultibuild() {
   local spec="$1"
 
-  local build_hosts protect_user protect_pass protect_arch
-  local host_info r_user r_pass r_arch
+  local build_hosts host_info r_port r_user r_pass r_arch
 
   build_hosts=$(cat "$remote")
 
   for build_host in $build_hosts ; do
-    IFS=" " read -r -a host_info <<< "$(getURLVars "$build_host")"
+    IFS=" " read -r -a host_info <<< "$(extractHostInfo "$build_host")"
 
     host="${host_info[0]/-/}"
 
-    r_user="${host_info[1]/-/}"
-    r_pass="${host_info[2]/-/}"
-    r_arch="${host_info[3]/-/}"
+    r_port="${host_info[1]/-/}"
+    r_user="${host_info[2]/-/}"
+    r_pass="${host_info[3]/-/}"
+    r_arch="${host_info[4]/-/}"
 
-    [[ -z "$protect_user" ]] && user="$r_user"
-    [[ -z "$protect_pass" ]] && pass="$r_pass"
-    [[ -z "$protect_arch" ]] && arch="$r_arch"
+    port="${r_port:-$port}"
+    user="${r_user:-$user}"
+    pass="${r_pass:-$pass}"
+    arch="${r_arch:-$arch}"
 
     remoteRunBuild "$spec"
   done
@@ -149,31 +150,19 @@ remoteRunMultibuild() {
 remoteRunBuild() {
   local spec="$1"
 
-  local host_info r_file r_line r_arch tlines
+  local host_info r_port r_user r_pass r_arch
 
-  if [[ "$remote" =~ :[0-9]{1,}$ ]] ; then
-    r_file=$(echo "$remote" | cut -f1 -d":")
-    r_line=$(echo "$remote" | cut -f2 -d":")
-    tlines=$(wc -l "$r_file" | cut -f1 -d" ")
-
-    if [[ $r_line -gt $tlines ]] ; then
-      show ""
-      error "Error - file ${CL_BL_RED}${r_file}${CL_RED} don't contain a line with number ${CL_BL_RED}${r_line}${CL_RED}"
-      return 1
-    fi
-
-    remote=$(sed -n "${r_line}p" "$r_file")
-  fi
-
-  if [[ "$remote" =~ \@|\~i ]] ; then
-    IFS=" " read -r -a host_info <<< "$(getURLVars "$remote")"
+  if [[ "$remote" =~ \@|\~|\:i ]] ; then
+    IFS=" " read -r -a host_info <<< "$(extractHostInfo "$remote")"
 
     host="${host_info[0]/-/}"
 
-    r_user="${host_info[1]/-/}"
-    r_pass="${host_info[2]/-/}"
-    r_arch="${host_info[3]/-/}"
+    r_port="${host_info[1]/-/}"
+    r_user="${host_info[2]/-/}"
+    r_pass="${host_info[3]/-/}"
+    r_arch="${host_info[4]/-/}"
 
+    port="${r_port:-$port}"
     user="${r_user:-$user}"
     pass="${r_pass:-$pass}"
     arch="${r_arch:-$arch}"
@@ -202,23 +191,23 @@ remoteRunBuild() {
 remoteCheckEnv() {
   showSeparator "REMOTE CHECK"
 
-  show "Connecting to a remote build server on ${CL_CYAN}$host${CL_NORM}…"
+  show "Connecting to a remote build server on ${CL_CYAN}${host}:${port:-22}${CL_NORM}…"
 
   if isRemoteServerReachable "$host" ; then
-    if ! isSSHConnectionWorks "$user" "$host" ; then
-      error "Can't connect to host ${CL_BL_RED}${host}${CL_RED} (server is reachable but SSH command returned an error)"
+    if ! isSSHConnectionWorks "$host" ; then
+      error "Can't connect to host ${CL_BL_RED}${host}:${port:-22}${CL_RED} (server is reachable but SSH command returned an error)"
       doExit $ERROR_REMOTE
     fi
   else
-    error "Remote server ${CL_BL_RED}${host}${CL_RED} is not reachable!"
+    error "Remote server ${CL_BL_RED}${host}:${port:-22}${CL_RED} is not reachable!"
     doExit $ERROR_REMOTE
   fi
 
   # Print info about node
-  sshCommand "$user@$host" "$BUILDER_HOME/nodeinfo 2>/dev/null"
+  sshCommand "$host" "$BUILDER_HOME/nodeinfo 2>/dev/null"
 
   # Initialize build environment
-  sshCommand "$user@$host" "$BUILDER_HOME/initenv" &> /dev/null
+  sshCommand "$host" "$BUILDER_HOME/initenv" &> /dev/null
 }
 
 # Installs build dependencies on remote host
@@ -239,7 +228,7 @@ remoteDepsInstall() {
 
   yum_opts=$(getYumOpts "$verbose")
 
-  sshCommand "$user@$host" "sudo yum $yum_opts clean expire-cache && cd $specs_dir && sudo yum-builddep $yum_opts -y $spec"
+  sshCommand "$host" "sudo yum $yum_opts clean expire-cache && cd $specs_dir && sudo yum-builddep $yum_opts -y $spec"
 
   if [[ $? -ne 0 ]] ; then
     show ""
@@ -272,7 +261,7 @@ remoteSpecValidate() {
   rpmbuild_dir=$(getRPMBuildDir)
   specs_dir="$rpmbuild_dir/SPECS"
 
-  sshCommand "$user@$host" "cd $specs_dir && perfecto -f short $opts $spec"
+  sshCommand "$host" "cd $specs_dir && perfecto -f short $opts $spec"
 
   if [[ $? -ne 0 ]] ; then
     show ""
@@ -314,9 +303,9 @@ remoteBuildProcess() {
   startStatusObserver
 
   if [[ -n "$verbose" ]] ; then
-    sshCommand "$user@$host" "cd $specs_dir && $build_prfx rpmbuild $spec_name $build_opts" | tee "$tmp_output" &> $verb_output
+    sshCommand "$host" "cd $specs_dir && $build_prfx rpmbuild $spec_name $build_opts" | tee "$tmp_output" &> $verb_output
   else
-    sshCommand "$user@$host" "cd $specs_dir && $build_prfx rpmbuild $spec_name $build_opts" 1> "$tmp_output" 2> /dev/null
+    sshCommand "$host" "cd $specs_dir && $build_prfx rpmbuild $spec_name $build_opts" 1> "$tmp_output" 2> /dev/null
   fi
 
   stopStatusObserver
@@ -521,7 +510,7 @@ downloadFromRemoteHost() {
 checkRemoteAvailability() {
   local remote_available
 
-  remote_available=$(sshCommand "$user@$host" "stat $BUILD_LOCK &> /dev/null || echo 1")
+  remote_available=$(sshCommand "$host" "stat $BUILD_LOCK &> /dev/null || echo 1")
 
   if [[ -z "$remote_available" ]] ; then
     showt "${CL_GREEN}Executing:${CL_NORM} ${CL_YELLOW}waiting in queue${CL_NORM}"
@@ -531,7 +520,7 @@ checkRemoteAvailability() {
 
       showt "${CL_GREEN}Executing:${CL_NORM} ${CL_CYAN}checking queue${CL_NORM}"
 
-      remote_available=$(sshCommand "$user@$host" "stat $BUILD_LOCK &> /dev/null || echo 1")
+      remote_available=$(sshCommand "$host" "stat $BUILD_LOCK &> /dev/null || echo 1")
 
       if [[ -n "$remote_available" ]] ; then
         showt "${CL_GREEN}Executing:${CL_NORM} ${CL_YELLOW}~${CL_NORM}"
@@ -552,7 +541,7 @@ checkRemoteAvailability() {
 remoteSign() {
   local package="$1"
 
-  sshCommand "$user@$host" "rpm --addsign $package &> /dev/null" 2> /dev/null
+  sshCommand "$host" "rpm --addsign $package &> /dev/null" 2> /dev/null
 }
 
 # Checks if parallel build is possible
@@ -590,13 +579,14 @@ checkParallelBuildAvailability() {
 
 # Checks if SSH connection to remote server works
 #
-# 1: User (String)
-# 2: Host (String)
+# 1: Host (String)
 #
 # Code: Yes
 # Echo: No
 isSSHConnectionWorks() {
-  if ! sshCommand "$1@$2" "echo 2>&1" &> /dev/null ; then
+  sshCommand "$1" "echo 2>&1"
+
+  if ! sshCommand "$1" "echo 2>&1" &> /dev/null ; then
     return 1
   fi
 
@@ -631,15 +621,27 @@ isRemoteServerReachable() {
 
 # Returns options for SSH/SCP commands
 #
+# 1: SCP flag (Boolean)
+#
 # Code: No
 # Echo: Options (String)
 getSSHOpts() {
+  local is_scp="$1"
+
   local opts
 
   if [[ -n "$key" ]] ; then
     opts="-i $key"
   else
     opts="-o PubkeyAuthentication=no"
+  fi
+
+  if [[ -n "$port" ]] ; then
+    if [[ -z "$is_scp" ]] ; then
+      opts="$opts -p $port"
+    else
+      opts="$opts -P $port"
+    fi
   fi
 
   echo "$opts"
@@ -711,10 +713,10 @@ sshCommand() {
   fi
 
   if [[ -n "$pass" && -z "$no_pass" ]] ; then
-    sshpass -p "$pass" ssh $SSH_BASE_OPTS -t -t -q $ssh_opts "$host" "$comm"
+    sshpass -p "$pass" ssh $SSH_BASE_OPTS -t -t -q $ssh_opts "$user@$host" "$comm"
   else
     # shellcheck disable=SC2029
-    ssh $SSH_BASE_OPTS -t -t -q $ssh_opts "$host" "$comm"
+    ssh $SSH_BASE_OPTS -t -t -q $ssh_opts "$user@$host" "$comm"
   fi
 
   return $?
@@ -732,7 +734,7 @@ scpCommand() {
   local to="$2"
 
   local ssh_opts
-  ssh_opts=$(getSSHOpts)
+  ssh_opts=$(getSSHOpts true)
 
   if [[ -n "$pass" ]] ; then
     sshpass -p "$pass" scp -q $SSH_BASE_OPTS $ssh_opts "$from" "$to"
@@ -743,16 +745,15 @@ scpCommand() {
   return $?
 }
 
-# Parses URL to remote host options
+# Parses and extracts host info
 #
 # 1: URL (String)
 #
 # Code: No
-# Echo: Options and URL (String)
-getURLVars() {
+# Echo: Host properties (String)
+extractHostInfo() {
   local url="$1"
-
-  local user pass user_pass host arch
+  local user pass port arch
 
   if [[ "$url" =~ \~ ]] ; then
     arch=$(echo "$url" | cut -f2 -d"~")
@@ -760,19 +761,19 @@ getURLVars() {
   fi
 
   if [[ "$url" =~ \@ ]] ; then
-    user_pass=$(echo "$url" | cut -f1 -d"@")
-    host=$(echo "$url" | cut -f2 -d"@")
+    user=$(echo "$url" | cut -f1 -d"@")
+    url=$(echo "$url" | cut -f2 -d"@")
 
-    # shellcheck disable=SC1001
-    if [[ "$user_pass" =~ \: ]] ; then
-      user=$(echo "$user_pass" | cut -f1 -d":")
-      pass=$(echo "$user_pass" | cut -f2 -d":")
-    else
-      user="$user_pass"
+    if [[ "$user" =~ \: ]] ; then
+      pass=$(echo "$user" | cut -f2 -d":")
+      user=$(echo "$user" | cut -f1 -d":")
     fi
-  else
-    host="$url"
   fi
 
-  echo "${host:-} ${user:-} ${pass:-} ${arch:-}"
+  if [[ "$url" =~ \: ]] ; then
+    port=$(echo "$url" | cut -f2 -d":")
+    url=$(echo "$url" | cut -f1 -d":")
+  fi
+
+  echo "${url:--} ${port:--} ${user:--} ${pass:--} ${arch:--}"
 }
