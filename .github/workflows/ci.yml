@@ -65,7 +65,7 @@ jobs:
 
     strategy:
       matrix:
-        image: [ 'centos7', 'ol7', 'ol8', node-centos7', 'node-ol7', 'node-ol8' ]
+        image: [ 'centos7', 'ol7', 'ol8', 'node-centos7', 'node-ol7', 'node-ol8' ]
 
     steps:
       - name: Check event type
