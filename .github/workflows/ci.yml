@@ -63,6 +63,10 @@ jobs:
 
     needs: [Hadolint, Shellcheck, Perfecto]
 
+    strategy:
+      matrix:
+        images: [ 'centos7', 'ol7' 'node-centos7', 'node-ol7' ]
+
     steps:
       - name: Check event type
         run: |
@@ -94,17 +98,14 @@ jobs:
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Build Docker image
+      - name: Build Docker images
         if: ${{ github.event_name == 'pull_request' }}
         run: |
-          docker build -f .docker/centos7.docker -t centos7 .
-          docker build -f .docker/ol7.docker -t ol7 .
-          docker build -f .docker/node-centos7.docker -t node-centos7 .
-          docker build -f .docker/node-ol7.docker -t node-ol7 .
+          docker build -f .docker/${{matrix.image}}.docker -t ${{matrix.image}} .
 
-      - name: Show info about built Docker image
+      - name: Show info about built Docker images
         uses: essentialkaos/docker-info-action@v1
         if: ${{ github.event_name == 'pull_request' }}
         with:
-          image: centos7 ol7 node-centos7 node-ol7
+          image: ${{matrix.image}}
           show-labels: true
