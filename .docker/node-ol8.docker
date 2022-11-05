@@ -1,0 +1,49 @@
+## FINAL IMAGE #################################################################
+
+FROM essentialkaos/oraclelinux:8
+
+ARG USER_ID=9001
+
+ENV PUB_KEY=""
+
+LABEL org.opencontainers.image.title="RPMBuilder Node" \
+      org.opencontainers.image.description="RPMBuilder Build Node (OracleLinux 8)" \
+      org.opencontainers.image.vendor="ESSENTIAL KAOS" \
+      org.opencontainers.image.authors="Anton Novojilov" \
+      org.opencontainers.image.licenses="Apache-2.0" \
+      org.opencontainers.image.url="https://kaos.sh/d/rpmbuilder" \
+      org.opencontainers.image.source="https://github.com/essentialkaos/rpmbuilder"
+
+# hadolint ignore=DL3031,DL3033
+RUN dnf -y -q install https://yum.kaos.st/kaos-repo-latest.el8.noarch.rpm && \
+    dnf -y -q install https://mirror.yandex.ru/epel/8/Everything/x86_64/Packages/e/epel-release-8-18.el8.noarch.rpm && \
+    dnf -y -q install sudo make which openssh-server openssh-clients && \
+    dnf -y -q install rpm-build rpmdevtools && \
+    dnf -y -q install rpmlint && \
+    dnf clean all && \
+    rm -rf /var/cache/dnf /var/log/dnf.* && \
+    mkdir -p /home/builder/rpmbuild/BUILD /home/builder/rpmbuild/BUILDROOT /home/builder/rpmbuild/RPMS \
+             /home/builder/rpmbuild/SOURCES /home/builder/rpmbuild/SPECS /home/builder/rpmbuild/SRPMS \
+             /home/builder/.ssh /home/builder/.config && \
+    touch /home/builder/.ssh/authorized_keys && \
+    chmod 0600 /home/builder/.ssh/authorized_keys
+
+COPY --chown=$USER_ID SOURCES/conf/rpmmacros_el8 /home/builder/.rpmmacros
+COPY --chown=$USER_ID SOURCES/conf/rpmlint /home/builder/.config/rpmlint
+COPY --chown=$USER_ID SOURCES/initenv /home/builder/initenv
+COPY --chown=$USER_ID SOURCES/nodeinfo /home/builder/nodeinfo
+
+COPY SOURCES/conf/builder.sudoers /etc/sudoers.d/rpmbuilder
+COPY .docker/sshd_config /etc/ssh/sshd_config
+
+COPY .docker/node-entrypoint /usr/local/bin/entrypoint
+
+RUN chmod +x /usr/local/bin/entrypoint \
+             /home/builder/initenv \
+             /home/builder/nodeinfo
+
+EXPOSE 2022
+
+CMD  ["/usr/local/bin/entrypoint"]
+
+################################################################################

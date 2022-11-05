@@ -192,6 +192,9 @@ user=$(whoami)
 # Packager name (String)
 packager=""
 
+# Package manager
+pkg_manager=""
+
 verb_output=/dev/null
 
 build_start=0
