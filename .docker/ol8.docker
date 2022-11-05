@@ -12,9 +12,9 @@ LABEL org.opencontainers.image.title="RPMBuilder" \
       org.opencontainers.image.url="https://kaos.sh/d/rpmbuilder" \
       org.opencontainers.image.source="https://github.com/essentialkaos/rpmbuilder"
 
-# hadolint ignore=DL3031,DL3033
+# hadolint ignore=DL3031,DL3041
 RUN dnf -y -q install https://yum.kaos.st/kaos-repo-latest.el8.noarch.rpm && \
-    dnf -y -q install https://mirror.yandex.ru/epel/8/Everything/x86_64/Packages/e/epel-release-8-18.el8.noarch.rpm && \
+    dnf -y -q install https://dl.fedoraproject.org/pub/epel/epel-release-latest-8.noarch.rpm && \
     dnf -y -q install sudo make which && \
     dnf -y -q install rpm-build rpmdevtools sshpass && \
     dnf -y -q install rpmlint && \
