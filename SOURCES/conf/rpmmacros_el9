@@ -15,7 +15,7 @@
 %_use_internal_dependency_generator  0
 
 # Fix default dist name
-%dist  .el7
+%dist  .el9
 
 # Use xz compression for payload by default
 %_source_payload  w7T.xzdio
