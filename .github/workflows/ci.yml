@@ -42,16 +42,7 @@ jobs:
       - name: Check scripts with Shellcheck
         uses: essentialkaos/shellcheck-action@v1
         with:
-          files: 
-            - SOURCES/rpmbuilder 
-            - SOURCES/libexec/*.shx 
-            - SOURCES/rpmunbuilder 
-            - SOURCES/buildmon
-            - SOURCES/initenv
-            - SOURCES/nodeinfo
-            - .docker/entrypoint
-            - .docker/node-entrypoint
-            - rpmbuilder-docker
+          files: SOURCES/rpmbuilder SOURCES/libexec/*.shx SOURCES/rpmunbuilder SOURCES/buildmo SOURCES/initen SOURCES/nodeinf .docker/entrypoin .docker/node-entrypoin rpmbuilder-docker
 
   Hadolint:
     name: Hadolint
@@ -64,17 +55,13 @@ jobs:
       - name: Check dockerfiles with Hadolint
         uses: essentialkaos/hadolint-action@v1
         with:
-          files: centos7.docker
+          files: .docker/centos7.docker .docker/ol7.docker .docker/node-centos7.docker .docker/node-ol7.docker
 
   DockerBuild:
     name: Docker Build Check
     runs-on: ubuntu-latest
 
     needs: [Hadolint, Shellcheck, Perfecto]
-
-    env:
-      DOCKER_FILE: centos7.docker
-      IMAGE_NAME: centos7
 
     steps:
       - name: Check event type
@@ -110,11 +97,14 @@ jobs:
       - name: Build Docker image
         if: ${{ github.event_name == 'pull_request' }}
         run: |
-          docker build -f ${{ env.DOCKER_FILE }} -t ${{ env.IMAGE_NAME }} .
+          docker build -f .docker/centos7.docker -t centos7 .
+          docker build -f .docker/ol7.docker -t ol7 .
+          docker build -f .docker/node-centos7.docker -t node-centos7 .
+          docker build -f .docker/node-ol7.docker -t node-ol7 .
 
       - name: Show info about built Docker image
         uses: essentialkaos/docker-info-action@v1
         if: ${{ github.event_name == 'pull_request' }}
         with:
-          image: ${{ env.IMAGE_NAME }}
+          image: centos7 ol7 node-centos7 node-ol7
           show-labels: true
