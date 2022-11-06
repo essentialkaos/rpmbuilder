@@ -3,7 +3,7 @@
 ################################################################################
 
 # Default image name
-DEFAULT_IMAGE="essentialkaos/rpmbuilder:centos7"
+DEFAULT_IMAGE="essentialkaos/rpmbuilder:ol8"
 
 ################################################################################
 
