@@ -1,9 +1,9 @@
-########################################################################################
+################################################################################
 
 %_topdir  %(echo $HOME)/rpmbuild
 
 # Use all available cores on build node
-%_smp_mflags  -j%(cat /proc/cpuinfo | grep processor | wc -l)
+%_smp_mflags  -j%(cat /proc/cpuinfo | grep -c processor)
 
 # Disable debug packages
 %debug_package  %{nil}
@@ -21,4 +21,4 @@
 %_source_payload  w7T.xzdio
 %_binary_payload  w7T.xzdio
 
-########################################################################################
+################################################################################
