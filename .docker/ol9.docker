@@ -15,7 +15,7 @@ LABEL org.opencontainers.image.title="RPMBuilder" \
 # hadolint ignore=DL3031,DL3041
 RUN dnf -y -q install https://yum.kaos.st/kaos-repo-latest.el9.noarch.rpm && \
     dnf -y -q install https://dl.fedoraproject.org/pub/epel/epel-release-latest-9.noarch.rpm && \
-    dnf -y -q install sudo make which && \
+    dnf -y -q install sudo make which file && \
     dnf -y -q install rpm-build rpmdevtools sshpass && \
     dnf -y -q install rpmlint && \
     dnf clean all && \

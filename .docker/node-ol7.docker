@@ -19,7 +19,7 @@ RUN yum -y -q install https://yum.kaos.st/kaos-repo-latest.el7.noarch.rpm && \
     yum -y -q install https://mirror.yandex.ru/epel/7/x86_64/Packages/e/epel-release-7-14.noarch.rpm && \
     yum -y -q install https://mirror.yandex.ru/centos/7/extras/x86_64/Packages/centos-release-scl-rh-2-3.el7.centos.noarch.rpm && \
     yum -y -q install https://mirror.yandex.ru/centos/7/extras/x86_64/Packages/centos-release-scl-2-3.el7.centos.noarch.rpm && \
-    yum -y -q install sudo make which openssh-server openssh-clients && \
+    yum -y -q install sudo make which file openssh-server openssh-clients && \
     yum -y -q install rpm-build rpmdevtools && \
     yum -y -q install perfecto rpmlint && \
     yum clean all && \

@@ -17,7 +17,7 @@ LABEL org.opencontainers.image.title="RPMBuilder Node" \
 # hadolint ignore=DL3031,DL3041
 RUN dnf -y -q install https://yum.kaos.st/kaos-repo-latest.el8.noarch.rpm && \
     dnf -y -q install https://dl.fedoraproject.org/pub/epel/epel-release-latest-8.noarch.rpm && \
-    dnf -y -q install sudo make which openssh-server openssh-clients && \
+    dnf -y -q install sudo make which file openssh-server openssh-clients && \
     dnf -y -q install rpm-build rpmdevtools && \
     dnf -y -q install rpmlint && \
     dnf clean all && \

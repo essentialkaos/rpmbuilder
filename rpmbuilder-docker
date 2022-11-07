@@ -2,6 +2,11 @@
 
 ################################################################################
 
+CL_NORM="\e[0m"
+CL_DARK="\e[0;90;49m"
+
+################################################################################
+
 # Default image name
 DEFAULT_IMAGE="essentialkaos/rpmbuilder:ol8"
 
@@ -40,6 +45,8 @@ run() {
   if [[ $user_id -eq 0 ]] ; then
     user_id="$SUDO_UID"
   fi
+
+  echo -e "\n${CL_DARK}IMAGE: $image${CL_NORM}"
 
   docker run --rm -e LOCAL_USER_ID="$user_id" -v "$(pwd):/rpmbuilder" "$image" rpmbuilder "$@"
 

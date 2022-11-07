@@ -15,7 +15,7 @@ LABEL org.opencontainers.image.title="RPMBuilder" \
 # hadolint ignore=DL3031,DL3033
 RUN yum -y -q install https://yum.kaos.st/kaos-repo-latest.el7.noarch.rpm && \
     yum -y -q install epel-release centos-release-scl && \
-    yum -y -q install sudo make which && \
+    yum -y -q install sudo make which file && \
     yum -y -q install rpm-build rpmdevtools sshpass && \
     yum -y -q install perfecto rpmlint && \
     yum clean all && \

@@ -265,22 +265,26 @@ validateSourceFile() {
   local source_file="$1"
   local src_type
 
-  src_type=$(file -i -b "$source_file" | cut -f1 -d";")
+  src_type=$(file --mime-type -b "$source_file" 2> /dev/null)
 
   if [[ -z "$src_type" ]] ; then
     return 0
   fi
 
   if [[ "$source_file" =~ \.gz$ || "$source_file" =~ \.tgz$ ]] ; then
-    if [[ "$src_type" != "application/x-gzip" ]] ; then
+    if [[ "$src_type" != "application/x-gzip" && "$src_type" != "application/gzip" ]] ; then
       return 1
     fi
   elif [[ "$source_file" =~ \.bz2$ || "$source_file" =~ \.tbz2$ ]] ; then
-    if [[ "$src_type" != "application/x-bzip2" ]] ; then
+    if [[ "$src_type" != "application/x-bzip2" && "$src_type" != "application/bzip2" ]] ; then
+      return 1
+    fi
+  elif [[ "$source_file" =~ \.bz$ || "$source_file" =~ \.tbz$ ]] ; then
+    if [[ "$src_type" != "application/x-bzip" && "$src_type" != "application/bzip" ]] ; then
       return 1
     fi
   elif [[ "$source_file" =~ \.xz$ || "$source_file" =~ \.txz$ ]] ; then
-    if [[ "$src_type" != "application/x-xz" ]] ; then
+    if [[ "$src_type" != "application/x-xz" && "$src_type" != "application/xz" ]] ; then
       return 1
     fi
   elif [[ "$source_file" =~ \.zip$ || "$source_file" =~ \.jar$ ]] ; then
@@ -288,7 +292,7 @@ validateSourceFile() {
       return 1
     fi
   elif [[ "$source_file" =~ \.patch$ ]] ; then
-    if [[ "$src_type" != "text/x-diff" ]] ; then
+    if [[ "$src_type" != "text/x-diff" || "$src_type" != "text/x-patch" ]] ; then
       return 1
     fi
   elif [[ "$source_file" =~ \.pdf$ ]] ; then
