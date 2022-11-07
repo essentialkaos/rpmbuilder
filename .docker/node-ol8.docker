@@ -20,6 +20,7 @@ RUN dnf -y -q install https://yum.kaos.st/kaos-repo-latest.el8.noarch.rpm && \
     dnf -y -q install sudo make which file openssh-server openssh-clients && \
     dnf -y -q install rpm-build rpmdevtools && \
     dnf -y -q install rpmlint && \
+    dnf -y -q module disable '*' && \
     dnf clean all && \
     rm -rf /var/cache/dnf /var/log/dnf.* && \
     mkdir -p /home/builder/rpmbuild/BUILD /home/builder/rpmbuild/BUILDROOT /home/builder/rpmbuild/RPMS \

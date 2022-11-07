@@ -18,6 +18,7 @@ RUN dnf -y -q install https://yum.kaos.st/kaos-repo-latest.el8.noarch.rpm && \
     dnf -y -q install sudo make which file && \
     dnf -y -q install rpm-build rpmdevtools sshpass && \
     dnf -y -q install rpmlint && \
+    dnf -y -q module disable "*" && \
     dnf clean all && \
     rm -rf /var/cache/dnf /var/log/dnf.* && \
     curl -o /usr/local/bin/gosu -sSL "https://github.com/tianon/gosu/releases/download/$GOSU_VER/gosu-amd64" && \
