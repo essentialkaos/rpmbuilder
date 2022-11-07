@@ -272,29 +272,34 @@ validateSourceFile() {
   fi
 
   if [[ "$source_file" =~ \.gz$ || "$source_file" =~ \.tgz$ ]] ; then
-    if [[ "$src_type" != "application/x-gzip" && "$src_type" != "application/gzip" ]] ; then
-      return 1
-    fi
+    case $src_type in
+      "application/x-gzip" | "application/gzip") ;;
+      *) return 1 ;;
+    esac
   elif [[ "$source_file" =~ \.bz2$ || "$source_file" =~ \.tbz2$ ]] ; then
-    if [[ "$src_type" != "application/x-bzip2" && "$src_type" != "application/bzip2" ]] ; then
-      return 1
-    fi
+    case $src_type in
+      "application/x-bzip2" | "application/bzip2") ;;
+      *) return 1 ;;
+    esac
   elif [[ "$source_file" =~ \.bz$ || "$source_file" =~ \.tbz$ ]] ; then
-    if [[ "$src_type" != "application/x-bzip" && "$src_type" != "application/bzip" ]] ; then
-      return 1
-    fi
+    case $src_type in
+      "application/x-bzip" | "application/bzip") ;;
+      *) return 1 ;;
+    esac
   elif [[ "$source_file" =~ \.xz$ || "$source_file" =~ \.txz$ ]] ; then
-    if [[ "$src_type" != "application/x-xz" && "$src_type" != "application/xz" ]] ; then
-      return 1
-    fi
+    case $src_type in
+      "application/x-xz" | "application/xz") ;;
+      *) return 1 ;;
+    esac
   elif [[ "$source_file" =~ \.zip$ || "$source_file" =~ \.jar$ ]] ; then
     if [[ "$src_type" != "application/zip" ]] ; then
       return 1
     fi
   elif [[ "$source_file" =~ \.patch$ ]] ; then
-    if [[ "$src_type" != "text/x-diff" || "$src_type" != "text/x-patch" ]] ; then
-      return 1
-    fi
+    case $src_type in
+      "text/x-diff" | "text/x-patch") ;;
+      *) return 1 ;;
+    esac
   elif [[ "$source_file" =~ \.pdf$ ]] ; then
     if [[ "$src_type" != "application/pdf" ]] ; then
       return 1
