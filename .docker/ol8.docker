@@ -17,7 +17,7 @@ RUN dnf -y -q install https://yum.kaos.st/kaos-repo-latest.el8.noarch.rpm && \
     dnf -y -q install https://dl.fedoraproject.org/pub/epel/epel-release-latest-8.noarch.rpm && \
     dnf -y -q install sudo make which file && \
     dnf -y -q install rpm-build rpmdevtools sshpass && \
-    dnf -y -q install rpmlint && \
+    dnf -y -q install perfecto rpmlint && \
     dnf -y -q module disable "*" && \
     dnf clean all && \
     rm -rf /var/cache/dnf /var/log/dnf.* && \
