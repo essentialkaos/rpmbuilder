@@ -19,6 +19,6 @@
 
 # Use xz/zstd compression for payload by default
 %_source_payload  w7T.xzdio
-%_binary_payload  w15T0.zstdio
+%_binary_payload  w19T0.zstdio
 
 ################################################################################
