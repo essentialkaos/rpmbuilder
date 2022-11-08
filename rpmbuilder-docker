@@ -121,7 +121,7 @@ getUserID() {
 # Code: Yes
 # Echo: No
 hasImage() {
-  if [[ -n $(docker images -q myimage:mytag 2> /dev/null) ]] ; then
+  if [[ -n $(docker images -q "$1" 2> /dev/null) ]] ; then
     return 0
   fi
 
