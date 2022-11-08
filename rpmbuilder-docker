@@ -1,9 +1,38 @@
 #!/usr/bin/env bash
+# shellcheck disable=SC2034
 
 ################################################################################
 
+NORM=0
+BOLD=1
+UNLN=4
+RED=31
+GREEN=32
+YELLOW=33
+BLUE=34
+MAG=35
+CYAN=36
+GREY=37
+DARK=90
+
 CL_NORM="\e[0m"
-CL_DARK="\e[0;90;49m"
+CL_BOLD="\e[0;${BOLD};49m"
+CL_UNLN="\e[0;${UNLN};49m"
+CL_RED="\e[0;${RED};49m"
+CL_GREEN="\e[0;${GREEN};49m"
+CL_YELLOW="\e[0;${YELLOW};49m"
+CL_BLUE="\e[0;${BLUE};49m"
+CL_MAG="\e[0;${MAG};49m"
+CL_CYAN="\e[0;${CYAN};49m"
+CL_GREY="\e[0;${GREY};49m"
+CL_DARK="\e[0;${DARK};49m"
+CL_BL_RED="\e[1;${RED};49m"
+CL_BL_GREEN="\e[1;${GREEN};49m"
+CL_BL_YELLOW="\e[1;${YELLOW};49m"
+CL_BL_BLUE="\e[1;${BLUE};49m"
+CL_BL_MAG="\e[1;${MAG};49m"
+CL_BL_CYAN="\e[1;${CYAN};49m"
+CL_BL_GREY="\e[1;${GREY};49m"
 
 ################################################################################
 
@@ -21,13 +50,8 @@ DEFAULT_IMAGE="$IMAGE_REPO:ol8"
 # Echo: No
 main() {
   if ! hasApp "docker" ; then
-    echo "You must install Docker runtime first"
+    error "You must install Docker runtime first"
     exit 1
-  fi
-
-  if [[ $# -eq 0 ]] ; then
-    usage
-    exit 0
   fi
 
   run "$@"
@@ -40,12 +64,46 @@ main() {
 # Code: Yes
 # Echo: No
 run() {
-  local image="${IMAGE:-$DEFAULT_IMAGE}" 
-  local user_id
+  local image user_id
+
+  image=$(getImage)
+  user_id=$(getUserID)
+
+  if ! hasImage "$image" ; then
+    show "\n${CL_BOLD}Pulling image ${CL_BL_BLUE}$image${CL_NORM}${CL_BOLD}…${CL_NORM}\n"
+
+    if ! docker pull "$image" ; then
+      exit 1
+    fi
+  fi
+
+  show "\nIMAGE: $image" $DARK
+
+  docker run --rm -e LOCAL_USER_ID="$user_id" -v "$(pwd):/rpmbuilder" "$image" rpmbuilder "$@"
+
+  return $?
+}
+
+# Get target image for using
+#
+# Code: No
+# Echo: Image name (String)
+getImage() {
+  local image="${IMAGE:-$DEFAULT_IMAGE}"
 
   if [[ ! $image =~ \: ]] ; then
     image="$IMAGE_REPO:$IMAGE"
   fi
+
+  echo "$image"
+}
+
+# Get current user ID
+#
+# Code: No
+# Echo: User ID (Number)
+getUserID() {
+  local user_id
 
   user_id=$(id -u)
 
@@ -53,11 +111,21 @@ run() {
     user_id="${SUDO_UID:-0}"
   fi
 
-  echo -e "\n${CL_DARK}IMAGE: $image${CL_NORM}"
+  echo "$user_id"
+}
 
-  docker run --rm -e LOCAL_USER_ID="$user_id" -v "$(pwd):/rpmbuilder" "$image" rpmbuilder "$@"
+# Check if image already pulled
+#
+# 1: Image name (String)
+#
+# Code: Yes
+# Echo: No
+hasImage() {
+  if [[ -n $(docker images -q myimage:mytag 2> /dev/null) ]] ; then
+    return 0
+  fi
 
-  return $?
+  return 1
 }
 
 # Check if some app is installed
@@ -71,6 +139,31 @@ hasApp() {
   return $?
 }
 
+# Show message
+#
+# 1: Message (String)
+# 2: Message color (Number) [Optional]
+#
+# Code: No
+# Echo: No
+show() {
+  if [[ -n "$2" && -z "$no_colors" ]] ; then
+    echo -e "\e[${2}m${1}\e[0m"
+  else
+    echo -e "$*"
+  fi
+}
+
+# Print error message
+#
+# 1: Message (String)
+# 2: Message color (Number) [Optional]
+#
+# Code: No
+# Echo: No
+error() {
+  show "$*" $RED 1>&2
+}
 
 ################################################################################
 
