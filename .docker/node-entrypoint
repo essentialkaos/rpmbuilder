@@ -22,4 +22,4 @@ chown -R builder:builder /home/builder
 ssh-keygen -A &> /dev/null
 
 # Start SSH daemon
-/usr/sbin/sshd -D -E /var/log/secure
+/usr/sbin/sshd -D -p "${SSH_PORT:-2022}" -E /var/log/secure

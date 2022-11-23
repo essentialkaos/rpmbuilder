@@ -3,8 +3,10 @@
 FROM essentialkaos/oraclelinux:8
 
 ARG USER_ID=9001
+ARG PORT=2038
 
 ENV PUB_KEY=""
+ENV SSH_PORT=$PORT
 
 LABEL org.opencontainers.image.title="RPMBuilder Node" \
       org.opencontainers.image.description="RPMBuilder Build Node (OracleLinux 8)" \
@@ -43,7 +45,7 @@ RUN chmod +x /usr/local/bin/entrypoint \
              /home/builder/initenv \
              /home/builder/nodeinfo
 
-EXPOSE 2022
+EXPOSE $PORT
 
 CMD  ["/usr/local/bin/entrypoint"]
 
