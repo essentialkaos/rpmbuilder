@@ -78,7 +78,7 @@ SEPARATOR="---------------------------------------------------------------------
 ################################################################################
 
 # Path to preferencies file
-PREFS_FILE="${PREFS_FILE:-$HOME/.rpmbuilder}"
+PREFS_FILE="${PREFS_FILE:-$HOME/.config/rpmbuilder/rpmbuilder.conf}"
 
 SUPPORTED_OPTS="remote !parallel host user pass port key source_dir source_list 
  !sign !no_build !no_clean !no_deps !no_lint !no_source pack !attach 
