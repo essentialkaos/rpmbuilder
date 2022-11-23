@@ -84,7 +84,7 @@ Package build using build node image:
 
 ```bash
 docker pull essentialkaos/rpmbuilder:node-ol8
-docker run -e PUB_KEY=$(cat ~/.ssh/buildnode.pub) -p 2038:2038 -d essentialkaos/rpmbuilder:node-ol8
+docker run -e PUB_KEY="$(cat ~/.ssh/buildnode.pub)" -p 2038:2038 -d essentialkaos/rpmbuilder:node-ol8
 
 cd my-package-dir
 rpmbuilder my-package.spec -r builder@localhost:2038 -kk ~/.ssh/buildnode

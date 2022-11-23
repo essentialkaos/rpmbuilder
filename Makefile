@@ -5,12 +5,13 @@ export PATH := shellcheck-latest:$(PATH)
 
 ########################################################################################
 
-IMAGE_REPO = essentialkaos/rpmbuilder
+IMAGE_REPO ?= essentialkaos/rpmbuilder
+PUB_KEY_FILE ?= ~/.ssh/buildnode.pub
 
 ########################################################################################
 
 .DEFAULT_GOAL := help
-.PHONY = images images-base images-node get-shellcheck test help
+.PHONY = images images-base images-node run-nodes get-shellcheck test help
 
 ########################################################################################
 
@@ -41,6 +42,13 @@ images-node: ## Build node docker images
 	docker build -f .docker/node-ol7.docker -t $(IMAGE_REPO):node-ol7 .
 	docker build -f .docker/node-ol8.docker -t $(IMAGE_REPO):node-ol8 .
 	docker build -f .docker/node-ol9.docker -t $(IMAGE_REPO):node-ol9 .
+
+run-nodes: ## Run nodes containers
+ifneq (,$(wildcard $(PUB_KEY_FILE)))
+	docker run -e PUB_KEY="$(shell cat $(PUB_KEY_FILE))" -p 2037:2037 -d $(IMAGE_REPO):node-ol7
+	docker run -e PUB_KEY="$(shell cat $(PUB_KEY_FILE))" -p 2038:2038 -d $(IMAGE_REPO):node-ol8
+	docker run -e PUB_KEY="$(shell cat $(PUB_KEY_FILE))" -p 2039:2039 -d $(IMAGE_REPO):node-ol9
+endif
 
 help: ## Show this info
 	@echo -e '\nSupported targets:\n'
