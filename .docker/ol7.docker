@@ -14,7 +14,7 @@ LABEL org.opencontainers.image.title="RPMBuilder" \
       org.opencontainers.image.source="https://github.com/essentialkaos/rpmbuilder"
 
 # hadolint ignore=DL3031,DL3033
-RUN hostnamectl set-hostname $HOSTNAME && \
+RUN echo "$HOSTNAME" > /etc/hostname && \
     yum -y -q install https://yum.kaos.st/kaos-repo-latest.el7.noarch.rpm && \
     yum -y -q install https://mirror.yandex.ru/epel/7/x86_64/Packages/e/epel-release-7-14.noarch.rpm && \
     yum -y -q install https://mirror.yandex.ru/centos/7/extras/x86_64/Packages/centos-release-scl-rh-2-3.el7.centos.noarch.rpm && \

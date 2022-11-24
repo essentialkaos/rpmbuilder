@@ -18,7 +18,7 @@ LABEL org.opencontainers.image.title="RPMBuilder Node" \
       org.opencontainers.image.source="https://github.com/essentialkaos/rpmbuilder"
 
 # hadolint ignore=DL3031,DL3033
-RUN hostnamectl set-hostname $HOSTNAME && \
+RUN echo "$HOSTNAME" > /etc/hostname && \
     yum -y -q install https://yum.kaos.st/kaos-repo-latest.el7.noarch.rpm && \
     yum -y -q install epel-release centos-release-scl && \
     yum -y -q install sudo make which file openssh-server openssh-clients && \

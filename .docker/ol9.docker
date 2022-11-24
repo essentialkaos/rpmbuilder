@@ -14,7 +14,7 @@ LABEL org.opencontainers.image.title="RPMBuilder" \
       org.opencontainers.image.source="https://github.com/essentialkaos/rpmbuilder"
 
 # hadolint ignore=DL3031,DL3041
-RUN hostnamectl set-hostname $HOSTNAME && \
+RUN echo "$HOSTNAME" > /etc/hostname && \
     dnf -y -q install https://yum.kaos.st/kaos-repo-latest.el9.noarch.rpm && \
     dnf -y -q install https://dl.fedoraproject.org/pub/epel/epel-release-latest-9.noarch.rpm && \
     dnf -y -q install sudo make which file && \
