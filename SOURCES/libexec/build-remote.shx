@@ -61,7 +61,7 @@ parallelBuild() {
         tmux new-window "$0 $opts -r $serv --tmux-worker $wid"
       fi
 
-      tmux rename-window "$APP"
+      tmux rename-window "$APP($spec)"
       session_exist=true
     else
       tmux split-window "$0 $opts -r $serv --tmux-worker $wid" >/dev/null 2>&1
@@ -71,6 +71,10 @@ parallelBuild() {
   # If we not in tmux, attach to session
   if [[ -z "$TMUX" ]] ; then
     tmux attach-session -t "$TMUX_SESSION_NAME" >/dev/null 2>&1
+  else
+    if [[ ${#wids[@]} -gt 2 ]] ; then
+      tmux select-layout even-vertical
+    fi
   fi
 
   waitTillWorkersComplete "${wids[@]}"
