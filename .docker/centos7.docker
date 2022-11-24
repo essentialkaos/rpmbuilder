@@ -3,6 +3,7 @@
 FROM essentialkaos/centos:7
 
 ARG GOSU_VER=1.14
+ARG HOSTNAME="rpmbuilder-centos7.docker.local"
 
 LABEL org.opencontainers.image.title="RPMBuilder" \
       org.opencontainers.image.description="RPM package build helper (CentOS 7)" \
@@ -13,7 +14,8 @@ LABEL org.opencontainers.image.title="RPMBuilder" \
       org.opencontainers.image.source="https://github.com/essentialkaos/rpmbuilder"
 
 # hadolint ignore=DL3031,DL3033
-RUN yum -y -q install https://yum.kaos.st/kaos-repo-latest.el7.noarch.rpm && \
+RUN hostnamectl set-hostname $HOSTNAME && \
+    yum -y -q install https://yum.kaos.st/kaos-repo-latest.el7.noarch.rpm && \
     yum -y -q install epel-release centos-release-scl && \
     yum -y -q install sudo make which file && \
     yum -y -q install rpm-build rpmdevtools sshpass && \

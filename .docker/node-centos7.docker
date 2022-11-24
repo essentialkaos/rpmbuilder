@@ -4,6 +4,7 @@ FROM essentialkaos/centos:7
 
 ARG USER_ID=9001
 ARG PORT=2027
+ARG HOSTNAME="rpmbuilder-node-centos7.docker.local"
 
 ENV PUB_KEY=""
 ENV SSH_PORT=$PORT
@@ -17,7 +18,8 @@ LABEL org.opencontainers.image.title="RPMBuilder Node" \
       org.opencontainers.image.source="https://github.com/essentialkaos/rpmbuilder"
 
 # hadolint ignore=DL3031,DL3033
-RUN yum -y -q install https://yum.kaos.st/kaos-repo-latest.el7.noarch.rpm && \
+RUN hostnamectl set-hostname $HOSTNAME && \
+    yum -y -q install https://yum.kaos.st/kaos-repo-latest.el7.noarch.rpm && \
     yum -y -q install epel-release centos-release-scl && \
     yum -y -q install sudo make which file openssh-server openssh-clients && \
     yum -y -q install rpm-build rpmdevtools && \

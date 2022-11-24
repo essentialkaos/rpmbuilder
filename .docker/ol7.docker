@@ -3,6 +3,7 @@
 FROM essentialkaos/oraclelinux:7
 
 ARG GOSU_VER=1.14
+ARG HOSTNAME="rpmbuilder-ol7.docker.local"
 
 LABEL org.opencontainers.image.title="RPMBuilder" \
       org.opencontainers.image.description="RPM package build helper (OracleLinux 7)" \
@@ -13,7 +14,8 @@ LABEL org.opencontainers.image.title="RPMBuilder" \
       org.opencontainers.image.source="https://github.com/essentialkaos/rpmbuilder"
 
 # hadolint ignore=DL3031,DL3033
-RUN yum -y -q install https://yum.kaos.st/kaos-repo-latest.el7.noarch.rpm && \
+RUN hostnamectl set-hostname $HOSTNAME && \
+    yum -y -q install https://yum.kaos.st/kaos-repo-latest.el7.noarch.rpm && \
     yum -y -q install https://mirror.yandex.ru/epel/7/x86_64/Packages/e/epel-release-7-14.noarch.rpm && \
     yum -y -q install https://mirror.yandex.ru/centos/7/extras/x86_64/Packages/centos-release-scl-rh-2-3.el7.centos.noarch.rpm && \
     yum -y -q install https://mirror.yandex.ru/centos/7/extras/x86_64/Packages/centos-release-scl-2-3.el7.centos.noarch.rpm && \
