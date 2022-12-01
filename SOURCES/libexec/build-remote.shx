@@ -129,12 +129,12 @@ remoteRunMultibuild() {
   for build_host in $build_hosts ; do
     IFS=" " read -r -a host_info <<< "$(extractHostInfo "$build_host")"
 
-    host="${host_info[0]/-/}"
+    host="${host_info[0]/!/}"
 
-    r_port="${host_info[1]/-/}"
-    r_user="${host_info[2]/-/}"
-    r_pass="${host_info[3]/-/}"
-    r_arch="${host_info[4]/-/}"
+    r_port="${host_info[1]/!/}"
+    r_user="${host_info[2]/!/}"
+    r_pass="${host_info[3]/!/}"
+    r_arch="${host_info[4]/!/}"
 
     port="${r_port:-$port}"
     user="${r_user:-$user}"
@@ -159,12 +159,12 @@ remoteRunBuild() {
   if [[ "$remote" =~ \@|\~|\:i ]] ; then
     IFS=" " read -r -a host_info <<< "$(extractHostInfo "$remote")"
 
-    host="${host_info[0]/-/}"
+    host="${host_info[0]/!/}"
 
-    r_port="${host_info[1]/-/}"
-    r_user="${host_info[2]/-/}"
-    r_pass="${host_info[3]/-/}"
-    r_arch="${host_info[4]/-/}"
+    r_port="${host_info[1]/!/}"
+    r_user="${host_info[2]/!/}"
+    r_pass="${host_info[3]/!/}"
+    r_arch="${host_info[4]/!/}"
 
     port="${r_port:-$port}"
     user="${r_user:-$user}"
@@ -779,5 +779,5 @@ extractHostInfo() {
     url=$(echo "$url" | cut -f1 -d":")
   fi
 
-  echo "${url:--} ${port:--} ${user:--} ${pass:--} ${arch:--}"
+  echo "${url:-!} ${port:-!} ${user:-!} ${pass:-!} ${arch:-!}"
 }
