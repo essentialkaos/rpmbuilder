@@ -588,8 +588,6 @@ checkParallelBuildAvailability() {
 # Code: Yes
 # Echo: No
 isSSHConnectionWorks() {
-  sshCommand "$1" "echo 2>&1"
-
   if ! sshCommand "$1" "echo 2>&1" &> /dev/null ; then
     return 1
   fi
@@ -615,7 +613,7 @@ isRemoteServerReachable() {
 
   # If ICMP is blocked, use nc for check
   if type -P nc &>/dev/null ; then
-    if nc -z "$host" 22 ; then
+    if nc -z "$host" 22 &>/dev/null ; then
       return 0
     fi
   fi
