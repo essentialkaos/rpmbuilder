@@ -40,7 +40,7 @@ COPY --chown=$USER_ID SOURCES/nodeinfo /home/builder/nodeinfo
 COPY SOURCES/conf/builder.sudoers /etc/sudoers.d/rpmbuilder
 COPY .docker/sshd_config /etc/ssh/sshd_config
 
-COPY .docker/entrypoint /usr/local/bin/entrypoint
+COPY .docker/node-entrypoint /usr/local/bin/entrypoint
 
 RUN chmod +x /usr/local/bin/entrypoint \
              /home/builder/initenv \
