@@ -1,6 +1,10 @@
+## REGISTRY CONFIGURATION ######################################################
+
+ARG REGISTRY="docker.io"
+
 ## FINAL IMAGE #################################################################
 
-FROM essentialkaos/oraclelinux:9
+FROM ${REGISTRY}/essentialkaos/oraclelinux:9
 
 ARG GOSU_VER=1.14
 ARG HOSTNAME="rpmbuilder-ol9.docker.local"
@@ -45,3 +49,5 @@ VOLUME /rpmbuilder
 WORKDIR /rpmbuilder
 
 ENTRYPOINT ["/usr/local/bin/entrypoint"]
+
+################################################################################

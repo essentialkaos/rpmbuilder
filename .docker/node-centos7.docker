@@ -1,6 +1,10 @@
+## REGISTRY CONFIGURATION ######################################################
+
+ARG REGISTRY="docker.io"
+
 ## FINAL IMAGE #################################################################
 
-FROM essentialkaos/centos:7
+FROM ${REGISTRY}/essentialkaos/centos:7
 
 ARG USER_ID=9001
 ARG PORT=2027

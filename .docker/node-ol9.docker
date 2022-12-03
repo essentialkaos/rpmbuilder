@@ -1,6 +1,10 @@
+## REGISTRY CONFIGURATION ######################################################
+
+ARG REGISTRY="docker.io"
+
 ## FINAL IMAGE #################################################################
 
-FROM essentialkaos/oraclelinux:9
+FROM ${REGISTRY}/essentialkaos/oraclelinux:9
 
 ARG USER_ID=9001
 ARG PORT=2039
