@@ -18,7 +18,7 @@
 %dist  .el9
 
 # Use xz/zstd compression for payload by default
-%_source_payload  w7.xzdio
-%_binary_payload  w19T0.zstdio
+%_source_payload  w7T.xzdio
+%_binary_payload  w19.zstdio
 
 ################################################################################
