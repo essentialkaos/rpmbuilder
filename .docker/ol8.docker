@@ -24,7 +24,6 @@ RUN echo "$HOSTNAME" > /etc/hostname && \
     dnf -y -q install sudo make which file && \
     dnf -y -q install rpm-build rpmdevtools sshpass && \
     dnf -y -q install perfecto rpmlint && \
-    dnf -y -q module disable "*" && \
     dnf clean all && \
     rm -rf /var/cache/dnf /var/log/dnf.* && \
     curl -o /usr/local/bin/gosu -sSL "https://github.com/tianon/gosu/releases/download/$GOSU_VER/gosu-amd64" && \
