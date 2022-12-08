@@ -25,6 +25,7 @@ LABEL org.opencontainers.image.title="RPMBuilder Node" \
 RUN echo "$HOSTNAME" > /etc/hostname && \
     dnf -y -q install https://yum.kaos.st/kaos-repo-latest.el8.noarch.rpm && \
     dnf -y -q install https://dl.fedoraproject.org/pub/epel/epel-release-latest-8.noarch.rpm && \
+    sed -i 's/gpgcheck=1/gpgcheck=1\nmodule_hotfixes=1/g' /etc/yum.repos.d/epel.repo && \
     dnf -y -q install sudo make which file openssh-server openssh-clients && \
     dnf -y -q install rpm-build rpmdevtools && \
     dnf -y -q install perfecto rpmlint && \
