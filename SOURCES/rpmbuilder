@@ -320,11 +320,17 @@ showt() {
 # Code: No
 # Echo: No
 showo() {
-  local optn optd optp optt optf breadcrumbs
+  local optn optd optp optt optf prefix breadcrumbs
 
   optn="$1"
   optd="$2"
   optp="$3"
+  prefix="  "
+
+  if [[ "${optn:0:1}" == "┌" || "${optn:0:1}" == "│" || "${optn:0:1}" == "└" ]] ; then
+    prefix="${CL_DARK}${optn:0:1}${CL_NORM} "
+    optn="${optn:2:999}"
+  fi
 
   if [[ -n "$DARK" ]] ; then
     breadcrumbs="............................"
@@ -335,11 +341,11 @@ showo() {
   if [[ -z "$optp" ]] ; then
     optt="$optn"
     optf=$(( 31 - ${#optt} ))
-    echo -e "  ${CL_GREEN}${optn}${CL_NORM} ${CL_DARK}${breadcrumbs:0:$optf}${CL_NORM} $optd"
+    echo -e "${prefix}${CL_GREEN}${optn}${CL_NORM} ${CL_DARK}${breadcrumbs:0:$optf}${CL_NORM} $optd"
   else
     optt="$optn $optp"
     optf=$(( 31 - ${#optt} ))
-    echo -e "  ${CL_GREEN}${optn}${CL_NORM} ${CL_GREY}${optp}${CL_NORM} ${CL_DARK}${breadcrumbs:0:$optf}${CL_NORM} $optd"
+    echo -e "${prefix}${CL_GREEN}${optn}${CL_NORM} ${CL_GREY}${optp}${CL_NORM} ${CL_DARK}${breadcrumbs:0:$optf}${CL_NORM} $optd"
   fi
 }
 
@@ -411,14 +417,14 @@ usage() {
   showo "--svn-user, -su" "Username for access to SVN repository" "username"
   showo "--svn-pass, -sp" "Password for access to SVN repository" "password"
   show ""
-  showo "--github, -gh" "Fetch sources from github.com repository by url" "url"
-  showo "--github, -gh" "Fetch sources from github.com repository by user and project" "user:project"
-  showo "--github, -gh" "Fetch sources from github.com repository by user and project" "user/project"
-  showo "--bitbucket, -bb" "Fetch sources from bitbucket.org repository by url" "url"
-  showo "--bitbucket, -bb" "Fetch sources from bitbucket.org repository by user and project" "user:project"
-  showo "--bitbucket, -bb" "Fetch sources from bitbucket.org repository by user and project" "user/project"
-  showo "--launchpad, -lp" "Fetch sources from launchpad.net repository by url" "url"
-  showo "--launchpad, -lp" "Fetch sources from launchpad.net repository by project name" "project-name"
+  showo "┌ --github, -gh" "Fetch sources from github.com repository by url" "url"
+  showo "│ --github, -gh" "Fetch sources from github.com repository by user and project" "user:project"
+  showo "└ --github, -gh" "Fetch sources from github.com repository by user and project" "user/project"
+  showo "┌ --bitbucket, -bb" "Fetch sources from bitbucket.org repository by url" "url"
+  showo "│ --bitbucket, -bb" "Fetch sources from bitbucket.org repository by user and project" "user:project"
+  showo "└ --bitbucket, -bb" "Fetch sources from bitbucket.org repository by user and project" "user/project"
+  showo "┌ --launchpad, -lp" "Fetch sources from launchpad.net repository by url" "url"
+  showo "└ --launchpad, -lp" "Fetch sources from launchpad.net repository by project name" "project-name"
   show ""
   showo "--gopack, -G" "Fetch and pack golang sources using gopack" "url"
   show ""
@@ -445,9 +451,9 @@ usage() {
   show "Remote build:" $BOLD
   show ""
   showo "--parallel, -P" "Parallel build on all build servers in same time ${CL_DARK}(tmux is required)${CL_NORM}"
-  showo "--remote, -r" "Build rpm package on remote server"
-  showo "--remote, -r" "Build rpm package on the remote server with specified host, username and password" "user:pass@host"
-  showo "--remote, -r" "Build rpm package on the remote servers listed in specified file" "file"
+  showo "┌ --remote, -r" "Build rpm package on remote server"
+  showo "│ --remote, -r" "Build rpm package on the remote server with specified host, username and password" "user:pass@host"
+  showo "└ --remote, -r" "Build rpm package on the remote servers listed in specified file" "file"
   showo "--host, -hh" "Remote host IP or domain name" "host"
   showo "--user, -uu" "Remote host user" "username"
   showo "--pass, -ss" "Password for specified user" "password"
@@ -461,6 +467,7 @@ usage() {
   show "    rpmbuilder package.spec --remote -uu builder -ss mypass -hh 127.0.0.1" $GREY
   show "    rpmbuilder package.spec -r builder:mypass@127.0.0.1:2022 -i ~/.ssh/id_dsa" $GREY
   show "    rpmbuilder package.spec --remote ~/servers.list --key ~/.ssh/id_dsa" $GREY
+  show "    rpmbuilder package.spec --parallel --remote ~/servers.list --node 1,2" $GREY
   show ""
   show "Build options:" $BOLD
   show ""
