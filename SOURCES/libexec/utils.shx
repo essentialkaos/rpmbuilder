@@ -218,3 +218,21 @@ getArchExt() {
   echo ""
   return 1
 }
+
+# Check if given value is a number
+#
+# 1: Value (String)
+#
+# Code: Yes
+# Echo: No
+isNum() {
+  if [[ -z "$1" ]] ; then
+    return 1
+  fi
+
+  if [[ -z $(echo "$1" | tr -d '[:digit:]') ]] ; then
+    return 0
+  fi
+
+  return 1
+}

@@ -345,9 +345,10 @@ checkLocalBuildAvailability() {
   cdf=$(( ct - cdt ))
 
   if [[ $cdf -gt $LOCK_TIME_MAX_DIFF ]] ; then
-    show "We found lock file created more than 3 hours ago. It's too much time for the usual build process." $YELLOW
-    show "If another build process doesn't occur, you must remove file $BUILD_LOCK_LOCAL manually." $YELLOW
-    show "We will continue to build when this file will be removed." $YELLOW
+    warn "Can't start parallel build"
+    show "  We found lock file created more than 3 hours ago. It's too much time for the usual build process." $YELLOW
+    show "  If another build process doesn't occur, you must remove file $BUILD_LOCK_LOCAL manually." $YELLOW
+    show "  We will continue to build when this file will be removed." $YELLOW
     show ""
   fi
 
@@ -433,7 +434,7 @@ localSign() {
   fi
 
   if [[ $? -ne 0 ]] ; then
-    show "Can't sign package" $YELLOW
+    warn "Can't sign package"
   fi
 }
 
@@ -443,7 +444,7 @@ localSign() {
 # Echo: No
 setupBuildTree() {
   # shellcheck disable=SC2012
-  if [[ $(ls -1 $HOME/rpmbuild 2>/dev/null | wc -l) == "6" ]] ; then
+  if [[ $(ls -1 "$HOME/rpmbuild" 2>/dev/null | wc -l) == "6" ]] ; then
     return
   fi
 

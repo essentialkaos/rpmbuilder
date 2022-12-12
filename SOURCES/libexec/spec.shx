@@ -98,6 +98,6 @@ releaseBump() {
   fi
 
   if [[ $? -ne 0 ]] ; then
-    error "Can't bump release - bumpspec return error code" $YELLOW
+    warn "Can't bump release - bumpspec return error code"
   fi
 }

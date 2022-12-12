@@ -94,8 +94,8 @@ downloadSource() {
 
     if [[ -z "$tmux_worker" && -z "$dlcache" && $time_diff -gt $LONG_DOWNLOADING ]] ; then
       show ""
-      show "HINT: Downloading took more than $LONG_DOWNLOADING seconds. We strongly recommend use download" $YELLOW
-      show "cache feature in this case. Use -dc <path> or --dlcache <path>." $YELLOW
+      show "HINT: Downloading took more than $LONG_DOWNLOADING seconds. We strongly recommend use download" $GREY
+      show "cache feature in this case. Use -dc <path> or --dlcache <path>." $GREY
       show ""
     fi
 

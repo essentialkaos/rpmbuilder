@@ -21,7 +21,17 @@ parallelBuild() {
   fi
 
   if [[ -n "$dlcache" ]] ; then
-    show "Warning! You can't use a parallel build with download cache." $YELLOW
+    warn "Warning! You can't use a parallel build with download cache."
+    doExit $ERROR_ARGS
+  fi
+
+  local host_list
+
+  # shellcheck disable=SC2207
+  host_list=($(filterNodeList "$remote"))
+
+  if [[ ${#host_list[@]} -eq 0 ]] ; then
+    error "Error! Can't start parallel build process - there are no build nodes with given indices."
     doExit $ERROR_ARGS
   fi
 
@@ -45,28 +55,27 @@ parallelBuild() {
   checkParallelBuildAvailability
   createParalellLock
 
-  local serv serv_name session_exist wid
+  local remote_host session_exist wid
   local wids=()
 
-  while read -r serv ; do
-    serv_name=$(echo "$serv" | cut -f2 -d"@")
+  for remote_host in "${host_list[@]}" ; do
     wid=$(mktemp -u XXXXXXXXXXXX)
-
     wids+=("$wid")
 
     if [[ -z "$session_exist" ]] ; then
       if [[ -z "$TMUX" ]] ; then
-        tmux new-session -s "$TMUX_SESSION_NAME" -d "$0 $opts -r $serv --tmux-worker $wid" >/dev/null 2>&1
+        tmux new-session -s "$TMUX_SESSION_NAME" -d "$0 $opts -r $remote_host --tmux-worker $wid" >/dev/null 2>&1
       else
-        tmux new-window "$0 $opts -r $serv --tmux-worker $wid"
+        tmux new-window "$0 $opts -r $remote_host --tmux-worker $wid"
       fi
 
       tmux rename-window "$APP($spec)"
+
       session_exist=true
     else
-      tmux split-window "$0 $opts -r $serv --tmux-worker $wid" >/dev/null 2>&1
+      tmux split-window "$0 $opts -r $remote_host --tmux-worker $wid" >/dev/null 2>&1
     fi
-  done < "$remote"
+  done
 
   # If we not in tmux, attach to session
   if [[ -z "$TMUX" ]] ; then
@@ -566,13 +575,15 @@ checkParallelBuildAvailability() {
   ct=$(now)
   cdf=$(( ct - cdt ))
 
+  warn "Can't start parallel build"
+
   if [[ $cdf -gt $LOCK_TIME_MAX_DIFF ]] ; then
-    show "We found lock file created more than 3 hours ago. It's too much time for the usual build process." $YELLOW
-    show "If another build process doesn't occur, you must remove file $BUILD_LOCK_PARALLEL manually." $YELLOW
-    show "We will continue to build when this file will be removed." $YELLOW
+    show "  We found lock file created more than 3 hours ago. It's too much time for the usual build process." $YELLOW
+    show "  If another build process doesn't occur, you must remove file $BUILD_LOCK_PARALLEL manually." $YELLOW
+    show "  We will continue to build when this file will be removed." $YELLOW
   else
-    show "Another parallel build process in progress." $YELLOW
-    show "We will continue to build when another process complete." $YELLOW
+    show "  Another parallel build process in progress." $YELLOW
+    show "  We will continue to build when another process complete." $YELLOW
   fi
 
   while : ; do
@@ -781,4 +792,34 @@ extractHostInfo() {
   fi
 
   echo "${url:-!} ${port:-!} ${user:-!} ${pass:-!} ${arch:-!}"
+}
+
+# Function description
+#
+# 1: Path to file with nodes (String)
+#
+# Code: No
+# Echo: Node list (String)
+filterNodeList() {
+  local remote_host line_num index indices
+  local result=()
+
+  declare -A indices
+
+  for index in ${node//,/ } ; do
+    if isNum "$index" ; then
+      indices[$index]=true
+    fi
+  done
+
+  while read -r remote_host ; do
+    (( line_num++ ))
+
+    if [[ -n "${indices[$line_num]}" ]] ; then
+      result+=("$remote_host")
+    fi
+
+  done < <(awk 1 "$1")
+
+  echo "${result[@]}"
 }

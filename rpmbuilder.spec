@@ -20,7 +20,7 @@ BuildArch:       noarch
 BuildRoot:       %{_tmppath}/%{name}-%{version}-%{release}-root-%(%{__id_u} -n)
 
 Requires:        rpm >= 4.8.0 rpm-build rpmdevtools yum-utils
-Requires:        sshpass coreutils tmux
+Requires:        sshpass coreutils awk tmux
 Requires:        perfecto >= 3.0 rpmlint
 
 Provides:        %{name} = %{version}-%{release}
