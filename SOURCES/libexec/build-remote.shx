@@ -80,10 +80,10 @@ parallelBuild() {
   # If we not in tmux, attach to session
   if [[ -z "$TMUX" ]] ; then
     tmux attach-session -t "$TMUX_SESSION_NAME" >/dev/null 2>&1
-  else
-    if [[ ${#wids[@]} -gt 2 ]] ; then
-      tmux select-layout even-vertical
-    fi
+  fi
+
+  if [[ ${#wids[@]} -gt 2 ]] ; then
+    tmux select-layout even-vertical
   fi
 
   waitTillWorkersComplete "${wids[@]}"

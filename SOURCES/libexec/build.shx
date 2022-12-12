@@ -59,7 +59,13 @@ basicBuild() {
   local start_ts
   start_ts=$(now)
 
-  [[ -n "$tmux_worker" ]] && createWorkerLock
+  if [[ -n "$tmux_worker" ]] ; then
+    if [[ -n "$TMUX" ]] ; then
+      tmux set-option -p -t "$TMUX_PANE" @custom_pane_title "$remote"
+    fi
+
+    createWorkerLock
+  fi
 
   if [[ "$download" == "true" ]] ; then
     download=$(findSourcesDir)
@@ -98,7 +104,9 @@ basicBuild() {
     fi
   fi
 
-  [[ -n "$tmux_worker" ]] && removeWorkerLock
+  if [[ -n "$tmux_worker" ]] ; then
+    removeWorkerLock
+  fi
 
   notify "$start_ts"
 }
