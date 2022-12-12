@@ -4,7 +4,6 @@
 ################################################################################
 
 require "build-remote-worker"
-require "upload"
 
 ################################################################################
 
@@ -399,20 +398,12 @@ remoteBuildProcess() {
 
     [[ -n "$bump" ]] && releaseBump "$CWD/$spec"
 
+    show ""
+
     if [[ -n "$dest_dir" ]] ; then
-      if [[ -n "$upload" ]] ; then
-        uploadPackages "$dest_dir" "$packages"
-      else
-        show ""
-        show "All rpm packages saved to a directory ${CL_BL_GREEN}${dest_dir}" $GREEN
-      fi
+      show "All rpm packages saved to a directory ${CL_BL_GREEN}${dest_dir}" $GREEN
     else
-      if [[ -n "$upload" ]] ; then
-        uploadPackages "$CWD" "$packages"
-      else
-        show ""
-        show "All rpm packages saved to a current directory" $GREEN
-      fi
+      show "All rpm packages saved to a current directory" $GREEN
     fi
   else
     error "Error! Can't build a package."

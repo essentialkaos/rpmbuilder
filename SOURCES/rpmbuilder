@@ -82,7 +82,7 @@ PREFS_FILE="${PREFS_FILE:-$HOME/.config/rpmbuilder/rpmbuilder.conf}"
 
 SUPPORTED_OPTS="remote !parallel host user pass port key source_dir source_list 
  !sign !no_build !no_clean !no_deps !no_lint !no_source pack !attach 
- pre post dest dest_dir upload git svn hg bzr branch revision tag svn_user 
+ pre post dest dest_dir git svn hg bzr branch revision tag svn_user 
  svn_pass path !bump bump_comment tmp dlcache !install github node
  bitbucket launchpad with without define output !verbose !help !usage !ver 
  !version !raw_version qa_rpaths tmux_worker !no_colors !keep_log !notify 
@@ -92,7 +92,7 @@ SUPPORTED_OPTS="remote !parallel host user pass port key source_dir source_list
 SHORT_OPTS="r:remote P:!parallel hh:host uu:user ss:pass pp:port kk:key 
  sd:source_dir sl:source_list NB:!no_build NC:!no_clean ND:!no_deps 
  NR:!no_binary NS:!no_source p:pack 0:!no_lint 1:!strict 2:!pedantic 3:!perfect 
- pr:pre ps:post d:dest U:upload su:svn_user sp:svn_pass rp:path b:!bump 
+ pr:pre ps:post d:dest su:svn_user sp:svn_pass rp:path b:!bump 
  bc:bump_comment dc:dlcache I:!install rb:branch rt:tag rr:revision 
  gh:github bb:bitbucket lp:launchpad w:with W:without s:!sign D:define 
  O:output V:!verbose h:help v:!version nv:!no_validate nc:!no_colors 
