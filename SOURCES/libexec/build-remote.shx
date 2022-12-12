@@ -178,12 +178,15 @@ remoteRunBuild() {
 
   uploadSourcesToRemoteHost "$spec"
 
-  if [[ -n "$depinstall" || -n "$dep_install" ]] ; then
+  if [[ -n "$install" ]] ; then
     showSeparator "DEPENDENCIES INSTALL"
     remoteDepsInstall "$spec"
   fi
 
-  [[ -n "$no_build" ]] && show "" && return
+  if [[ -n "$no_build" ]] ; then
+    show ""
+    return
+  fi
 
   remoteBuildProcess "$spec"
 }

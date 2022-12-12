@@ -83,7 +83,7 @@ PREFS_FILE="${PREFS_FILE:-$HOME/.config/rpmbuilder/rpmbuilder.conf}"
 SUPPORTED_OPTS="remote !parallel host user pass port key source_dir source_list 
  !sign !no_build !no_clean !no_deps !no_lint !no_source pack !attach 
  pre post dest dest_dir upload git svn hg bzr branch revision tag svn_user 
- svn_pass path !bump bump_comment tmp dlcache !depinstall !dep_install github 
+ svn_pass path !bump bump_comment tmp dlcache !install github 
  bitbucket launchpad with without define output !verbose !help !usage !ver 
  !version !raw_version qa_rpaths tmux_worker !no_colors !keep_log !notify 
  arch download !relative_pack enable_repo disable_repo exclude_package gopack 
@@ -92,8 +92,8 @@ SUPPORTED_OPTS="remote !parallel host user pass port key source_dir source_list
 SHORT_OPTS="r:remote P:!parallel hh:host uu:user ss:pass pp:port kk:key 
  sd:source_dir sl:source_list NB:!no_build NC:!no_clean ND:!no_deps 
  NR:!no_binary NS:!no_source p:pack 0:!no_lint 1:!strict 2:!pedantic 3:!perfect 
- pr:pre ps:post d:dest u:upload su:svn_user sp:svn_pass rp:path b:!bump 
- bc:bump_comment dc:dlcache di:!depinstall rb:branch rt:tag rr:revision 
+ pr:pre ps:post d:dest U:upload su:svn_user sp:svn_pass rp:path b:!bump 
+ bc:bump_comment dc:dlcache I:!install rb:branch rt:tag rr:revision 
  gh:github bb:bitbucket lp:launchpad w:with W:without s:!sign D:define 
  O:output V:!verbose h:help v:!version nv:!no_validate nc:!no_colors 
  kl:!keep_log n:!notify a:arch dl:download R:relative_pack ER:enable_repo 
@@ -140,10 +140,10 @@ BUILD_LOCK=".buildlock"
 BUILDER_HOME="/home/builder"
 
 # Path to local build lock file (String)
-BUILD_LOCK_LOCAL="/tmp/rpmbuilder-local-lock"
+BUILD_LOCK_LOCAL="/var/tmp/.RPMBUILDER-LOCAL-LOCK"
 
 # Path to parallel local build lock file (String)
-BUILD_LOCK_PARALLEL="/tmp/rpmbuilder-parallel-lock"
+BUILD_LOCK_PARALLEL="/var/tmp/.RPMBUILDER-PARALLEL-LOCK"
 
 # Max lock file lifetime in seconds (Number)
 LOCK_TIME_MAX_DIFF=10800 # 3 Hours
@@ -427,7 +427,7 @@ usage() {
   show ""
   show "Dependencies install:" $BOLD
   show ""
-  showo "--dep-install, -di" "Automatically install build dependencies before build process"
+  showo "--install, -I" "Automatically install build dependencies before build process"
   showo "--enable-repo, -ER" "Enable repositories ${CL_DARK}(mergeable)${CL_NORM}" "repo-name"
   showo "--disable-repo, -DR" "Disable repositories ${CL_DARK}(mergeable)${CL_NORM}" "repo-name"
   showo "--exclude-package, -EX" "Exclude package by name or glob ${CL_DARK}(mergeable)${CL_NORM}" "package"

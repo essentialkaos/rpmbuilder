@@ -34,12 +34,15 @@ localBuild() {
 
   copySourcesToBuildDir "$spec"
 
-  if [[ -n "$depinstall" || -n "$dep_install" ]] ; then
+  if [[ -n "$install" ]] ; then
     showSeparator "DEPENDENCIES INSTALL"
     localDepsInstall "$spec"
   fi
 
-  [[ -n "$no_build" ]] && show "" && return
+  if [[ -n "$no_build" ]] ; then
+    show ""
+    return
+  fi
 
   localBuildProcess "$spec"
 }
