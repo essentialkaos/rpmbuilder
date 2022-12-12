@@ -89,7 +89,7 @@ parallelBuild() {
   waitTillWorkersComplete "${wids[@]}"
   removeParalellLock
 
-  show "Parallel build complete" $GREEN
+  show "Parallel builds are finished" $BOLD
 }
 
 # Prepares sources and run build on remote hosts
@@ -801,6 +801,11 @@ extractHostInfo() {
 # Code: No
 # Echo: Node list (String)
 filterNodeList() {
+  if [[ -z "$node" ]] ; then
+    awk 1 "$1"
+    return
+  fi
+
   local remote_host line_num index indices
   local result=()
 
