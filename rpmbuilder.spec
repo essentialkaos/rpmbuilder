@@ -64,8 +64,14 @@ rm -rf %{buildroot}
 
 %changelog
 * Sat Nov 05 2022 Anton Novojilov <andy@essentialkaos.com> - 3.0.0-0
+- Added new option for defining build nodes indices
+- Added panes naming in parallel build
+- Added HUP signal handling
 - Better Docker and Podman support
 - Improved remote hostname parsing
+- Improved usage info formatting
+- Option '--depinstall'/'-di' renamed to '--install'/'-I'
+- Removed packages uploading feature
 
 * Mon Jul 04 2022 Anton Novojilov <andy@essentialkaos.com> - 2.12.2-0
 - Fixed UI bugs
