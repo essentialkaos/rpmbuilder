@@ -83,7 +83,7 @@ PREFS_FILE="${PREFS_FILE:-$HOME/.config/rpmbuilder/rpmbuilder.conf}"
 SUPPORTED_OPTS="remote !parallel host user pass port key source_dir source_list 
  !sign !no_build !no_clean !no_deps !no_lint !no_source pack !attach 
  pre post dest dest_dir git svn hg bzr branch revision tag svn_user 
- svn_pass path !bump bump_comment tmp dlcache !install github node
+ svn_pass path !bump bump_comment tmp dlcache !install github node 
  bitbucket launchpad with without define output !verbose !help !usage !ver 
  !version !raw_version qa_rpaths tmux_worker !no_colors !keep_log !notify 
  arch download !relative_pack enable_repo disable_repo exclude_package gopack 
