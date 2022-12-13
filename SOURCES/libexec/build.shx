@@ -389,10 +389,14 @@ doExit() {
 
   if [[ -n "$tmux_worker" ]] ; then
     if [[ -z "$1" || "$1" == "0" ]] ; then
-      sleep $TMUX_OK_SLEEP
+      asyncSleep $TMUX_OK_SLEEP
     else
-      [[ -z "$keep_log" || $1 -eq $ERROR_VALIDATE ]] && sleep $TMUX_ERROR_SLEEP
+      [[ -z "$keep_log" || $1 -eq $ERROR_VALIDATE ]] && asyncSleep $TMUX_ERROR_SLEEP
     fi
+  fi
+
+  if [[ -n "$tmux_worker" ]] ; then
+    removeWorkerLock
   fi
 
   exit "${1:-0}"

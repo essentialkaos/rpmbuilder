@@ -153,7 +153,7 @@ localSpecValidate() {
     doExit $ERROR_LINT
   fi
 
-  [[ -n "$verbose" ]] && sleep $LINT_WAIT
+  [[ -n "$verbose" ]] && asyncSleep $LINT_WAIT
 }
 
 # Execute build commands on local host
@@ -355,7 +355,7 @@ checkLocalBuildAvailability() {
   showt "${CL_GREEN}Executing:${CL_NORM} ${CL_YELLOW}waiting in queue${CL_NORM}"
 
   while : ; do
-    sleep $CHECK_LOCAL_QUEUE_DELAY
+    asyncSleep $CHECK_LOCAL_QUEUE_DELAY
 
     if ! hasLocalLock ; then
       showt "${CL_GREEN}Executing:${CL_NORM} ${CL_YELLOW}~${CL_NORM}"

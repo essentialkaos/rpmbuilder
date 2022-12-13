@@ -21,6 +21,17 @@ hasApp() {
   return 0
 }
 
+# Sleep which allows to catch signals
+#
+# 1: Sleep duration in seconds (Number)
+#
+# Code: No
+# Echo: No
+asyncSleep() {
+  sleep "$1" &
+  wait $!
+}
+
 # Prints absolute path to target (file or directory)
 #
 # 1: Obsolute path (String)

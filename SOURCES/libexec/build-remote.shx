@@ -284,7 +284,7 @@ remoteSpecValidate() {
     doExit $ERROR_LINT
   fi
 
-  [[ -n "$verbose" ]] && sleep $LINT_WAIT
+  [[ -n "$verbose" ]] && asyncSleep $LINT_WAIT
 }
 
 # Executes build commands on remote host
@@ -523,7 +523,7 @@ checkRemoteAvailability() {
     showt "${CL_GREEN}Executing:${CL_NORM} ${CL_YELLOW}waiting in queue${CL_NORM}"
 
     while : ; do
-      sleep $CHECK_REMOTE_QUEUE_DELAY
+      asyncSleep $CHECK_REMOTE_QUEUE_DELAY
 
       showt "${CL_GREEN}Executing:${CL_NORM} ${CL_CYAN}checking queue${CL_NORM}"
 
@@ -578,7 +578,7 @@ checkParallelBuildAvailability() {
   fi
 
   while : ; do
-    sleep $CHECK_LOCAL_QUEUE_DELAY
+    asyncSleep $CHECK_LOCAL_QUEUE_DELAY
 
     if ! hasParalellLock ; then
       break
