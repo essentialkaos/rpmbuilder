@@ -76,7 +76,7 @@ parallelBuild() {
     fi
   done
 
-  # If we not in tmux, attach to session
+  # If we not in tmux, attach to the session
   if [[ -z "$TMUX" ]] ; then
     tmux attach-session -t "$TMUX_SESSION_NAME" >/dev/null 2>&1
   fi
@@ -465,12 +465,10 @@ uploadSourcesToRemoteHost() {
   showt "${CL_BLNK_YELLOW}↑ ${CL_NORM} ${spec}"
 
   if [[ -n "$bump" ]] ; then
-    cp "$spec" "$tmp"
+    cp "$spec" "$tmp_dir"
 
-    releaseBump "$tmp/$spec"
-    scpCommand "$tmp/$spec" "$user@$host:$rmpbuild_dir/SPECS/" &> $verb_output
-
-    rm -f "$tmp/$spec"
+    releaseBump "$tmp_dir/$spec"
+    scpCommand "$tmp_dir/$spec" "$user@$host:$rmpbuild_dir/SPECS/" &> $verb_output
   else
     scpCommand "$spec" "$user@$host:$rmpbuild_dir/SPECS/" &> $verb_output
   fi
@@ -478,6 +476,8 @@ uploadSourcesToRemoteHost() {
   grc_time=$(getGraceDurationShort "$copy_start")
   showt "${CL_GREEN}✔ ${CL_NORM} ${spec} ${CL_DARK}${grc_time}${CL_NORM}"
   show ""
+
+  rm -rf "$tmp_dir" &> /dev/null
 }
 
 # Downloads packages from remote build host

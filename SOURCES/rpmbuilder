@@ -169,11 +169,17 @@ SOURCE_PATHS=". SOURCES SOURCE sources source src"
 # Current working dir (String)
 CWD=$(pwd)
 
+# Prefix used for all temporary objects (String)
+TMP_PREFIX="rpmbuilder"
+
+# Prefix used for naming worker lock files (String)
+WORKER_PREFIX=".rpmbuilder-worker"
+
 # Template used for temporary directory name generation (String)
-TMP_DIR_TEMPLATE="rpmbuilder-XXXXXXXX"
+TMP_DIR_TEMPLATE="$TMP_PREFIX-XXXXXXXX"
 
 # Template used for temporary output file name generation (String)
-TMP_OUT_TEMPLATE="rpmbuilder-XXXXXXXX.out"
+TMP_OUT_TEMPLATE="$TMP_PREFIX-XXXXXXXX.out"
 
 ################################################################################
 
@@ -192,13 +198,16 @@ user=$(whoami)
 # Packager name (String)
 packager=""
 
-# Package manager
-pkg_manager=""
-
+# Path to target for verbose output
 verb_output=/dev/null
 
+# Build start timestamp
 build_start=0
+
+# Build end timestamp
 build_end=0
+
+################################################################################
 
 declare -A _requires
 
