@@ -55,8 +55,9 @@ parallelBuild() {
   createParalellLock
 
   parallel_build=true
+  build_start=$(now)
 
-  local remote_host session_exist wid
+  local remote_host session_exist wid grc_time
   local wids=()
 
   for remote_host in "${host_list[@]}" ; do
@@ -90,7 +91,9 @@ parallelBuild() {
   waitTillWorkersComplete "${wids[@]}"
   removeParalellLock
 
-  show "Parallel builds are finished" $BOLD
+  grc_time=$(getGraceDuration "$build_start")
+
+  show "${CL_BOLD}Parallel builds are finished ${CL_DARK}($grc_time)${CL_NORM}"
 }
 
 # Prepares sources and run build on remote hosts
