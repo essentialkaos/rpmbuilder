@@ -449,7 +449,7 @@ uploadSourcesToRemoteHost() {
   local copy_start grc_time
 
   rmpbuild_dir=$(getRPMBuildDir)
-  source_files=$(find "$tmp_dir" -maxdepth 1 -type f)
+  source_files=$(find "$tmp_dir" -maxdepth 1 -type f | sort -h)
 
   for source_file in $source_files ; do
     source_file_name=$(basename "$source_file")
