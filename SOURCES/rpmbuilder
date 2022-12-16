@@ -101,7 +101,7 @@ SHORT_OPTS="r:remote P:!parallel hh:host uu:user ss:pass pp:port kk:key
 
 INSPEC_OPTS="git svn hg bzr branch revision tag svn_user svn_pass github 
  bitbucket launchpad qa_rpaths no_lint no_validate relative_pack gopack strict 
- pedantic perfect"
+ pedantic perfect exclude_package"
 
 MERGEABLE_OPTS="pack with without enable_repo disable_repo exclude_package define"
 
