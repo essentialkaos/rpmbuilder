@@ -207,6 +207,9 @@ build_start=0
 # Build end timestamp
 build_end=0
 
+# Parallel build flag
+parallel_build=""
+
 ################################################################################
 
 declare -A _requires

@@ -54,6 +54,8 @@ parallelBuild() {
   checkParallelBuildAvailability
   createParalellLock
 
+  parallel_build=true
+
   local remote_host session_exist wid
   local wids=()
 

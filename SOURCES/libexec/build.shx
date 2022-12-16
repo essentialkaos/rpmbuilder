@@ -425,8 +425,10 @@ doExit() {
 # Code: No
 # Echo: No
 termExit() {
-  if hasWorkers ; then
-    killAllWorkers
+  if [[ -n "$parallel_build" ]] ; then
+    if hasWorkers ; then
+      killAllWorkers
+    fi
   fi
 
   clean
