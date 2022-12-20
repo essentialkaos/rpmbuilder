@@ -1,0 +1,9 @@
+{
+  "name": "Bash",
+  "build": {
+    "dockerfile": "Dockerfile",
+  },
+  "settings": {
+    "terminal.integrated.shell.linux": "/usr/bin/zsh"
+  }
+}
