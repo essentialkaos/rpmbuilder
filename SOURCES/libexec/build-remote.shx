@@ -166,24 +166,21 @@ remoteRunMultibuild() {
 # Echo: No
 remoteRunBuild() {
   local spec="$1"
-
   local host_info r_port r_user r_pass r_arch
 
-  if [[ "$remote" =~ \@|\~|\:i ]] ; then
-    IFS=" " read -r -a host_info <<< "$(extractHostInfo "$remote")"
+  IFS=" " read -r -a host_info <<< "$(extractHostInfo "$remote")"
 
-    host="${host_info[0]/!/}"
+  host="${host_info[0]/!/}"
 
-    r_port="${host_info[1]/!/}"
-    r_user="${host_info[2]/!/}"
-    r_pass="${host_info[3]/!/}"
-    r_arch="${host_info[4]/!/}"
+  r_port="${host_info[1]/!/}"
+  r_user="${host_info[2]/!/}"
+  r_pass="${host_info[3]/!/}"
+  r_arch="${host_info[4]/!/}"
 
-    port="${r_port:-$port}"
-    user="${r_user:-$user}"
-    pass="${r_pass:-$pass}"
-    arch="${r_arch:-$arch}"
-  fi
+  port="${r_port:-$port}"
+  user="${r_user:-$user}"
+  pass="${r_pass:-$pass}"
+  arch="${r_arch:-$arch}"
 
   remoteCheckEnv
 
@@ -211,7 +208,7 @@ remoteRunBuild() {
 remoteCheckEnv() {
   showSeparator "REMOTE CHECK"
 
-  show "Connecting to a remote build server on ${CL_CYAN}${host}:${port:-22}${CL_NORM}…"
+  show "Connecting as ${CL_CYAN}${user}${CL_NORM} to a remote build server on ${CL_CYAN}${host}:${port:-22}${CL_NORM}…"
 
   if isRemoteServerReachable "$host" ; then
     if ! isSSHConnectionWorks "$host" ; then
@@ -788,6 +785,45 @@ extractHostInfo() {
   fi
 
   echo "${url:-!} ${port:-!} ${user:-!} ${pass:-!} ${arch:-!}"
+}
+
+# Check if URL is valid host info
+#
+# 1: URL (String)
+#
+# Code: Yes
+# Echo: No
+validateHostInfo() {
+  local host_info r_host r_port r_user r_pass r_arch
+
+  IFS=" " read -r -a host_info <<< "$(extractHostInfo "$1")"
+
+  r_host="${host_info[0]/!/}"
+  r_port="${host_info[1]/!/}"
+  r_user="${host_info[2]/!/}"
+  r_pass="${host_info[3]/!/}"
+  r_arch="${host_info[4]/!/}"
+
+  if [[ -n "$r_port" ]] ; then
+    if ! isNum "$r_port" ; then
+      error "Can't start remote build process: remote server port must be a number"
+      return 1
+    fi
+  fi
+
+  if [[ -n "$r_pass" ]] ; then
+    if ! hasApp "sshpass" ; then
+      error "Can't start remote build process: remote server info contains password, using passwords requires sshpass"
+      return 1
+    fi
+  fi
+
+  if [[ -z "$r_host" ]] ; then
+    error "Can't start remote build process: can't parse remote server info"
+    return 1
+  fi
+
+  return 0
 }
 
 # Function description

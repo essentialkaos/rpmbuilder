@@ -258,9 +258,12 @@ checkOptions() {
     doExit $ERROR_ARGS
   fi
 
-  if [[ -n "$remote" && -z "$host" && ! -r $remote && ! "$remote" =~ \@|\~ && ! "$remote" =~ :[0-9]{1,}$ ]] ; then
-    error "Can't start remote build process: you must define the remote host"
-    doExit $ERROR_ARGS
+  if [[ -n "$remote" ]] ; then
+    if [[ ! -r "$remote" ]] ; then
+      if ! validateHostInfo "$remote" ; then
+        doExit $ERROR_ARGS
+      fi
+    fi
   fi
 
   if ! hasApp "git" && [[ -n "$git" ]] ; then
@@ -285,11 +288,6 @@ checkOptions() {
 
   if ! hasApp "gopack" && [[ -n "$gopack" ]] ; then
     error "Can't start build process: for using --gopack option, you must install gopack first"
-    doExit $ERROR_DEPS
-  fi
-
-  if ! hasApp "sshpass" && [[ -n "$pass" ]] ; then
-    error "Can't start build process: for using --pass option, you must install sshpass first"
     doExit $ERROR_DEPS
   fi
 

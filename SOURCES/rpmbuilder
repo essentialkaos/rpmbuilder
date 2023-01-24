@@ -80,24 +80,22 @@ SEPARATOR="---------------------------------------------------------------------
 # Path to preferencies file
 PREFS_FILE="${PREFS_FILE:-$HOME/.config/rpmbuilder/rpmbuilder.conf}"
 
-SUPPORTED_OPTS="remote !parallel host user pass port key source_dir source_list 
- !sign !no_build !no_clean !no_deps !no_lint !no_source pack !attach 
- pre post dest dest_dir git svn hg bzr branch revision tag svn_user 
- svn_pass path !bump bump_comment tmp dlcache !install github node 
- bitbucket launchpad with without define output !verbose !help !usage !ver 
- !version !raw_version qa_rpaths tmux_worker !no_colors !keep_log !notify 
+SUPPORTED_OPTS="remote !parallel key source_dir source_list !sign !no_build 
+ !no_clean !no_deps !no_lint !no_source pack !attach dest dest_dir git svn hg 
+ bzr branch revision tag svn_user svn_pass path !bump bump_comment tmp dlcache 
+ !install github node bitbucket launchpad with without define output !verbose 
+ !help !version !raw_version qa_rpaths tmux_worker !no_colors !keep_log !notify 
  arch download !relative_pack enable_repo disable_repo exclude_package gopack 
  !no_validate !strict !pedantic !perfect"
 
-SHORT_OPTS="r:remote P:!parallel hh:host uu:user ss:pass pp:port kk:key 
- sd:source_dir sl:source_list NB:!no_build NC:!no_clean ND:!no_deps 
- NR:!no_binary NS:!no_source p:pack 0:!no_lint 1:!strict 2:!pedantic 3:!perfect 
- pr:pre ps:post d:dest su:svn_user sp:svn_pass rp:path b:!bump 
- bc:bump_comment dc:dlcache I:!install rb:branch rt:tag rr:revision 
- gh:github bb:bitbucket lp:launchpad w:with W:without s:!sign D:define 
- O:output V:!verbose h:help v:!version nv:!no_validate nc:!no_colors 
- kl:!keep_log n:!notify a:arch dl:download R:relative_pack ER:enable_repo 
- DR:disable_repo EX:exclude_package G:gopack A:!attach N:node"
+SHORT_OPTS="r:remote P:!parallel k:key sd:source_dir sl:source_list 
+ NB:!no_build NC:!no_clean ND:!no_deps NR:!no_binary NS:!no_source p:pack 
+ 0:!no_lint 1:!strict 2:!pedantic 3:!perfect d:dest su:svn_user 
+ sp:svn_pass rp:path b:!bump bc:bump_comment dc:dlcache I:!install rb:branch 
+ rt:tag rr:revision gh:github bb:bitbucket lp:launchpad w:with W:without 
+ s:!sign D:define O:output V:!verbose h:help v:!version nv:!no_validate 
+ nc:!no_colors kl:!keep_log n:!notify a:arch dl:download R:relative_pack 
+ ER:enable_repo DR:disable_repo EX:exclude_package G:gopack A:!attach N:node"
 
 INSPEC_OPTS="git svn hg bzr branch revision tag svn_user svn_pass github 
  bitbucket launchpad qa_rpaths no_lint no_validate relative_pack gopack strict 
@@ -194,6 +192,18 @@ tmp_output=""
 
 # Current user name (String)
 user=$(whoami)
+
+# Remote server IP or domain name (String)
+host=""
+
+# Remote server password (String)
+pass=""
+
+# Remote server port (Number)
+port=""
+
+# Remote server arch (String)
+arch=""
 
 # Packager name (String)
 packager=""
@@ -352,11 +362,11 @@ showo() {
 
   if [[ -z "$optp" ]] ; then
     optt="$optn"
-    optf=$(( 31 - ${#optt} ))
+    optf=$(( 32 - ${#optt} ))
     echo -e "${prefix}${CL_GREEN}${optn}${CL_NORM} ${CL_DARK}${breadcrumbs:0:$optf}${CL_NORM} $optd"
   else
     optt="$optn $optp"
-    optf=$(( 31 - ${#optt} ))
+    optf=$(( 32 - ${#optt} ))
     echo -e "${prefix}${CL_GREEN}${optn}${CL_NORM} ${CL_GREY}${optp}${CL_NORM} ${CL_DARK}${breadcrumbs:0:$optf}${CL_NORM} $optd"
   fi
 }
@@ -464,21 +474,17 @@ usage() {
   show ""
   showo "--parallel, -P" "Parallel build on all build servers in same time ${CL_DARK}(tmux is required)${CL_NORM}"
   showo "┌ --remote, -r" "Build rpm package on remote server"
-  showo "│ --remote, -r" "Build rpm package on the remote server with specified host, username and password" "user:pass@host"
+  showo "│ --remote, -r" "Build rpm package on the remote server with specified host, username and password" "user:pass@host:port"
   showo "└ --remote, -r" "Build rpm package on the remote servers listed in specified file" "file"
-  showo "--host, -hh" "Remote host IP or domain name" "host"
-  showo "--user, -uu" "Remote host user" "username"
-  showo "--pass, -ss" "Password for specified user" "password"
-  showo "--port, -pp" "Remote host SSH daemon port" "port"
-  showo "--key, -kk" "Path to the private key for specified user" "file"
+  showo "--key, -k" "Path to the private key for specified user" "file"
   showo "--node, -N" "Node index or name from file with build servers" "index-or-name"
   showo "--attach, -A" "Attach to parallel build session in tmux"
   show ""
   show "  Examples:" $BOLD
   show ""
-  show "    rpmbuilder package.spec --remote -uu builder -ss mypass -hh 127.0.0.1" $GREY
-  show "    rpmbuilder package.spec -r builder:mypass@127.0.0.1:2022 -i ~/.ssh/id_dsa" $GREY
-  show "    rpmbuilder package.spec --remote ~/servers.list --key ~/.ssh/id_dsa" $GREY
+  show "    rpmbuilder package.spec -r builder@127.0.0.1" $GREY
+  show "    rpmbuilder package.spec -r builder:mypass@127.0.0.1:2022~i386" $GREY
+  show "    rpmbuilder package.spec --remote ~/servers.list --key ~/.ssh/id_ed25519" $GREY
   show "    rpmbuilder package.spec --parallel --remote ~/servers.list --node 1,2" $GREY
   show ""
   show "Build options:" $BOLD
@@ -489,7 +495,7 @@ usage() {
   showo "--no-binary, -NR" "Don't build binary packages"
   showo "--no-source, -NS" "Don't build source package"
   showo "--arch, -a" "Override target arch for a build" "arch"
-  showo "--qa-rpaths" "  Ignoring rpaths check" '"<value>,…"'
+  showo "--qa-rpaths" "Ignoring rpaths check" '"<value>,…"'
   show ""
   show "Arguments passing:" $BOLD
   show ""
