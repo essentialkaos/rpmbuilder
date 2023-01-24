@@ -13,8 +13,6 @@
 
 ### Usage demo
 
-Building Redis rpm package for CentOS6 and CentOS7:
-
 [![demo](https://gh.kaos.st/rpmbuilder-220.gif)](#usage-demo)
 
 ### Installation
