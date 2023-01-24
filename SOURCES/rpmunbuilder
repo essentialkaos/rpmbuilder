@@ -13,14 +13,14 @@ fi
 APP="RPMUnbuilder"
 
 # Utility version (String)
-VER="1.2.1"
+VER="1.3.0"
 
 ################################################################################
 
 NORM=0
 BOLD=1
 UNLN=4
-RED=31s
+RED=31
 GREEN=32
 YELLOW=33
 BLUE=34
@@ -48,8 +48,8 @@ CL_BL_MAG="\e[1;${MAG};49m"
 CL_BL_CYAN="\e[1;${CYAN};49m"
 CL_BL_GREY="\e[1;${GREY};49m"
 
-SUPPORTED_OPTS="help usage ver version"
-SHORT_OPTS="h:help v:version"
+SUPPORTED_OPTS="help version !no_color"
+SHORT_OPTS="h:help v:version nc:!no_color"
 
 ################################################################################
 
@@ -58,44 +58,80 @@ SHORT_OPTS="h:help v:version"
 # Code: No
 # Echo: No
 main() {
-  if [[ -n "$ver" || -n "$version" ]] ; then
+  if [[ ! -t 1 || -n "$no_color" || -n "$NO_COLOR" ]] ; then
+    unset NORM BOLD UNLN RED GREEN YELLOW BLUE MAG CYAN GREY DARK
+    unset CL_NORM CL_BOLD CL_UNLN CL_RED CL_GREEN CL_YELLOW CL_BLUE CL_MAG CL_CYAN CL_GREY CL_DARK
+    unset CL_BL_RED CL_BL_GREEN CL_BL_YELLOW CL_BL_BLUE CL_BL_MAG CL_BL_CYAN CL_BL_GREY
+    no_color=true
+  fi
+
+  if [[ -n "$version" ]] ; then
     about
     exit 0
   fi
 
-  if [[ $# -eq 0 || -n "$help" || -n "$usage" ]] ; then
+  if [[ $# -eq 0 || -n "$help" ]] ; then
     usage
     exit 0
   fi
 
-  if ! hasApp "rpm" "rpm2cpio" "cpio" ; then
-    error "For using this utility install this packages first: rpm rpm2cpio cpio"
-    exit 2
-  fi
-
-  local pkg="$1"
-  local path="$2"
-
-  if ! isRPMPackage "$pkg" ; then
-    error "Error! [$pkg] is not an rpm package!"
+  if ! prepare ; then
     exit 1
   fi
 
-  if [[ -n "$path" ]] ; then
-    if ! checkPerms "$path" "DWX" ; then
-      error "Error! Please check permissions for directory [$path]."
-      exit 3
-    fi
-  else
-    path=$(pwd)
-
-    if ! checkPerms "$path" "DWX" ; then
-      error "Error! Please check permissions for directory [$path]."
-      exit 3
-    fi
+  if ! checkArgs "$@" ; then
+    exit 1
   fi
 
-  processPackage "$pkg" "$path"
+  processPackage "$@"
+
+  exit $?
+}
+
+# Prepare for script execution
+#
+# Code: Yes
+# Echo: No
+prepare() {
+  if ! hasApp "rpm" "rpm2cpio" "cpio" ; then
+    error "This utility requires next packages: rpm rpm2cpio cpio"
+    return 1
+  fi
+
+  return 0
+}
+
+# Check script arguments before unbuilding
+#
+# *: Arguments passed to script
+#
+# Code: Yes
+# Echo: No
+checkArgs() {
+  local pkg="$1"
+  local path="${2:-$(pwd)}"
+
+  if ! isRPMPackage "$pkg" ; then
+    error "$pkg is not an rpm package"
+    return 1
+  fi
+
+  if [[ ! -e "$path" ]] ; then
+    error "Directory $path doesn't exist"
+    return 1
+  fi
+
+  if [[ ! -d "$path" ]] ; then
+    error "$path isn't a directory"
+    return 1
+  fi
+
+  if [[ ! -r "$path" ]] ; then
+    error "Directory $path isn't readable"
+    return 1
+  fi
+
+  return 0
 }
 
 # Start package processing
@@ -103,15 +139,15 @@ main() {
 # 1: Package (String)
 # 2: Path (String)
 #
-# Code: No
+# Code: Yes
 # Echo: No
 processPackage() {
   local pkg="$1"
-  local path="$2"
-
-  showm "Unbuilding package: " $BOLD
+  local path="${2:-$(pwd)}"
 
   local src_name src_list
+
+  showm "Unbuilding package: " $BOLD
 
   src_list=$(rpm2cpio "$pkg" | cpio -div --quiet 2>&1 | grep -v "cpio:")
 
@@ -126,47 +162,20 @@ processPackage() {
   done
 
   show "DONE" $GREEN
+
+  return 0
 }
 
 # Check if given file is RPM package
 #
-# 1: Package (String)
+# 1: Path to package (String)
 #
 # Code: Yes
 # Echo: No
 isRPMPackage() {
-  if LC_ALL=C rpm -qp --qf "%{name}\n" "$1" &> /dev/null ; then
-    return 0
+  if ! rpm -qp "$1" &> /dev/null ; then
+    return 1
   fi
-
-  return 1
-}
-
-# Checks file or directory permissions
-#
-# 1: Path to file or directory (String)
-#
-# Code: Yes
-# Echo: No
-checkPerms() {
-  local path="$1"
-  local perms
-
-  perms=$(echo "$2" | tr "[:lower:]" "[:upper:]")
-
-  for perm in $(echo "$perms" | fold -w1) ; do
-    case $perm in
-      "R") [[ ! -r "$path" ]] && return 1 ;;
-      "W") [[ ! -w "$path" ]] && return 1 ;;
-      "E") [[ ! -e "$path" ]] && return 1 ;;
-      "D") [[ ! -d "$path" ]] && return 1 ;;
-      "F") [[ ! -f "$path" ]] && return 1 ;;
-      "S") [[ ! -s "$path" ]] && return 1 ;;
-      "H") [[ ! -h "$path" ]] && return 1 ;;
-      "X") [[ ! -x "$path" ]] && return 1 ;;
-      *) return 1 ;;
-    esac
-  done
 
   return 0
 }
@@ -196,12 +205,12 @@ hasApp() {
 # Print message
 #
 # 1: Message (String)
-# 2: Color code (Number) [Optional]
+# 2: Message color (Number) [Optional]
 #
 # Code: No
 # Echo: No
 show() {
-  if [[ -n "$2" ]] ; then
+  if [[ -n "$2" && -z "$no_color" ]] ; then
     echo -e "\e[${2}m${1}\e[0m"
   else
     echo -e "$*"
@@ -223,6 +232,38 @@ showm() {
   fi
 }
 
+# Print formated message with option info
+#
+# 1: Option (String)
+# 2: Description (String)
+# 3: Arguments (String) [Optional]
+#
+# Code: No
+# Echo: No
+showo() {
+  local optn optd optp optt optf breadcrumbs
+
+  optn="$1"
+  optd="$2"
+  optp="$3"
+
+  if [[ -n "$DARK" ]] ; then
+    breadcrumbs="............................"
+  else
+    breadcrumbs="                            "
+  fi
+
+  if [[ -z "$optp" ]] ; then
+    optt="$optn"
+    optf=$(( 16 - ${#optt} ))
+    echo -e "  ${CL_GREEN}${optn}${CL_NORM} ${CL_DARK}${breadcrumbs:0:$optf}${CL_NORM} $optd"
+  else
+    optt="$optn $optp"
+    optf=$(( 16 - ${#optt} ))
+    echo -e "  ${CL_GREEN}${optn}${CL_NORM} ${CL_GREY}${optp}${CL_NORM} ${CL_DARK}${breadcrumbs:0:$optf}${CL_NORM} $optd"
+  fi
+}
+
 # Print error message
 #
 # 1: Message (String)
@@ -230,26 +271,44 @@ showm() {
 # Code: No
 # Echo: No
 error() {
-  show "$@" $RED 1>&2
+  show "▲ $*" $RED 1>&2
 }
 
-# Show message about unknown option
+# Print message about unknown option
 #
 # 1: Option name (String)
 #
 # Code: No
 # Echo: No
 showOptWarn() {
-  error "Error! Unknown argument $1."
-  doExit 1
+  error "Unknown option $1"
+  exit 1
 }
+
+################################################################################
 
 # Print usage info
 #
 # Code: No
 # Echo: No
 usage() {
+  show ""
   show "${CL_BOLD}Usage:${CL_NORM} rpmunbuilder rpm-file path"
+  show ""
+  show "Options" $BOLD
+  show ""
+  showo "--no-color, -nc" "Disable colors in output"
+  showo "--help, -h" "Show this help message"
+  showo "--version, -v" "Show information about version"
+  show ""
+  show "Examples" $BOLD
+  show ""
+  show "  rpmunbuilder package.rpm"
+  show "  Unpack package to current directory" $DARK
+  show ""
+  show "  rpmunbuilder package.rpm /some/dir"
+  show "  Unpack package to custom directory" $DARK
+  show ""
 }
 
 # Print version info
@@ -267,7 +326,6 @@ about() {
 
 if [[ $# -eq 0 ]] ; then
   main
-  exit $?
 fi
 
 unset opt optn optm optv optt optk
