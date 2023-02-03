@@ -4,26 +4,26 @@
 
 ################################################################################
 
-Summary:         RPM package build helper
-Name:            rpmbuilder
-Version:         3.0.0
-Release:         0%{?dist}
-License:         Apache License, Version 2.0
-Group:           Development/Tools
-URL:             https://kaos.sh/rpmbuilder
+Summary:    RPM package build helper
+Name:       rpmbuilder
+Version:    3.0.0
+Release:    0%{?dist}
+License:    Apache License, Version 2.0
+Group:      Development/Tools
+URL:        https://kaos.sh/rpmbuilder
 
-Source0:         https://source.kaos.st/%{name}/%{name}-%{version}.tar.bz2
+Source0:    https://source.kaos.st/%{name}/%{name}-%{version}.tar.bz2
 
-Source100:       checksum.sha512
+Source100:  checksum.sha512
 
-BuildArch:       noarch
-BuildRoot:       %{_tmppath}/%{name}-%{version}-%{release}-root-%(%{__id_u} -n)
+BuildArch:  noarch
+BuildRoot:  %{_tmppath}/%{name}-%{version}-%{release}-root-%(%{__id_u} -n)
 
-Requires:        rpm >= 4.8.0 rpm-build rpmdevtools yum-utils
-Requires:        sshpass coreutils gawk tmux
-Requires:        perfecto >= 3.0 rpmlint
+Requires:   rpm >= 4.8.0 rpm-build rpmdevtools yum-utils
+Requires:   sshpass coreutils gawk tmux
+Requires:   perfecto >= 3.0 rpmlint
 
-Provides:        %{name} = %{version}-%{release}
+Provides:   %{name} = %{version}-%{release}
 
 ################################################################################
 
