@@ -31,6 +31,14 @@ sudo yum install -y https://yum.kaos.st/kaos-repo-latest.el$(grep 'CPE_NAME' /et
 sudo yum install rpmbuilder-node
 ```
 
+#### Using Makefile and Git
+
+```bash
+git clone https://kaos.sh/rpmbuilder.git
+cd rpmbuilder
+sudo make install
+```
+
 #### Using Docker
 
 We provide a big variety of Docker images available on [Docker Hub](http://kaos.sh/d/rpmbuilder) and [GitHub Container Registry](https://kaos.sh/p/rpmbuilder).
