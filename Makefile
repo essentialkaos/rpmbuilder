@@ -50,7 +50,6 @@ endif
 	install -dDm 755 /usr/libexec/rpmbuilder
 	install -pm 755 SOURCES/rpmbuilder /usr/bin/
 	install -pm 755 SOURCES/rpmunbuilder /usr/bin/
-	install -pm 644 SOURCES/logcat.conf /etc/
 	install -pm 644 libexec/* /usr/libexec/rpmbuilder/
 
 	@echo -e "\e[1;32;49m\nApp successfully installed!\n\e[0m"
