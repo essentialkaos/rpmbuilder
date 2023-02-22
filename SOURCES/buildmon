@@ -21,10 +21,8 @@ CWD=$(pwd)
 ################################################################################
 
 main() {
-  trap doExit SIGINT SIGTERM
-
+  trap termExit SIGINT SIGQUIT SIGTERM SIGHUP
   check
-
   doExit
 }
 

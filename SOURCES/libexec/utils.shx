@@ -21,6 +21,17 @@ hasApp() {
   return 0
 }
 
+# Sleep which allows to catch signals
+#
+# 1: Sleep duration in seconds (Number)
+#
+# Code: No
+# Echo: No
+asyncSleep() {
+  sleep "$1" &
+  wait $!
+}
+
 # Prints absolute path to target (file or directory)
 #
 # 1: Obsolute path (String)
@@ -146,7 +157,7 @@ showSeparator() {
   if [[ -n "$tmux_worker" ]] ; then
     cols=$(tmux display-message -p "#{window_width}")
   else
-    cols=$(tput cols)
+    cols=$(tput -T xterm-256color cols)
   fi
 
   for i in $(seq 1 $cols) ; do
@@ -216,5 +227,23 @@ getArchExt() {
   done
 
   echo ""
+  return 1
+}
+
+# Check if given value is a number
+#
+# 1: Value (String)
+#
+# Code: Yes
+# Echo: No
+isNum() {
+  if [[ -z "$1" ]] ; then
+    return 1
+  fi
+
+  if [[ -z $(echo "$1" | tr -d '[:digit:]') ]] ; then
+    return 0
+  fi
+
   return 1
 }

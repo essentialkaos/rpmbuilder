@@ -13,32 +13,88 @@
 
 ### Usage demo
 
-Building Redis rpm package for CentOS6 and CentOS7:
-
-[![demo](https://gh.kaos.st/rpmbuilder-220.gif)](#usage-demo)
+[![demo](https://gh.kaos.st/rpmbuilder-300.1.gif)](#usage-demo)
 
 ### Installation
 
 #### From [ESSENTIAL KAOS Public Repository](https://yum.kaos.st)
 
 ```bash
-sudo yum install -y https://yum.kaos.st/get/$(uname -r).rpm
+sudo yum install -y https://yum.kaos.st/kaos-repo-latest.el$(grep 'CPE_NAME' /etc/os-release | tr -d '"' | cut -d':' -f5).noarch.rpm
 sudo yum install rpmbuilder
 ```
 
 Build node:
 
 ```bash
-sudo yum install -y https://yum.kaos.st/get/$(uname -r).rpm
+sudo yum install -y https://yum.kaos.st/kaos-repo-latest.el$(grep 'CPE_NAME' /etc/os-release | tr -d '"' | cut -d':' -f5).noarch.rpm
 sudo yum install rpmbuilder-node
-sudo passwd builder
-# change builder user password here
-sudo service buildmon start
+```
+
+#### Using Makefile and Git
+
+```bash
+git clone https://kaos.sh/rpmbuilder.git
+cd rpmbuilder
+sudo make install
 ```
 
 #### Using Docker
 
-Official `rpmbuilder` images available on [Docker Hub](http://kaos.sh/d/rpmbuilder) and [GitHub Container Registry](https://kaos.sh/p/rpmbuilder).
+We provide a big variety of Docker images available on [Docker Hub](http://kaos.sh/d/rpmbuilder) and [GitHub Container Registry](https://kaos.sh/p/rpmbuilder).
+
+<details><summary><b>Official images</b></summary><p>
+
+Basic images:
+
+- `essentialkaos/rpmbuilder:centos7` (_CentOS 7_)
+- `essentialkaos/rpmbuilder:ol7` (_OracleLinux 7_)
+- `essentialkaos/rpmbuilder:ol8` (_OracleLinux 8_)
+- `essentialkaos/rpmbuilder:ol9` (_OracleLinux 9_)
+- `ghcr.io/essentialkaos/rpmbuilder:centos7` (_CentOS 7_)
+- `ghcr.io/essentialkaos/rpmbuilder:ol7` (_OracleLinux 7_)
+- `ghcr.io/essentialkaos/rpmbuilder:ol8` (_OracleLinux 8_)
+- `ghcr.io/essentialkaos/rpmbuilder:ol9` (_OracleLinux 9_)
+
+Build node images:
+
+- `essentialkaos/rpmbuilder:node-centos7` (_CentOS 7_ | Port: `2027`)
+- `essentialkaos/rpmbuilder:node-ol7` (_OracleLinux 7_ | Port: `2037`)
+- `essentialkaos/rpmbuilder:node-ol8` (_OracleLinux 8_ | Port: `2038`)
+- `essentialkaos/rpmbuilder:node-ol9` (_OracleLinux 9_ | Port: `2039`)
+- `ghcr.io/essentialkaos/rpmbuilder:node-centos7` (_CentOS 7_| Port: `2027`)
+- `ghcr.io/essentialkaos/rpmbuilder:node-ol7` (_OracleLinux 7_ | Port: `2037`)
+- `ghcr.io/essentialkaos/rpmbuilder:node-ol8` (_OracleLinux 8_ | Port: `2038`)
+- `ghcr.io/essentialkaos/rpmbuilder:node-ol9` (_OracleLinux 9_ | Port: `2039`)
+
+</p></details>
+
+Package build using basic image:
+
+```bash
+# Download and install rpmbuilder-docker script
+curl -fL# -o rpmbuilder-docker https://kaos.sh/rpmbuilder/rpmbuilder-docker
+chmod +x rpmbuilder-docker
+sudo mv rpmbuilder-docker /usr/bin/
+
+# Pull image
+docker pull essentialkaos/rpmbuilder:ol8
+export IMAGE=essentialkaos/rpmbuilder:ol8
+
+# Build package
+cd my-package-dir
+rpmbuilder-docker my-package.spec
+```
+
+Package build using build node image:
+
+```bash
+docker pull essentialkaos/rpmbuilder:node-ol8
+docker run -e PUB_KEY="$(cat ~/.ssh/buildnode.pub)" -p 2038:2038 -d essentialkaos/rpmbuilder:node-ol8
+
+cd my-package-dir
+rpmbuilder my-package.spec -r builder@localhost:2038 -kk ~/.ssh/buildnode
+```
 
 ### Tips
 
@@ -49,45 +105,46 @@ Official `rpmbuilder` images available on [Docker Hub](http://kaos.sh/d/rpmbuild
 ### Usage
 
 ```
+
 Usage: rpmbuilder {spec-file} {options}
 
 Spec file:
 
   You can define absolute or relative path to spec file. You also can define only spec name (without extension).
-  In this case, rpmbuilder try use {name}.spec file for build and try to find {name}.source file and use as 
+  In this case, rpmbuilder try use {name}.spec file for build and try to find {name}.source file and use as
   sources list.
 
 Source packaging:
 
-  --pack, -p files                 Pack specified files to archive with default source name (mergeable)
-  --relative-pack, -R              Use relative path in source archive instead of absolute
-  --source-dir, -sd path           Path to a directory which contains source files specified in spec file
-  --source-list, -sl file          Path to file which contains a list of source files specified in spec file
-  --dlcache, -dc dir               Path to a directory for downloads caching
-  --download, -dl dir              Download all remote sources to a specified directory
-  --no-validate, -nv               Don't validate sources
+  --pack, -p files                  Pack specified files to archive with default source name (mergeable)
+  --relative-pack, -R               Use relative path in source archive instead of absolute
+  --source-dir, -sd path            Path to a directory which contains source files specified in spec file
+  --source-list, -sl file           Path to file which contains a list of source files specified in spec file
+  --dlcache, -dc dir                Path to a directory for downloads caching
+  --download, -dl dir               Download all remote sources to a specified directory
+  --no-validate, -nv                Don't validate sources
 
-  --git url                        Fetch sources from Git repository
-  --svn url                        Fetch sources from SVN repository
-  --hg url                         Fetch sources from Mercurial repository
-  --bzr url                        Fetch sources from Bazaar repository
-  --path, -rp path                 Path to a directory with sources in repository
-  --branch, -rb branch             Use specified repository branch
-  --revision, -rr rev              Use specified revision
-  --tag, -rt tag                   Use specified tag
-  --svn-user, -su username         Username for access to SVN repository
-  --svn-pass, -sp password         Password for access to SVN repository
+  --git url                         Fetch sources from Git repository
+  --svn url                         Fetch sources from SVN repository
+  --hg url                          Fetch sources from Mercurial repository
+  --bzr url                         Fetch sources from Bazaar repository
+  --path, -rp path                  Path to a directory with sources in repository
+  --branch, -rb branch              Use specified repository branch
+  --revision, -rr rev               Use specified revision
+  --tag, -rt tag                    Use specified tag
+  --svn-user, -su username          Username for access to SVN repository
+  --svn-pass, -sp password          Password for access to SVN repository
 
-  --github, -gh url                Fetch sources from github.com repository by url
-  --github, -gh user:project       Fetch sources from github.com repository by user and project
-  --github, -gh user/project       Fetch sources from github.com repository by user and project
-  --bitbucket, -bb url             Fetch sources from bitbucket.org repository by url
-  --bitbucket, -bb user:project    Fetch sources from bitbucket.org repository by user and project
-  --bitbucket, -bb user/project    Fetch sources from bitbucket.org repository by user and project
-  --launchpad, -lp url             Fetch sources from launchpad.net repository by url
-  --launchpad, -lp project-name    Fetch sources from launchpad.net repository by project name
+┌ --github, -gh url                 Fetch sources from github.com repository by url
+│ --github, -gh user:project        Fetch sources from github.com repository by user and project
+└ --github, -gh user/project        Fetch sources from github.com repository by user and project
+┌ --bitbucket, -bb url              Fetch sources from bitbucket.org repository by url
+│ --bitbucket, -bb user:project     Fetch sources from bitbucket.org repository by user and project
+└ --bitbucket, -bb user/project     Fetch sources from bitbucket.org repository by user and project
+┌ --launchpad, -lp url              Fetch sources from launchpad.net repository by url
+└ --launchpad, -lp project-name     Fetch sources from launchpad.net repository by project name
 
-  --gopack, -G url                 Fetch and pack golang sources using gopack
+  --gopack, -G url                  Fetch and pack golang sources using gopack
 
   Examples:
 
@@ -104,44 +161,43 @@ Source packaging:
 
 Dependencies install:
 
-  --dep-install, -di               Automatically install build dependencies before build process
-  --enable-repo, -ER repo-name     Enable repositories (mergeable)
-  --disable-repo, -DR repo-name    Disable repositories (mergeable)
-  --exclude-package, -EX package   Exclude package by name or glob (mergeable)
+  --install, -I                     Automatically install build dependencies before build process
+  --enable-repo, -ER repo-name      Enable repositories (mergeable)
+  --disable-repo, -DR repo-name     Disable repositories (mergeable)
+  --exclude-package, -EX package    Exclude package by name or glob (mergeable)
 
 Remote build:
 
-  --parallel, -P                   Parallel build on all build servers in same time
-  --remote, -r                     Build rpm package on remote server
-  --remote, -r user:pass@host      Build rpm package on the remote server with specified host, username and password
-  --remote, -r file                Build rpm package on the remote servers listed in specified file
-  --host, -hh host                 Remote host IP or domain name
-  --user, -uu username             Remote host user
-  --pass, -pp password             Password for specified user
-  --key, -kk file                  Path to the private key for specified user
-  --attach, -A                     Attach to parallel build session in tmux
+  --parallel, -P                    Parallel build on all build servers in same time (tmux is required)
+┌ --remote, -r                      Build rpm package on remote server
+│ --remote, -r user:pass@host:port  Build rpm package on the remote server with specified host, username and password
+└ --remote, -r file                 Build rpm package on the remote servers listed in specified file
+  --key, -k file                    Path to the private key for specified user
+  --node, -N index-or-name          Node index or name from file with build servers
+  --attach, -A                      Attach to parallel build session in tmux
 
   Examples:
 
-    rpmbuilder package.spec --remote -ru builder -rp mypass -rh 127.0.0.1
-    rpmbuilder package.spec -r builder:mypass@127.0.0.1 -i ~/.ssh/id_dsa
-    rpmbuilder package.spec --remote ~/servers.list --key ~/.ssh/id_dsa
+    rpmbuilder package.spec -r builder@127.0.0.1
+    rpmbuilder package.spec -r builder:mypass@127.0.0.1:2022~i386
+    rpmbuilder package.spec --remote ~/servers.list --key ~/.ssh/id_ed25519
+    rpmbuilder package.spec --parallel --remote ~/servers.list --node 1,2
 
 Build options:
 
-  --no-build, -NB                  Don't execute any build stages
-  --no-clean, -NC                  Don't remove source files and spec file after build
-  --no-deps, -ND                   Don't verify build dependencies
-  --no-binary, -NR                 Don't build binary packages
-  --no-source, -NS                 Don't build source package
-  --arch, -a arch                  Override target arch for a build
-  --qa-rpaths "<value>,…"          Ignoring rpaths check
+  --no-build, -NB                   Don't execute any build stages
+  --no-clean, -NC                   Don't remove source files and spec file after build
+  --no-deps, -ND                    Don't verify build dependencies
+  --no-binary, -NR                  Don't build binary packages
+  --no-source, -NS                  Don't build source package
+  --arch, -a arch                   Override target arch for a build
+  --qa-rpaths "<value>,…"           Ignoring rpaths check
 
 Arguments passing:
 
-  --with, -w param                 Pass conditional parameters into a rpmbuild (mergeable)
-  --without, -W param              Pass conditional parameters into a rpmbuild (mergeable)
-  --define, -D "macro=value"       Define MACRO with value (exist macro will be not redefined) (mergeable)
+  --with, -w param                  Pass conditional parameters into a rpmbuild (mergeable)
+  --without, -W param               Pass conditional parameters into a rpmbuild (mergeable)
+  --define, -D "macro=value"        Define MACRO with value (exist macro will be not redefined) (mergeable)
 
   Examples:
 
@@ -154,24 +210,23 @@ Arguments passing:
 
 Spec validation:
 
-  --no-lint, -0                    Don't check spec file before package build
-  --strict, -1                     Don't build package if perfecto found major problems in spec file
-  --pedantic, -2                   Don't build package if perfecto found minor problems in spec file
-  --perfect, -3                    Don't build package if perfecto found any problems in spec file
+  --no-lint, -0                     Don't check spec file before package build
+  --strict, -1                      Don't build package if perfecto found major problems in spec file
+  --pedantic, -2                    Don't build package if perfecto found minor problems in spec file
+  --perfect, -3                     Don't build package if perfecto found any problems in spec file
 
 Other:
 
-  --sign, -s                       Sign package after build
-  --dest, -d dir                   Save built packages to a specified directory
-  --keep-log, -kl                  Save build log after an unsuccessful build
-  --bump, -b                       Bump release in spec file after a successful build
-  --bump-comment, -bc comment      Comment which will be added while release bump
-  --tmp dir                        Path to a temporary directory
-  --verbose, -V                    Verbose output
-  --no-color, -C                   Disable colors in output
-  --help, -h                       Show this help message
-  --version, -v                    Show information about version
-
+  --sign, -s                        Sign package after build
+  --dest, -d dir                    Save built packages to a specified directory
+  --keep-log, -kl                   Save build log after an unsuccessful build
+  --bump, -b                        Bump release in spec file after a successful build
+  --bump-comment, -bc comment       Comment which will be added while release bump
+  --tmp dir                         Path to a temporary directory
+  --verbose, -V                     Verbose output
+  --no-color, -C                    Disable colors in output
+  --help, -h                        Show this help message
+  --version, -v                     Show information about version
 ```
 
 ### Build Status

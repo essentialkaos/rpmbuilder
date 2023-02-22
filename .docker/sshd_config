@@ -1,0 +1,39 @@
+################################################################################
+
+Protocol 2
+
+################################################################################
+
+SyslogFacility AUTHPRIV
+LogLevel INFO
+
+################################################################################
+
+PermitEmptyPasswords no
+PermitRootLogin no
+MaxAuthTries 3
+MaxSessions 5
+
+PubkeyAuthentication yes
+AuthorizedKeysFile .ssh/authorized_keys
+
+PasswordAuthentication no
+ChallengeResponseAuthentication no
+
+################################################################################
+
+Compression no
+UsePrivilegeSeparation yes
+StrictModes yes
+ClientAliveInterval 300
+ClientAliveCountMax 3
+AllowTcpForwarding no
+X11Forwarding no
+IgnoreRhosts yes
+UsePrivilegeSeparation sandbox
+
+################################################################################
+
+Subsystem sftp /usr/libexec/openssh/sftp-server
+
+################################################################################

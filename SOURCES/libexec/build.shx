@@ -1,5 +1,5 @@
 #!/bin/bash
-# shellcheck disable=SC1117,SC2034,SC2086,SC2154,SC2181
+# shellcheck disable=SC1117,SC2034,SC2086,SC2119,SC2120,SC2154,SC2181
 
 ################################################################################
 
@@ -34,7 +34,7 @@ startBuild() {
 
   checkOptions
 
-  trap termExit SIGINT SIGQUIT SIGTERM
+  trap termExit SIGINT SIGQUIT SIGTERM SIGHUP
 
   if [[ -z "$download" && -n "$parallel" && $(wc -l "${remote/:*/}" | cut -f1 -d" ") -gt 1 ]] ; then
     if [[ "${remote/:*/}" != "$remote" ]] ; then
@@ -59,7 +59,13 @@ basicBuild() {
   local start_ts
   start_ts=$(now)
 
-  [[ -n "$tmux_worker" ]] && createWorkerLock
+  if [[ -n "$tmux_worker" ]] ; then
+    if [[ -n "$TMUX" ]] ; then
+      tmux set-option -p -t "$TMUX_PANE" @custom_pane_title "$remote"
+    fi
+
+    createWorkerLock
+  fi
 
   if [[ "$download" == "true" ]] ; then
     download=$(findSourcesDir)
@@ -98,7 +104,9 @@ basicBuild() {
     fi
   fi
 
-  [[ -n "$tmux_worker" ]] && removeWorkerLock
+  if [[ -n "$tmux_worker" ]] ; then
+    removeWorkerLock
+  fi
 
   notify "$start_ts"
 }
@@ -250,9 +258,12 @@ checkOptions() {
     doExit $ERROR_ARGS
   fi
 
-  if [[ -n "$remote" && -z "$host" && ! -r $remote && ! "$remote" =~ \@|\~ && ! "$remote" =~ :[0-9]{1,}$ ]] ; then
-    error "Can't start remote build process: you must define the remote host"
-    doExit $ERROR_ARGS
+  if [[ -n "$remote" ]] ; then
+    if [[ ! -r "$remote" ]] ; then
+      if ! validateHostInfo "$remote" ; then
+        doExit $ERROR_ARGS
+      fi
+    fi
   fi
 
   if ! hasApp "git" && [[ -n "$git" ]] ; then
@@ -277,11 +288,6 @@ checkOptions() {
 
   if ! hasApp "gopack" && [[ -n "$gopack" ]] ; then
     error "Can't start build process: for using --gopack option, you must install gopack first"
-    doExit $ERROR_DEPS
-  fi
-
-  if ! hasApp "sshpass" && [[ -n "$pass" ]] ; then
-    error "Can't start build process: for using --pass option, you must install sshpass first"
     doExit $ERROR_DEPS
   fi
 
@@ -366,6 +372,24 @@ clean() {
   if [[ -e "$tmp_output" ]] ; then
     rm -f "$tmp_output"
   fi
+
+  cleanGarbage
+}
+
+# Remove old temporary data
+#
+# 1: Force remove (Boolean) [Optional]
+#
+# Code: Yes
+# Echo: No
+cleanGarbage() {
+  if [[ -n "$1" ]] ; then
+    find "${tmp:?}" -maxdepth 1 -name "$TMP_PREFIX-*" -user "$USER" -exec rm -rf {} \; &> /dev/null
+  else
+    find "${tmp:?}" -maxdepth 1 -name "$TMP_PREFIX-*" -user "$USER" -mtime +1 -exec rm -rf {} \; &> /dev/null
+  fi
+
+  return $?
 }
 
 # Exit from script
@@ -381,20 +405,30 @@ doExit() {
 
   if [[ -n "$tmux_worker" ]] ; then
     if [[ -z "$1" || "$1" == "0" ]] ; then
-      sleep $TMUX_OK_SLEEP
+      asyncSleep $TMUX_OK_SLEEP
     else
-      [[ -z "$keep_log" || $1 -eq $ERROR_VALIDATE ]] && sleep $TMUX_ERROR_SLEEP
+      [[ -z "$keep_log" || $1 -eq $ERROR_VALIDATE ]] && asyncSleep $TMUX_ERROR_SLEEP
     fi
+  fi
+
+  if [[ -n "$tmux_worker" ]] ; then
+    removeWorkerLock
   fi
 
   exit "${1:-0}"
 }
 
-# TERM/INT signal handler
+# TERM/INT/QUIT/HUP signal handler
 #
 # Code: No
 # Echo: No
 termExit() {
+  if [[ -n "$parallel_build" ]] ; then
+    if hasWorkers ; then
+      killAllWorkers
+    fi
+  fi
+
   clean
 
   if hasLocalLock ; then
@@ -435,12 +469,6 @@ getRPMBuildDir() {
 getYumOpts() {
   local verb="$1"
   local opts repo pkg
-
-  if [[ -z "$verb" ]] ; then
-    opts="-q --disablerepo='*-source'"
-  else
-    opts="--disablerepo='*-source'"
-  fi
 
   if [[ -n "$enable_repo" ]] ; then
     for repo in $enable_repo ; do

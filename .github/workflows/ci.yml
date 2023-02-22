@@ -42,7 +42,7 @@ jobs:
       - name: Check scripts with Shellcheck
         uses: essentialkaos/shellcheck-action@v1
         with:
-          files: SOURCES/rpmbuilder SOURCES/libexec/*.shx SOURCES/rpmunbuilder SOURCES/buildmon SOURCES/initenv SOURCES/nodeinfo SOURCES/docker-entrypoint
+          files: SOURCES/rpmbuilder SOURCES/libexec/*.shx SOURCES/rpmunbuilder SOURCES/buildmon SOURCES/initenv SOURCES/nodeinfo .docker/entrypoint .docker/node-entrypoint rpmbuilder-docker
 
   Hadolint:
     name: Hadolint
@@ -55,7 +55,7 @@ jobs:
       - name: Check dockerfiles with Hadolint
         uses: essentialkaos/hadolint-action@v1
         with:
-          files: centos7.docker
+          files: .docker/centos7.docker .docker/ol7.docker .docker/ol8.docker .docker/ol9.docker .docker/node-centos7.docker .docker/node-ol7.docker .docker/node-ol8.docker .docker/node-ol9.docker
 
   DockerBuild:
     name: Docker Build Check
@@ -64,8 +64,11 @@ jobs:
     needs: [Hadolint, Shellcheck, Perfecto]
 
     env:
-      DOCKER_FILE: centos7.docker
-      IMAGE_NAME: centos7
+      REGISTRY: ghcr.io
+
+    strategy:
+      matrix:
+        image: [ 'centos7', 'ol7', 'ol8', 'ol9', 'node-centos7', 'node-ol7', 'node-ol8', 'node-ol9' ]
 
     steps:
       - name: Check event type
@@ -98,14 +101,14 @@ jobs:
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Build Docker image
+      - name: Build Docker images
         if: ${{ github.event_name == 'pull_request' }}
         run: |
-          docker build -f ${{ env.DOCKER_FILE }} -t ${{ env.IMAGE_NAME }} .
+          docker build --build-arg REGISTRY=${REGISTRY} -f .docker/${{matrix.image}}.docker -t ${{matrix.image}} .
 
-      - name: Show info about built Docker image
+      - name: Show info about built Docker images
         uses: essentialkaos/docker-info-action@v1
         if: ${{ github.event_name == 'pull_request' }}
         with:
-          image: ${{ env.IMAGE_NAME }}
+          image: ${{matrix.image}}
           show-labels: true

@@ -10,6 +10,10 @@
 # Code: Yes
 # Echo: No
 isSpecFile() {
+  if [[ ! -f "$1" ]] ; then
+    return 1
+  fi
+
   if [[ ! -r "$1" ]] ; then
     return 1
   fi
@@ -94,6 +98,6 @@ releaseBump() {
   fi
 
   if [[ $? -ne 0 ]] ; then
-    error "Can't bump release - bumpspec return error code" $YELLOW
+    warn "Can't bump release - bumpspec return error code"
   fi
 }

@@ -34,12 +34,15 @@ localBuild() {
 
   copySourcesToBuildDir "$spec"
 
-  if [[ -n "$depinstall" || -n "$dep_install" ]] ; then
+  if [[ -n "$install" ]] ; then
     showSeparator "DEPENDENCIES INSTALL"
     localDepsInstall "$spec"
   fi
 
-  [[ -n "$no_build" ]] && show "" && return
+  if [[ -n "$no_build" ]] ; then
+    show ""
+    return
+  fi
 
   localBuildProcess "$spec"
 }
@@ -150,7 +153,7 @@ localSpecValidate() {
     doExit $ERROR_LINT
   fi
 
-  [[ -n "$verbose" ]] && sleep $LINT_WAIT
+  [[ -n "$verbose" ]] && asyncSleep $LINT_WAIT
 }
 
 # Execute build commands on local host
@@ -342,16 +345,17 @@ checkLocalBuildAvailability() {
   cdf=$(( ct - cdt ))
 
   if [[ $cdf -gt $LOCK_TIME_MAX_DIFF ]] ; then
-    show "We found lock file created more than 3 hours ago. It's too much time for the usual build process." $YELLOW
-    show "If another build process doesn't occur, you must remove file $BUILD_LOCK_LOCAL manually." $YELLOW
-    show "We will continue to build when this file will be removed." $YELLOW
+    warn "Can't start parallel build"
+    show "  We found lock file created more than 3 hours ago. It's too much time for the usual build process." $YELLOW
+    show "  If another build process doesn't occur, you must remove file $BUILD_LOCK_LOCAL manually." $YELLOW
+    show "  We will continue to build when this file will be removed." $YELLOW
     show ""
   fi
 
   showt "${CL_GREEN}Executing:${CL_NORM} ${CL_YELLOW}waiting in queue${CL_NORM}"
 
   while : ; do
-    sleep $CHECK_LOCAL_QUEUE_DELAY
+    asyncSleep $CHECK_LOCAL_QUEUE_DELAY
 
     if ! hasLocalLock ; then
       showt "${CL_GREEN}Executing:${CL_NORM} ${CL_YELLOW}~${CL_NORM}"
@@ -430,7 +434,7 @@ localSign() {
   fi
 
   if [[ $? -ne 0 ]] ; then
-    show "Can't sign package" $YELLOW
+    warn "Can't sign package"
   fi
 }
 
@@ -440,7 +444,7 @@ localSign() {
 # Echo: No
 setupBuildTree() {
   # shellcheck disable=SC2012
-  if [[ $(ls -1 $HOME/rpmbuild 2>/dev/null | wc -l) == "6" ]] ; then
+  if [[ $(ls -1 "$HOME/rpmbuild" 2>/dev/null | wc -l) == "6" ]] ; then
     return
   fi
 
