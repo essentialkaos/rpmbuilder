@@ -41,31 +41,31 @@ sudo make install
 
 #### Using Docker
 
-We provide a big variety of Docker images available on [Docker Hub](http://kaos.sh/d/rpmbuilder) and [GitHub Container Registry](https://kaos.sh/p/rpmbuilder).
+We provide a big variety of Docker images available on [GitHub Container Registry](https://kaos.sh/p/rpmbuilder) and [Docker Hub](http://kaos.sh/d/rpmbuilder).
 
 <details><summary><b>Official images</b></summary><p>
 
 Basic images:
 
-- `essentialkaos/rpmbuilder:centos7` (_CentOS 7_)
-- `essentialkaos/rpmbuilder:ol7` (_OracleLinux 7_)
-- `essentialkaos/rpmbuilder:ol8` (_OracleLinux 8_)
-- `essentialkaos/rpmbuilder:ol9` (_OracleLinux 9_)
 - `ghcr.io/essentialkaos/rpmbuilder:centos7` (_CentOS 7_)
 - `ghcr.io/essentialkaos/rpmbuilder:ol7` (_OracleLinux 7_)
 - `ghcr.io/essentialkaos/rpmbuilder:ol8` (_OracleLinux 8_)
 - `ghcr.io/essentialkaos/rpmbuilder:ol9` (_OracleLinux 9_)
+- `essentialkaos/rpmbuilder:centos7` (_CentOS 7_) **`[Not Recommended]`**
+- `essentialkaos/rpmbuilder:ol7` (_OracleLinux 7_) **`[Not Recommended]`**
+- `essentialkaos/rpmbuilder:ol8` (_OracleLinux 8_) **`[Not Recommended]`**
+- `essentialkaos/rpmbuilder:ol9` (_OracleLinux 9_) **`[Not Recommended]`**
 
 Build node images:
 
-- `essentialkaos/rpmbuilder:node-centos7` (_CentOS 7_ | Port: `2027`)
-- `essentialkaos/rpmbuilder:node-ol7` (_OracleLinux 7_ | Port: `2037`)
-- `essentialkaos/rpmbuilder:node-ol8` (_OracleLinux 8_ | Port: `2038`)
-- `essentialkaos/rpmbuilder:node-ol9` (_OracleLinux 9_ | Port: `2039`)
-- `ghcr.io/essentialkaos/rpmbuilder:node-centos7` (_CentOS 7_| Port: `2027`)
+- `ghcr.io/essentialkaos/rpmbuilder:node-centos7` (_CentOS 7_ | Port: `2027`)
 - `ghcr.io/essentialkaos/rpmbuilder:node-ol7` (_OracleLinux 7_ | Port: `2037`)
 - `ghcr.io/essentialkaos/rpmbuilder:node-ol8` (_OracleLinux 8_ | Port: `2038`)
 - `ghcr.io/essentialkaos/rpmbuilder:node-ol9` (_OracleLinux 9_ | Port: `2039`)
+- `essentialkaos/rpmbuilder:node-centos7` (_CentOS 7_ | Port: `2027`) **`[Not Recommended]`**
+- `essentialkaos/rpmbuilder:node-ol7` (_OracleLinux 7_ | Port: `2037`) **`[Not Recommended]`**
+- `essentialkaos/rpmbuilder:node-ol8` (_OracleLinux 8_ | Port: `2038`) **`[Not Recommended]`**
+- `essentialkaos/rpmbuilder:node-ol9` (_OracleLinux 9_ | Port: `2039`) **`[Not Recommended]`**
 
 </p></details>
 
@@ -78,8 +78,8 @@ chmod +x rpmbuilder-docker
 sudo mv rpmbuilder-docker /usr/bin/
 
 # Pull image
-docker pull essentialkaos/rpmbuilder:ol8
-export IMAGE=essentialkaos/rpmbuilder:ol8
+docker pull ghcr.io/essentialkaos/rpmbuilder:ol8
+export IMAGE=ghcr.io/essentialkaos/rpmbuilder:ol8
 
 # Build package
 cd my-package-dir
@@ -89,8 +89,8 @@ rpmbuilder-docker my-package.spec
 Package build using build node image:
 
 ```bash
-docker pull essentialkaos/rpmbuilder:node-ol8
-docker run -e PUB_KEY="$(cat ~/.ssh/buildnode.pub)" -p 2038:2038 -d essentialkaos/rpmbuilder:node-ol8
+docker pull ghcr.io/essentialkaos/rpmbuilder:node-ol8
+docker run -e PUB_KEY="$(cat ~/.ssh/buildnode.pub)" -p 2038:2038 -d ghcr.io/essentialkaos/rpmbuilder:node-ol8
 
 cd my-package-dir
 rpmbuilder my-package.spec -r builder@localhost:2038 -kk ~/.ssh/buildnode
