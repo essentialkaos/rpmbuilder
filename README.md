@@ -41,7 +41,7 @@ sudo make install
 
 #### Using Docker
 
-We provide a big variety of Docker images available on [Docker Hub](http://kaos.sh/d/rpmbuilder) and [GitHub Container Registry](https://kaos.sh/p/rpmbuilder).
+We provide a big variety of Docker images available on [GitHub Container Registry](https://kaos.sh/p/rpmbuilder) and [Docker Hub](http://kaos.sh/d/rpmbuilder).
 
 <details><summary><b>Official images</b></summary><p>
 
@@ -51,10 +51,10 @@ Basic images:
 - `ghcr.io/essentialkaos/rpmbuilder:ol7` (_OracleLinux 7_)
 - `ghcr.io/essentialkaos/rpmbuilder:ol8` (_OracleLinux 8_)
 - `ghcr.io/essentialkaos/rpmbuilder:ol9` (_OracleLinux 9_)
-- `essentialkaos/rpmbuilder:centos7` (_CentOS 7_) **`[Not Recomended]`**
-- `essentialkaos/rpmbuilder:ol7` (_OracleLinux 7_) **`[Not Recomended]`**
-- `essentialkaos/rpmbuilder:ol8` (_OracleLinux 8_) **`[Not Recomended]`**
-- `essentialkaos/rpmbuilder:ol9` (_OracleLinux 9_) **`[Not Recomended]`**
+- `essentialkaos/rpmbuilder:centos7` (_CentOS 7_) **`[Not Recommended]`**
+- `essentialkaos/rpmbuilder:ol7` (_OracleLinux 7_) **`[Not Recommended]`**
+- `essentialkaos/rpmbuilder:ol8` (_OracleLinux 8_) **`[Not Recommended]`**
+- `essentialkaos/rpmbuilder:ol9` (_OracleLinux 9_) **`[Not Recommended]`**
 
 Build node images:
 
@@ -62,10 +62,10 @@ Build node images:
 - `ghcr.io/essentialkaos/rpmbuilder:node-ol7` (_OracleLinux 7_ | Port: `2037`)
 - `ghcr.io/essentialkaos/rpmbuilder:node-ol8` (_OracleLinux 8_ | Port: `2038`)
 - `ghcr.io/essentialkaos/rpmbuilder:node-ol9` (_OracleLinux 9_ | Port: `2039`)
-- `essentialkaos/rpmbuilder:node-centos7` (_CentOS 7_ | Port: `2027`) **`[Not Recomended]`**
-- `essentialkaos/rpmbuilder:node-ol7` (_OracleLinux 7_ | Port: `2037`) **`[Not Recomended]`**
-- `essentialkaos/rpmbuilder:node-ol8` (_OracleLinux 8_ | Port: `2038`) **`[Not Recomended]`**
-- `essentialkaos/rpmbuilder:node-ol9` (_OracleLinux 9_ | Port: `2039`) **`[Not Recomended]`**
+- `essentialkaos/rpmbuilder:node-centos7` (_CentOS 7_ | Port: `2027`) **`[Not Recommended]`**
+- `essentialkaos/rpmbuilder:node-ol7` (_OracleLinux 7_ | Port: `2037`) **`[Not Recommended]`**
+- `essentialkaos/rpmbuilder:node-ol8` (_OracleLinux 8_ | Port: `2038`) **`[Not Recommended]`**
+- `essentialkaos/rpmbuilder:node-ol9` (_OracleLinux 9_ | Port: `2039`) **`[Not Recommended]`**
 
 </p></details>
 
