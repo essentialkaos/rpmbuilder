@@ -47,25 +47,25 @@ We provide a big variety of Docker images available on [Docker Hub](http://kaos.
 
 Basic images:
 
-- `essentialkaos/rpmbuilder:centos7` (_CentOS 7_)
-- `essentialkaos/rpmbuilder:ol7` (_OracleLinux 7_)
-- `essentialkaos/rpmbuilder:ol8` (_OracleLinux 8_)
-- `essentialkaos/rpmbuilder:ol9` (_OracleLinux 9_)
 - `ghcr.io/essentialkaos/rpmbuilder:centos7` (_CentOS 7_)
 - `ghcr.io/essentialkaos/rpmbuilder:ol7` (_OracleLinux 7_)
 - `ghcr.io/essentialkaos/rpmbuilder:ol8` (_OracleLinux 8_)
 - `ghcr.io/essentialkaos/rpmbuilder:ol9` (_OracleLinux 9_)
+- `essentialkaos/rpmbuilder:centos7` (_CentOS 7_)
+- `essentialkaos/rpmbuilder:ol7` (_OracleLinux 7_)
+- `essentialkaos/rpmbuilder:ol8` (_OracleLinux 8_)
+- `essentialkaos/rpmbuilder:ol9` (_OracleLinux 9_)
 
 Build node images:
 
-- `essentialkaos/rpmbuilder:node-centos7` (_CentOS 7_ | Port: `2027`)
-- `essentialkaos/rpmbuilder:node-ol7` (_OracleLinux 7_ | Port: `2037`)
-- `essentialkaos/rpmbuilder:node-ol8` (_OracleLinux 8_ | Port: `2038`)
-- `essentialkaos/rpmbuilder:node-ol9` (_OracleLinux 9_ | Port: `2039`)
 - `ghcr.io/essentialkaos/rpmbuilder:node-centos7` (_CentOS 7_| Port: `2027`)
 - `ghcr.io/essentialkaos/rpmbuilder:node-ol7` (_OracleLinux 7_ | Port: `2037`)
 - `ghcr.io/essentialkaos/rpmbuilder:node-ol8` (_OracleLinux 8_ | Port: `2038`)
 - `ghcr.io/essentialkaos/rpmbuilder:node-ol9` (_OracleLinux 9_ | Port: `2039`)
+- `essentialkaos/rpmbuilder:node-centos7` (_CentOS 7_ | Port: `2027`)
+- `essentialkaos/rpmbuilder:node-ol7` (_OracleLinux 7_ | Port: `2037`)
+- `essentialkaos/rpmbuilder:node-ol8` (_OracleLinux 8_ | Port: `2038`)
+- `essentialkaos/rpmbuilder:node-ol9` (_OracleLinux 9_ | Port: `2039`)
 
 </p></details>
 

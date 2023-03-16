@@ -37,7 +37,7 @@ CL_BL_GREY="\e[1;${GREY};49m"
 ################################################################################
 
 # Default image repo
-IMAGE_REPO="essentialkaos/rpmbuilder"
+IMAGE_REPO="ghcr.io/essentialkaos/rpmbuilder"
 
 # Default image name
 DEFAULT_IMAGE="$IMAGE_REPO:ol8"
