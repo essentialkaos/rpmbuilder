@@ -13,7 +13,7 @@
 
 ### Usage demo
 
-[![demo](https://gh.kaos.st/rpmbuilder-300a.gif)](#usage-demo)
+[![demo](https://gh.kaos.st/rpmbuilder-300.1.gif)](#usage-demo)
 
 ### Installation
 
