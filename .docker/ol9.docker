@@ -6,7 +6,7 @@ ARG REGISTRY="docker.io"
 
 FROM ${REGISTRY}/essentialkaos/oraclelinux:9
 
-ARG GOSU_VER=1.14
+ARG GOSU_VER=1.16
 ARG HOSTNAME="rpmbuilder-ol9.docker.local"
 
 LABEL org.opencontainers.image.title="RPMBuilder" \
@@ -28,7 +28,7 @@ RUN echo "$HOSTNAME" > /etc/hostname && \
     dnf -y -q install perfecto rpmlint && \
     dnf clean all && \
     rm -rf /var/cache/dnf /var/log/dnf.* && \
-    curl -o /usr/local/bin/gosu -sSL "https://github.com/tianon/gosu/releases/download/$GOSU_VER/gosu-amd64" && \
+    curl -o /usr/bin/gosu -sSL "https://github.com/tianon/gosu/releases/download/$GOSU_VER/gosu-amd64" && \
     mkdir -p /home/builder/rpmbuild/BUILD /home/builder/rpmbuild/BUILDROOT \
              /home/builder/rpmbuild/RPMS /home/builder/rpmbuild/SOURCES \
              /home/builder/rpmbuild/SPECS /home/builder/rpmbuild/SRPMS && \
@@ -38,14 +38,14 @@ COPY SOURCES/conf/rpmmacros_el9 /home/builder/.rpmmacros
 COPY SOURCES/conf/rpmlint /home/builder/.config/rpmlint
 
 COPY SOURCES/conf/builder.sudoers /etc/sudoers.d/rpmbuilder
-COPY SOURCES/rpmbuilder /usr/local/bin/rpmbuilder
+COPY SOURCES/rpmbuilder /usr/bin/rpmbuilder
 COPY SOURCES/libexec/* /usr/libexec/rpmbuilder/
 
 COPY .docker/entrypoint /usr/local/bin/entrypoint
 
 RUN chmod +x /usr/local/bin/entrypoint \
-             /usr/local/bin/gosu \
-             /usr/local/bin/rpmbuilder
+             /usr/bin/gosu \
+             /usr/bin/rpmbuilder
 
 VOLUME /rpmbuilder
 WORKDIR /rpmbuilder
