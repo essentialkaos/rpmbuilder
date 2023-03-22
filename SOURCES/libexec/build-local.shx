@@ -3,10 +3,6 @@
 
 ################################################################################
 
-require "upload"
-
-################################################################################
-
 # Process sources and run build on local host
 #
 # 1: Path to spec file (String)
@@ -308,18 +304,11 @@ localBuildProcess() {
       [[ -n "$bump" ]] && releaseBump "$CWD/$spec"
 
       if [[ -n "$dest_dir" ]] ; then
-        if [[ -n "$upload" ]] ; then
-          uploadPackages "$dest_dir" "$packages"
-        else
-          show ""
-          show "All rpm packages saved to a directory $dest_dir"
-        fi
+        show ""
+        show "All rpm packages saved to a directory $dest_dir"
       else
-        if [[ -n "$upload" ]] ; then
-          uploadPackages "$CWD" "$packages"
-        else
-          show ""
-          show "All rpm packages saved to a current directory" $GREEN
+        show ""
+        show "All rpm packages saved to a current directory" $GREEN
         fi
       fi
     fi
