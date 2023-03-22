@@ -65,6 +65,7 @@ rm -rf %{buildroot}
 %changelog
 * Wed Mar 22 2023 Anton Novojilov <andy@essentialkaos.com> - 3.0.1-0
 - Fixed bug with local build due to lack of upload.shx file
+- Minor UI improvements
 
 * Sat Nov 05 2022 Anton Novojilov <andy@essentialkaos.com> - 3.0.0-0
 - Added new option for defining build nodes indices
