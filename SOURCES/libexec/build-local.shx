@@ -309,7 +309,6 @@ localBuildProcess() {
       else
         show ""
         show "All rpm packages saved to a current directory" $GREEN
-        fi
       fi
     fi
 
