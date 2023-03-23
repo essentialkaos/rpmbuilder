@@ -6,7 +6,7 @@
 
 Summary:    RPM package build helper
 Name:       rpmbuilder
-Version:    3.0.0
+Version:    3.0.1
 Release:    0%{?dist}
 License:    Apache License, Version 2.0
 Group:      Development/Tools
@@ -63,6 +63,11 @@ rm -rf %{buildroot}
 ################################################################################
 
 %changelog
+* Wed Mar 22 2023 Anton Novojilov <andy@essentialkaos.com> - 3.0.1-0
+- Fixed bug with local build due to lack of upload.shx file
+- Improved container engine check in nodeinfo
+- Minor UI improvements
+
 * Sat Nov 05 2022 Anton Novojilov <andy@essentialkaos.com> - 3.0.0-0
 - Added new option for defining build nodes indices
 - Added panes naming in parallel build
