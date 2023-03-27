@@ -51,7 +51,7 @@
 
 Summary:         Configuration package for rpmbuilder node
 Name:            rpmbuilder-node
-Version:         1.4.2
+Version:         1.4.3
 Release:         0%{?dist}
 License:         Apache License, Version 2.0
 Group:           Development/Tools
@@ -161,6 +161,9 @@ fi
 ################################################################################
 
 %changelog
+* Mon Mar 27 2023 Anton Novojilov <andy@essentialkaos.com> - 1.4.3-0
+- Fixed bug with printing container info in nodeinfo
+
 * Fri Apr 29 2022 Anton Novojilov <andy@essentialkaos.com> - 1.4.2-0
 - Dropped CentOS 6 support
 

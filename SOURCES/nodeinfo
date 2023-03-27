@@ -4,7 +4,7 @@
 ################################################################################
 
 APP="RPMBuilder Node Info Viewer"
-VER="1.1.0"
+VER="1.1.1"
 
 ################################################################################
 
@@ -111,11 +111,11 @@ getContainerEngine() {
     return
   fi
 
-  if grep "lxcfs " /proc/1/mounts ; then
+  if grep -q "lxcfs " /proc/1/mounts ; then
     echo "LXC"
-  elif grep "workdir=/var/lib/containers" /proc/1/mounts ; then
+  elif grep -q "workdir=/var/lib/containers" /proc/1/mounts ; then
     echo "Podman"
-  elif grep "workdir=/var/lib/docker" /proc/1/mounts ; then
+  elif grep -q "workdir=/var/lib/docker" /proc/1/mounts ; then
     echo "Docker"
   fi
 }
