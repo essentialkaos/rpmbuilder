@@ -127,7 +127,7 @@ rm -rf %{buildroot}
 - Use /var/tmp instead of /tmp for storing temporary data
 
 * Tue Mar 10 2020 Anton Novojilov <andy@essentialkaos.com> - 2.7.2-0
-- Fixed bug with handling macroses defined through --define option while
+- Fixed bug with handling macros defined through --define option while
   downloading sources and patches
 
 * Wed Feb 05 2020 Anton Novojilov <andy@essentialkaos.com> - 2.7.1-0
@@ -271,7 +271,7 @@ rm -rf %{buildroot}
 
 * Thu Jan 12 2017 Anton Novojilov <andy@essentialkaos.com> - 1.5.1-0
 - Simplified key definition support
-- Removed scp output in situtation when key-based auth is used
+- Removed scp output in situation when key-based auth is used
 
 * Mon Dec 26 2016 Anton Novojilov <andy@essentialkaos.com> - 1.5.0-0
 - Git submodules fetching support

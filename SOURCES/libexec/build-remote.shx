@@ -52,7 +52,7 @@ parallelBuild() {
   done
 
   checkParallelBuildAvailability
-  createParalellLock
+  createParallelLock
 
   parallel_build=true
   build_start=$(now)
@@ -89,7 +89,7 @@ parallelBuild() {
   fi
 
   waitTillWorkersComplete "${wids[@]}"
-  removeParalellLock
+  removeParallelLock
 
   grc_time=$(getGraceDuration "$build_start")
 
@@ -558,7 +558,7 @@ remoteSign() {
 # Code: No
 # Echo: No
 checkParallelBuildAvailability() {
-  if ! hasParalellLock ; then
+  if ! hasParallelLock ; then
     return
   fi
 
@@ -582,7 +582,7 @@ checkParallelBuildAvailability() {
   while : ; do
     asyncSleep $CHECK_LOCAL_QUEUE_DELAY
 
-    if ! hasParalellLock ; then
+    if ! hasParallelLock ; then
       break
     fi
   done
@@ -660,14 +660,14 @@ getSSHOpts() {
 #
 # Code: No
 # Echo: No
-hasParalellLock() {
+hasParallelLock() {
   [[ ! -e $BUILD_LOCK_PARALLEL ]] && return 1
 
   local pid
   pid=$(cat "$BUILD_LOCK_PARALLEL")
 
   if [[ ! -d "/proc/$pid" ]] ; then
-    if removeParalellLock ; then
+    if removeParallelLock ; then
       return 1
     fi
   fi
@@ -679,7 +679,7 @@ hasParalellLock() {
 #
 # Code: No
 # Echo: No
-createParalellLock() {
+createParallelLock() {
   echo "$$" 1> "$BUILD_LOCK_PARALLEL" 2> /dev/null
   chmod 666 "$BUILD_LOCK_PARALLEL" &> /dev/null
 }
@@ -688,7 +688,7 @@ createParalellLock() {
 #
 # Code: No
 # Echo: No
-removeParalellLock() {
+removeParallelLock() {
   local cur_user lock_owner
 
   if [[ -f $BUILD_LOCK_PARALLEL ]] ; then
