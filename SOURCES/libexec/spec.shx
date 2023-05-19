@@ -45,7 +45,7 @@ readInspecOptions() {
     optn="${opt[0]//-/_}"
 
     if [[ -z "${!optn}" && $INSPEC_OPTS\  =~ $optn\  ]] ; then
-      eval "$optn=${opt[*]:1:99}"
+      eval "$optn=\"${opt[*]:1:99}\""
     fi
   done < <(grep "$INSPEC_OPT_PREFIX" "$spec" | sed "s/# \?$INSPEC_OPT_PREFIX//g" | tr -s " ")
 }

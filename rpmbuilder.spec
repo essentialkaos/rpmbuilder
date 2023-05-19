@@ -6,7 +6,7 @@
 
 Summary:    RPM package build helper
 Name:       rpmbuilder
-Version:    3.0.1
+Version:    3.0.2
 Release:    0%{?dist}
 License:    Apache License, Version 2.0
 Group:      Development/Tools
@@ -63,6 +63,10 @@ rm -rf %{buildroot}
 ################################################################################
 
 %changelog
+* Thu May 18 2023 Anton Novojilov <andy@essentialkaos.com> - 3.0.2-0
+- Fixed bug with parsing in-spec variables with asterisk symbols
+- Fixed bug with installing dependencies if path to spec file is not relative
+
 * Wed Mar 22 2023 Anton Novojilov <andy@essentialkaos.com> - 3.0.1-0
 - Fixed bug with local build due to lack of upload.shx file
 - Improved container engine check in nodeinfo
@@ -127,7 +131,7 @@ rm -rf %{buildroot}
 - Use /var/tmp instead of /tmp for storing temporary data
 
 * Tue Mar 10 2020 Anton Novojilov <andy@essentialkaos.com> - 2.7.2-0
-- Fixed bug with handling macroses defined through --define option while
+- Fixed bug with handling macros defined through --define option while
   downloading sources and patches
 
 * Wed Feb 05 2020 Anton Novojilov <andy@essentialkaos.com> - 2.7.1-0
@@ -271,7 +275,7 @@ rm -rf %{buildroot}
 
 * Thu Jan 12 2017 Anton Novojilov <andy@essentialkaos.com> - 1.5.1-0
 - Simplified key definition support
-- Removed scp output in situtation when key-based auth is used
+- Removed scp output in situation when key-based auth is used
 
 * Mon Dec 26 2016 Anton Novojilov <andy@essentialkaos.com> - 1.5.0-0
 - Git submodules fetching support

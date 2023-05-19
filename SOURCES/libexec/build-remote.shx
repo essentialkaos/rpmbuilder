@@ -52,7 +52,7 @@ parallelBuild() {
   done
 
   checkParallelBuildAvailability
-  createParalellLock
+  createParallelLock
 
   parallel_build=true
   build_start=$(now)
@@ -89,7 +89,7 @@ parallelBuild() {
   fi
 
   waitTillWorkersComplete "${wids[@]}"
-  removeParalellLock
+  removeParallelLock
 
   grc_time=$(getGraceDuration "$build_start")
 
@@ -236,8 +236,9 @@ remoteCheckEnv() {
 remoteDepsInstall() {
   local spec="$1"
 
-  local rpmbuild_dir specs_dir yum_opts
+  local spec_name rpmbuild_dir specs_dir yum_opts
 
+  spec_name=$(basename "$spec")
   rpmbuild_dir=$(getRPMBuildDir)
   specs_dir="$rpmbuild_dir/SPECS"
 
@@ -245,7 +246,7 @@ remoteDepsInstall() {
 
   yum_opts=$(getYumOpts "$verbose")
 
-  sshCommand "$host" "sudo yum $yum_opts clean expire-cache && cd $specs_dir && sudo yum-builddep $yum_opts -y $spec"
+  sshCommand "$host" "sudo yum $yum_opts clean expire-cache && cd $specs_dir && sudo yum-builddep $yum_opts -y $spec_name"
 
   if [[ $? -ne 0 ]] ; then
     show ""
@@ -264,8 +265,7 @@ remoteDepsInstall() {
 # Code: No
 # Echo: No
 remoteSpecValidate() {
-  local spec="$1"
-
+  local spec_name="$1"
   local opts="-e critical"
 
   [[ -n "$strict" ]] && opts="-e error"
@@ -273,12 +273,12 @@ remoteSpecValidate() {
   [[ -n "$perfect" ]] && opts="-e notice"
   [[ -n "$no_colors" ]] && opts="$opts -nc"
 
-  local rpmbuild_dir specs_dir
+  local spec_name rpmbuild_dir specs_dir
 
   rpmbuild_dir=$(getRPMBuildDir)
   specs_dir="$rpmbuild_dir/SPECS"
 
-  sshCommand "$host" "cd $specs_dir && perfecto -f short $opts $spec"
+  sshCommand "$host" "cd $specs_dir && perfecto -f short $opts $spec_name"
 
   if [[ $? -ne 0 ]] ; then
     show ""
@@ -558,7 +558,7 @@ remoteSign() {
 # Code: No
 # Echo: No
 checkParallelBuildAvailability() {
-  if ! hasParalellLock ; then
+  if ! hasParallelLock ; then
     return
   fi
 
@@ -582,7 +582,7 @@ checkParallelBuildAvailability() {
   while : ; do
     asyncSleep $CHECK_LOCAL_QUEUE_DELAY
 
-    if ! hasParalellLock ; then
+    if ! hasParallelLock ; then
       break
     fi
   done
@@ -660,14 +660,14 @@ getSSHOpts() {
 #
 # Code: No
 # Echo: No
-hasParalellLock() {
+hasParallelLock() {
   [[ ! -e $BUILD_LOCK_PARALLEL ]] && return 1
 
   local pid
   pid=$(cat "$BUILD_LOCK_PARALLEL")
 
   if [[ ! -d "/proc/$pid" ]] ; then
-    if removeParalellLock ; then
+    if removeParallelLock ; then
       return 1
     fi
   fi
@@ -679,7 +679,7 @@ hasParalellLock() {
 #
 # Code: No
 # Echo: No
-createParalellLock() {
+createParallelLock() {
   echo "$$" 1> "$BUILD_LOCK_PARALLEL" 2> /dev/null
   chmod 666 "$BUILD_LOCK_PARALLEL" &> /dev/null
 }
@@ -688,7 +688,7 @@ createParalellLock() {
 #
 # Code: No
 # Echo: No
-removeParalellLock() {
+removeParallelLock() {
   local cur_user lock_owner
 
   if [[ -f $BUILD_LOCK_PARALLEL ]] ; then

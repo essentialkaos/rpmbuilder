@@ -436,8 +436,8 @@ termExit() {
   fi
 
   if [[ -z "$tmux_worker" ]] ; then
-    if hasParalellLock ; then
-      removeParalellLock
+    if hasParallelLock ; then
+      removeParallelLock
     fi
   else
     removeWorkerLock
