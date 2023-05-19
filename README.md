@@ -105,7 +105,6 @@ rpmbuilder my-package.spec -r builder@localhost:2038 -kk ~/.ssh/buildnode
 ### Usage
 
 ```
-
 Usage: rpmbuilder {spec-file} {options}
 
 Spec file:
