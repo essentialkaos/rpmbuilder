@@ -236,8 +236,9 @@ remoteCheckEnv() {
 remoteDepsInstall() {
   local spec="$1"
 
-  local rpmbuild_dir specs_dir yum_opts
+  local spec_name rpmbuild_dir specs_dir yum_opts
 
+  spec_name=$(basename "$spec")
   rpmbuild_dir=$(getRPMBuildDir)
   specs_dir="$rpmbuild_dir/SPECS"
 
@@ -245,7 +246,7 @@ remoteDepsInstall() {
 
   yum_opts=$(getYumOpts "$verbose")
 
-  sshCommand "$host" "sudo yum $yum_opts clean expire-cache && cd $specs_dir && sudo yum-builddep $yum_opts -y $spec"
+  sshCommand "$host" "sudo yum $yum_opts clean expire-cache && cd $specs_dir && sudo yum-builddep $yum_opts -y $spec_name"
 
   if [[ $? -ne 0 ]] ; then
     show ""
@@ -264,8 +265,7 @@ remoteDepsInstall() {
 # Code: No
 # Echo: No
 remoteSpecValidate() {
-  local spec="$1"
-
+  local spec_name="$1"
   local opts="-e critical"
 
   [[ -n "$strict" ]] && opts="-e error"
@@ -273,12 +273,12 @@ remoteSpecValidate() {
   [[ -n "$perfect" ]] && opts="-e notice"
   [[ -n "$no_colors" ]] && opts="$opts -nc"
 
-  local rpmbuild_dir specs_dir
+  local spec_name rpmbuild_dir specs_dir
 
   rpmbuild_dir=$(getRPMBuildDir)
   specs_dir="$rpmbuild_dir/SPECS"
 
-  sshCommand "$host" "cd $specs_dir && perfecto -f short $opts $spec"
+  sshCommand "$host" "cd $specs_dir && perfecto -f short $opts $spec_name"
 
   if [[ $? -ne 0 ]] ; then
     show ""

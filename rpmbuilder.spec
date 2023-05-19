@@ -65,6 +65,7 @@ rm -rf %{buildroot}
 %changelog
 * Thu May 18 2023 Anton Novojilov <andy@essentialkaos.com> - 3.0.2-0
 - Fixed bug with parsing in-spec variables with asterisk symbols
+- Fixed bug with installing dependencies if path to spec file is not relative
 
 * Wed Mar 22 2023 Anton Novojilov <andy@essentialkaos.com> - 3.0.1-0
 - Fixed bug with local build due to lack of upload.shx file
