@@ -6,7 +6,7 @@
 
 Summary:    RPM package build helper
 Name:       rpmbuilder
-Version:    3.0.2
+Version:    3.0.3
 Release:    0%{?dist}
 License:    Apache License, Version 2.0
 Group:      Development/Tools
@@ -63,6 +63,9 @@ rm -rf %{buildroot}
 ################################################################################
 
 %changelog
+* Tue Jul 04 2023 Anton Novojilov <andy@essentialkaos.com> - 3.0.3-0
+- Improved version output
+
 * Thu May 18 2023 Anton Novojilov <andy@essentialkaos.com> - 3.0.2-0
 - Fixed bug with parsing in-spec variables with asterisk symbols
 - Fixed bug with installing dependencies if path to spec file is not relative
