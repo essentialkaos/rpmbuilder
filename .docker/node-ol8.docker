@@ -23,23 +23,22 @@ LABEL org.opencontainers.image.title="RPMBuilder Node" \
 
 # hadolint ignore=DL3031,DL3041
 RUN echo "$HOSTNAME" > /etc/hostname && \
-    dnf -y -q install https://yum.kaos.st/kaos-repo-latest.el8.noarch.rpm && \
+    dnf -y -q install https://pkgs.kaos.st/kaos-repo-latest.el8.noarch.rpm && \
     dnf -y -q install https://dl.fedoraproject.org/pub/epel/epel-release-latest-8.noarch.rpm && \
     sed -i 's/gpgcheck=1/gpgcheck=1\nmodule_hotfixes=1/g' /etc/yum.repos.d/epel.repo && \
     dnf config-manager --set-enabled ol8_codeready_builder && \
     dnf -y -q install sudo make which file openssh-server openssh-clients && \
     dnf -y -q install rpm-build rpmdevtools epel-rpm-macros && \
-    dnf -y -q install perfecto rpmlint && \
+    dnf -y -q install perfecto rpmlint pwgen && \
     dnf clean all && \
     rm -rf /var/cache/dnf /var/log/dnf.* && \
     mkdir -p /home/builder/rpmbuild/BUILD /home/builder/rpmbuild/BUILDROOT /home/builder/rpmbuild/RPMS \
              /home/builder/rpmbuild/SOURCES /home/builder/rpmbuild/SPECS /home/builder/rpmbuild/SRPMS \
-             /home/builder/.ssh /home/builder/.config && \
+             /home/builder/.ssh && \
     touch /home/builder/.ssh/authorized_keys && \
     chmod 0600 /home/builder/.ssh/authorized_keys
 
 COPY --chown=$USER_ID SOURCES/conf/rpmmacros_el8 /home/builder/.rpmmacros
-COPY --chown=$USER_ID SOURCES/conf/rpmlint /home/builder/.config/rpmlint
 COPY --chown=$USER_ID SOURCES/initenv /home/builder/initenv
 COPY --chown=$USER_ID SOURCES/nodeinfo /home/builder/nodeinfo
 

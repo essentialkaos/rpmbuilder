@@ -13,7 +13,7 @@ fi
 APP="RPMBuilder"
 
 # Utility version (String)
-VER="3.0.2"
+VER="3.0.3"
 
 # Utility description (String)
 DESC="RPM package build helper"
@@ -540,6 +540,12 @@ usage() {
 # Code: No
 # Echo: No
 about() {
+  local rpmb_ver rpml_ver perf_ver
+
+  rpmb_ver=$(rpm -q rpmbuild --queryformat '%{version}' 2>/dev/null | grep -v 'installed')
+  rpml_ver=$(rpm -q rpmlint --queryformat '%{version}' 2>/dev/null | grep -v 'installed')
+  perf_ver=$(rpm -q perfecto --queryformat '%{version}' 2>/dev/null | grep -v 'installed')
+
   show ""
   if [[ -f "/.dockerenv" ]] ; then
     show "${CL_BL_CYAN}$APP${CL_NORM} ${CL_CYAN}$VER${CL_NORM} × ${CL_DOCKER}Docker${CL_NORM} — $DESC"
@@ -547,6 +553,10 @@ about() {
     show "${CL_BL_CYAN}$APP${CL_NORM} ${CL_CYAN}$VER${CL_NORM} × ${CL_PODMAN}Podman${CL_NORM} — $DESC"
   else
     show "${CL_BL_CYAN}$APP${CL_NORM} ${CL_CYAN}$VER${CL_NORM} — $DESC"
+    show "│" $DARK
+    show "├ rpmbuild: ${rpmb_ver:-—}" $DARK
+    show "├ rpmlint: ${rpml_ver:-—}" $DARK
+    show "└ perfecto: ${perf_ver:-—}" $DARK
   fi
   show ""
   show "Copyright (C) 2009-$(date +%Y) ESSENTIAL KAOS" $DARK

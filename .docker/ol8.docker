@@ -19,13 +19,13 @@ LABEL org.opencontainers.image.title="RPMBuilder" \
 
 # hadolint ignore=DL3031,DL3041
 RUN echo "$HOSTNAME" > /etc/hostname && \
-    dnf -y -q install https://yum.kaos.st/kaos-repo-latest.el8.noarch.rpm && \
+    dnf -y -q install https://pkgs.kaos.st/kaos-repo-latest.el8.noarch.rpm && \
     dnf -y -q install https://dl.fedoraproject.org/pub/epel/epel-release-latest-8.noarch.rpm && \
     sed -i 's/gpgcheck=1/gpgcheck=1\nmodule_hotfixes=1/g' /etc/yum.repos.d/epel.repo && \
     dnf config-manager --set-enabled ol8_codeready_builder && \
     dnf -y -q install sudo make which file && \
     dnf -y -q install rpm-build rpmdevtools sshpass epel-rpm-macros && \
-    dnf -y -q install perfecto rpmlint && \
+    dnf -y -q install perfecto rpmlint pwgen && \
     dnf clean all && \
     rm -rf /var/cache/dnf /var/log/dnf.* && \
     curl -o /usr/local/bin/gosu -sSL "https://github.com/tianon/gosu/releases/download/$GOSU_VER/gosu-amd64" && \
@@ -35,8 +35,6 @@ RUN echo "$HOSTNAME" > /etc/hostname && \
     mkdir -p /usr/libexec/rpmbuilder /home/builder/.config /rpmbuilder
 
 COPY SOURCES/conf/rpmmacros_el8 /home/builder/.rpmmacros
-COPY SOURCES/conf/rpmlint /home/builder/.config/rpmlint
-
 COPY SOURCES/conf/builder.sudoers /etc/sudoers.d/rpmbuilder
 COPY SOURCES/rpmbuilder /usr/bin/rpmbuilder
 COPY SOURCES/libexec/* /usr/libexec/rpmbuilder/
