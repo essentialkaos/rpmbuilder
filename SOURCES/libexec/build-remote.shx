@@ -278,7 +278,7 @@ remoteSpecValidate() {
   rpmbuild_dir=$(getRPMBuildDir)
   specs_dir="$rpmbuild_dir/SPECS"
 
-  sshCommand "$host" "cd $specs_dir && perfecto -f short $opts $spec_name"
+  sshCommand "$host" "cd $specs_dir ; perfecto -f short $opts $spec_name"
 
   if [[ $? -ne 0 ]] ; then
     show ""
@@ -653,6 +653,11 @@ getSSHOpts() {
     fi
   fi
 
+  opts="$opts -o ControlPath=${tmp:?}/${CONNECTION_CACHE_PREFIX}-$$"
+  opts="$opts -o ControlMaster=auto"
+  opts="$opts -o ControlPersist=$CONNECTION_CACHE_PERSIST"
+  opts="$opts $SSH_BASE_OPTS"
+
   echo "$opts"
 }
 
@@ -722,10 +727,10 @@ sshCommand() {
   fi
 
   if [[ -n "$pass" && -z "$no_pass" ]] ; then
-    sshpass -p "$pass" ssh $SSH_BASE_OPTS -t -t -q $ssh_opts "$user@$host" "$comm"
+    sshpass -p "$pass" ssh -t -t -q $ssh_opts "$user@$host" "$comm"
   else
     # shellcheck disable=SC2029
-    ssh $SSH_BASE_OPTS -t -t -q $ssh_opts "$user@$host" "$comm"
+    ssh -t -t -q $ssh_opts "$user@$host" "$comm"
   fi
 
   return $?
@@ -746,9 +751,9 @@ scpCommand() {
   ssh_opts=$(getSSHOpts true)
 
   if [[ -n "$pass" ]] ; then
-    sshpass -p "$pass" scp -q $SSH_BASE_OPTS $ssh_opts "$from" "$to"
+    sshpass -p "$pass" scp -q $ssh_opts "$from" "$to"
   else
-    scp -q $SSH_BASE_OPTS $ssh_opts "$from" "$to"
+    scp -q $ssh_opts "$from" "$to"
   fi
 
   return $?

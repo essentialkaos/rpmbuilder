@@ -13,7 +13,7 @@ fi
 APP="RPMBuilder"
 
 # Utility version (String)
-VER="3.0.3"
+VER="3.1.0"
 
 # Utility description (String)
 DESC="RPM package build helper"
@@ -178,6 +178,12 @@ TMP_DIR_TEMPLATE="$TMP_PREFIX-XXXXXXXX"
 
 # Template used for temporary output file name generation (String)
 TMP_OUT_TEMPLATE="$TMP_PREFIX-XXXXXXXX.out"
+
+# Prefix used for control master connection
+CONNECTION_CACHE_PREFIX="rpmbuilder-connection"
+
+# Duration in seconds used for persistent connection
+CONNECTION_CACHE_PERSIST=60
 
 ################################################################################
 
