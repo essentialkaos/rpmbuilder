@@ -637,10 +637,6 @@ isRemoteServerReachable() {
 getSSHOpts() {
   local is_scp="$1"
 
-  if [[ -z "$run_id" ]] ; then
-    run_id=$(mktemp -u 'XXXXXXXXXXXXXXXX')
-  fi
-
   local opts
 
   if [[ -n "$key" ]] ; then
@@ -657,7 +653,7 @@ getSSHOpts() {
     fi
   fi
 
-  opts="$opts -o ControlPath=${tmp}/${CONNECTION_CACHE_PREFIX}-${run_id}"
+  opts="$opts -o ControlPath=${tmp:?}/${CONNECTION_CACHE_PREFIX}-$$"
   opts="$opts -o ControlMaster=auto"
   opts="$opts -o ControlPersist=$CONNECTION_CACHE_PERSIST"
   opts="$opts $SSH_BASE_OPTS"

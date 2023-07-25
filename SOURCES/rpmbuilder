@@ -226,9 +226,6 @@ build_end=0
 # Parallel build flag
 parallel_build=""
 
-# Run ID
-run_id=""
-
 ################################################################################
 
 declare -A _requires
