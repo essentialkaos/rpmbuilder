@@ -468,7 +468,7 @@ usage() {
   show "    rpmbuilder package.spec --git git://github.com/user/project.git -rr f8debbfdbebb97f5d0ee2218edf1425ac219cff5" $GREY
   show "    rpmbuilder package.spec -bb user:project" $GREY
   show "    rpmbuilder package.spec --github https://github.com/user/project/" $GREY
-  show "    rpmbuilder package.spec --gopack github.com/user/project --version v1.2.3" $GREY
+  show "    rpmbuilder package.spec --gopack github.com/user/project --tag v1.2.3" $GREY
   show ""
   show "Dependencies install:" $BOLD
   show ""
