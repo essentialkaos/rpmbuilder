@@ -13,7 +13,7 @@ fi
 APP="RPMBuilder"
 
 # Utility version (String)
-VER="3.1.0"
+VER="3.1.1"
 
 # Utility description (String)
 DESC="RPM package build helper"
@@ -468,7 +468,7 @@ usage() {
   show "    rpmbuilder package.spec --git git://github.com/user/project.git -rr f8debbfdbebb97f5d0ee2218edf1425ac219cff5" $GREY
   show "    rpmbuilder package.spec -bb user:project" $GREY
   show "    rpmbuilder package.spec --github https://github.com/user/project/" $GREY
-  show "    rpmbuilder package.spec --gopack github.com/user/project --version v1.2.3" $GREY
+  show "    rpmbuilder package.spec --gopack github.com/user/project --tag v1.2.3" $GREY
   show ""
   show "Dependencies install:" $BOLD
   show ""
@@ -546,9 +546,9 @@ usage() {
 # Code: No
 # Echo: No
 about() {
-  local rpmb_ver rpml_ver perf_ver
+  local rpm_ver rpml_ver perf_ver
 
-  rpmb_ver=$(rpm -q rpmbuild --queryformat '%{version}' 2>/dev/null | grep -v 'installed')
+  rpm_ver=$(rpm -q rpm --queryformat '%{version}' 2>/dev/null | grep -v 'installed')
   rpml_ver=$(rpm -q rpmlint --queryformat '%{version}' 2>/dev/null | grep -v 'installed')
   perf_ver=$(rpm -q perfecto --queryformat '%{version}' 2>/dev/null | grep -v 'installed')
 
@@ -560,7 +560,7 @@ about() {
   else
     show "${CL_BL_CYAN}$APP${CL_NORM} ${CL_CYAN}$VER${CL_NORM} — $DESC"
     show "│" $DARK
-    show "├ rpmbuild: ${rpmb_ver:-—}" $DARK
+    show "├ rpm: ${rpm_ver:-—}" $DARK
     show "├ rpmlint: ${rpml_ver:-—}" $DARK
     show "└ perfecto: ${perf_ver:-—}" $DARK
   fi

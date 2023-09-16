@@ -6,7 +6,7 @@
 
 Summary:    RPM package build helper
 Name:       rpmbuilder
-Version:    3.1.0
+Version:    3.1.1
 Release:    0%{?dist}
 License:    Apache License, Version 2.0
 Group:      Development/Tools
@@ -63,6 +63,9 @@ rm -rf %{buildroot}
 ################################################################################
 
 %changelog
+* Tue Aug 22 2023 Anton Novojilov <andy@essentialkaos.com> - 3.1.1-0
+- Fixed output of dependencies versions in version info
+
 * Tue Jul 25 2023 Anton Novojilov <andy@essentialkaos.com> - 3.1.0-0
 - Added connection caching feature
 
