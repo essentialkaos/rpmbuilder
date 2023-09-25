@@ -51,7 +51,7 @@
 
 Summary:         Configuration package for rpmbuilder node
 Name:            rpmbuilder-node
-Version:         1.4.3
+Version:         1.5.0
 Release:         0%{?dist}
 License:         Apache License, Version 2.0
 Group:           Development/Tools
@@ -64,7 +64,7 @@ BuildArch:       noarch
 BuildRoot:       %{_tmppath}/%{name}-%{version}-%{release}-root-%(%{__id_u} -n)
 
 Requires:        rpm >= 4.8.0 rpm-build rpmdevtools
-Requires:        kaosv yum-utils
+Requires:        kaosv yum-utils spec-builddep
 Requires:        perfecto >= 2.0 rpmlint
 
 Provides:        %{name} = %{version}-%{release}
@@ -161,6 +161,9 @@ fi
 ################################################################################
 
 %changelog
+* Mon Sep 25 2023 Anton Novojilov <andy@essentialkaos.com> - 1.5.0-0
+- Added spec-builddep to dependencies
+
 * Mon Mar 27 2023 Anton Novojilov <andy@essentialkaos.com> - 1.4.3-0
 - Fixed bug with printing container info in nodeinfo
 
