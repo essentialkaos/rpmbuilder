@@ -553,6 +553,7 @@ about() {
   rpm_ver=$(rpm -q rpm --queryformat '%{version}' 2>/dev/null | grep -v 'installed')
   rpml_ver=$(rpm -q rpmlint --queryformat '%{version}' 2>/dev/null | grep -v 'installed')
   perf_ver=$(rpm -q perfecto --queryformat '%{version}' 2>/dev/null | grep -v 'installed')
+  sbd_ver=$(rpm -q spec-builddep --queryformat '%{version}' 2>/dev/null | grep -v 'installed')
 
   show ""
   if [[ -f "/.dockerenv" ]] ; then
@@ -564,7 +565,8 @@ about() {
     show "│" $DARK
     show "├ rpm: ${rpm_ver:-—}" $DARK
     show "├ rpmlint: ${rpml_ver:-—}" $DARK
-    show "└ perfecto: ${perf_ver:-—}" $DARK
+    show "├ perfecto: ${perf_ver:-—}" $DARK
+    show "└ spec-builddep: ${sbd_ver:-—}" $DARK
   fi
   show ""
   show "Copyright (C) 2009-$(date +%Y) ESSENTIAL KAOS" $DARK
