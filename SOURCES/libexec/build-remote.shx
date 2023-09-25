@@ -188,7 +188,7 @@ remoteRunBuild() {
 
   uploadSourcesToRemoteHost "$spec"
 
-  if [[ -n "$install" ]] ; then
+  if [[ -n "$install" || -n "$install_latest" ]] ; then
     showSeparator "DEPENDENCIES INSTALL"
     remoteDepsInstall "$spec"
   fi
