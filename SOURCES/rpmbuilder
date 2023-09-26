@@ -13,7 +13,7 @@ fi
 APP="RPMBuilder"
 
 # Utility version (String)
-VER="3.1.1"
+VER="3.2.0"
 
 # Utility description (String)
 DESC="RPM package build helper"
@@ -86,7 +86,7 @@ SUPPORTED_OPTS="remote !parallel key source_dir source_list !sign !no_build
  !install github node bitbucket launchpad with without define output !verbose 
  !help !version !raw_version qa_rpaths tmux_worker !no_color !keep_log !notify 
  arch download !relative_pack enable_repo disable_repo exclude_package gopack 
- !no_validate !strict !pedantic !perfect"
+ !no_validate !strict !pedantic !perfect !install_latest"
 
 SHORT_OPTS="r:remote P:!parallel k:key sd:source_dir sl:source_list 
  NB:!no_build NC:!no_clean ND:!no_deps NR:!no_binary NS:!no_source p:pack 
@@ -95,7 +95,8 @@ SHORT_OPTS="r:remote P:!parallel k:key sd:source_dir sl:source_list
  rt:tag rr:revision gh:github bb:bitbucket lp:launchpad w:with W:without 
  s:!sign D:define O:output V:!verbose h:help v:!version nv:!no_validate 
  nc:!no_color kl:!keep_log n:!notify a:arch dl:download R:relative_pack 
- ER:enable_repo DR:disable_repo EX:exclude_package G:gopack A:!attach N:node"
+ ER:enable_repo DR:disable_repo EX:exclude_package G:gopack A:!attach N:node 
+ IL:!install_latest"
 
 INSPEC_OPTS="git svn hg bzr branch revision tag svn_user svn_pass github 
  bitbucket launchpad qa_rpaths no_lint no_validate relative_pack gopack strict 
@@ -472,7 +473,8 @@ usage() {
   show ""
   show "Dependencies install:" $BOLD
   show ""
-  showo "--install, -I" "Automatically install build dependencies before build process"
+  showo "--install, -I" "Install build dependencies before build process"
+  showo "--install-latest, -IL" "Install the latest versions of build dependencies before build process"
   showo "--enable-repo, -ER" "Enable repositories ${CL_DARK}(mergeable)${CL_NORM}" "repo-name"
   showo "--disable-repo, -DR" "Disable repositories ${CL_DARK}(mergeable)${CL_NORM}" "repo-name"
   showo "--exclude-package, -EX" "Exclude package by name or glob ${CL_DARK}(mergeable)${CL_NORM}" "package"
@@ -551,6 +553,7 @@ about() {
   rpm_ver=$(rpm -q rpm --queryformat '%{version}' 2>/dev/null | grep -v 'installed')
   rpml_ver=$(rpm -q rpmlint --queryformat '%{version}' 2>/dev/null | grep -v 'installed')
   perf_ver=$(rpm -q perfecto --queryformat '%{version}' 2>/dev/null | grep -v 'installed')
+  sbd_ver=$(rpm -q spec-builddep --queryformat '%{version}' 2>/dev/null | grep -v 'installed')
 
   show ""
   if [[ -f "/.dockerenv" ]] ; then
@@ -562,7 +565,8 @@ about() {
     show "│" $DARK
     show "├ rpm: ${rpm_ver:-—}" $DARK
     show "├ rpmlint: ${rpml_ver:-—}" $DARK
-    show "└ perfecto: ${perf_ver:-—}" $DARK
+    show "├ perfecto: ${perf_ver:-—}" $DARK
+    show "└ spec-builddep: ${sbd_ver:-—}" $DARK
   fi
   show ""
   show "Copyright (C) 2009-$(date +%Y) ESSENTIAL KAOS" $DARK

@@ -6,7 +6,7 @@
 
 Summary:    RPM package build helper
 Name:       rpmbuilder
-Version:    3.1.1
+Version:    3.2.0
 Release:    0%{?dist}
 License:    Apache License, Version 2.0
 Group:      Development/Tools
@@ -19,7 +19,7 @@ Source100:  checksum.sha512
 BuildArch:  noarch
 BuildRoot:  %{_tmppath}/%{name}-%{version}-%{release}-root-%(%{__id_u} -n)
 
-Requires:   rpm >= 4.8.0 rpm-build rpmdevtools yum-utils
+Requires:   rpm >= 4.8.0 rpm-build rpmdevtools spec-builddep yum-utils
 Requires:   sshpass coreutils gawk tmux
 Requires:   perfecto >= 3.0 rpmlint
 
@@ -63,6 +63,11 @@ rm -rf %{buildroot}
 ################################################################################
 
 %changelog
+* Mon Sep 25 2023 Anton Novojilov <andy@essentialkaos.com> - 3.2.0-0
+- Use spec-builddep instead of yum-builddep for installing dependencies
+- Added option '--install-latest/-IL' for installing the latest versions of
+  dependencies
+
 * Tue Aug 22 2023 Anton Novojilov <andy@essentialkaos.com> - 3.1.1-0
 - Fixed output of dependencies versions in version info
 

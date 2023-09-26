@@ -30,7 +30,7 @@ localBuild() {
 
   copySourcesToBuildDir "$spec"
 
-  if [[ -n "$install" ]] ; then
+  if [[ -n "$install" || -n "$install_latest" ]] ; then
     showSeparator "DEPENDENCIES INSTALL"
     localDepsInstall "$spec"
   fi
@@ -99,27 +99,22 @@ copySourcesToBuildDir() {
 localDepsInstall() {
   local spec="$1"
 
-  show "Installing required packages for build…\n"
-
   local yum_opts
   yum_opts=$(getYumOpts "$verbose")
 
+  if [[ -n "$install_latest" ]] ; then
+    yum_opts="$yum_opts --actual"
+  fi
+
   if [[ "$user" == "root" ]] ; then
-    yum $yum_opts clean expire-cache
-    yum-builddep $yum_opts -y "$spec"
+    spec-builddep $yum_opts --clean "$spec"
   else
-    sudo yum $yum_opts clean expire-cache
-    sudo yum-builddep $yum_opts -y "$spec"
+    sudo spec-builddep $yum_opts --clean "$spec"
   fi
 
   if [[ $? -ne 0 ]] ; then
-    show ""
-    error "Can't install required dependencies"
     doExit $ERROR_DEPS
   fi
-
-  show ""
-  show "All required packages installed" $GREEN
 }
 
 # Validate spec on local host

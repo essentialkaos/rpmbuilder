@@ -188,7 +188,7 @@ remoteRunBuild() {
 
   uploadSourcesToRemoteHost "$spec"
 
-  if [[ -n "$install" ]] ; then
+  if [[ -n "$install" || -n "$install_latest" ]] ; then
     showSeparator "DEPENDENCIES INSTALL"
     remoteDepsInstall "$spec"
   fi
@@ -242,20 +242,17 @@ remoteDepsInstall() {
   rpmbuild_dir=$(getRPMBuildDir)
   specs_dir="$rpmbuild_dir/SPECS"
 
-  show "Installing required packages for build…\n"
-
   yum_opts=$(getYumOpts "$verbose")
 
-  sshCommand "$host" "sudo yum $yum_opts clean expire-cache && cd $specs_dir && sudo yum-builddep $yum_opts -y $spec_name"
-
-  if [[ $? -ne 0 ]] ; then
-    show ""
-    error "Can't install required dependencies"
-    doExit $ERROR_DEPS
+  if [[ -n "$install_latest" ]] ; then
+    yum_opts="$yum_opts --actual"
   fi
 
-  show ""
-  show "All required packages installed" $GREEN
+  sshCommand "$host" "cd $specs_dir && sudo spec-builddep --clean $yum_opts $spec_name"
+
+  if [[ $? -ne 0 ]] ; then
+    doExit $ERROR_DEPS
+  fi
 }
 
 # Validates spec on remote host

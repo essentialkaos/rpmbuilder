@@ -156,11 +156,12 @@ Source packaging:
     rpmbuilder package.spec --git git://github.com/user/project.git -rr f8debbfdbebb97f5d0ee2218edf1425ac219cff5
     rpmbuilder package.spec -bb user:project
     rpmbuilder package.spec --github https://github.com/user/project/
-    rpmbuilder package.spec --gopack github.com/user/project --version v1.2.3
+    rpmbuilder package.spec --gopack github.com/user/project --tag v1.2.3
 
 Dependencies install:
 
-  --install, -I                     Automatically install build dependencies before build process
+  --install, -I                     Install build dependencies before build process
+  --install-latest, -IL             Install the latest versions of build dependencies before build process
   --enable-repo, -ER repo-name      Enable repositories (mergeable)
   --disable-repo, -DR repo-name     Disable repositories (mergeable)
   --exclude-package, -EX package    Exclude package by name or glob (mergeable)
@@ -223,7 +224,7 @@ Other:
   --bump-comment, -bc comment       Comment which will be added while release bump
   --tmp dir                         Path to a temporary directory
   --verbose, -V                     Verbose output
-  --no-color, -C                    Disable colors in output
+  --no-color, -nc                   Disable colors in output
   --help, -h                        Show this help message
   --version, -v                     Show information about version
 ```
