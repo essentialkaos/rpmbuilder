@@ -13,7 +13,7 @@
 
 ### Usage demo
 
-[![demo](https://gh.kaos.st/rpmbuilder-300.1.gif)](#usage-demo)
+https://github.com/essentialkaos/rpmbuilder/assets/182020/d0ae6d9c-663e-46cf-a3f3-2c0fa25c97a3
 
 ### Installation
 
