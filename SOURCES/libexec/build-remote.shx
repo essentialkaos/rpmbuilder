@@ -19,10 +19,7 @@ parallelBuild() {
     doExit $ERROR_ARGS
   fi
 
-  if [[ -n "$dlcache" ]] ; then
-    warn "Warning! You can't use a parallel build with download cache."
-    doExit $ERROR_ARGS
-  fi
+  configurePrivateKey
 
   local host_list
 
@@ -66,7 +63,7 @@ parallelBuild() {
 
     if [[ -z "$session_exist" ]] ; then
       if [[ -z "$TMUX" ]] ; then
-        tmux new-session -s "$TMUX_SESSION_NAME" -d "$0 $opts -r $remote_host --tmux-worker $wid" >/dev/null 2>&1
+        tmux -u new-session -s "$TMUX_SESSION_NAME" -d "$0 $opts -r $remote_host --tmux-worker $wid" >/dev/null 2>&1
       else
         tmux new-window "$0 $opts -r $remote_host --tmux-worker $wid"
       fi
@@ -104,6 +101,8 @@ parallelBuild() {
 # Echo: No
 remoteBuild() {
   local spec="$1"
+
+  configurePrivateKey
 
   showSeparator "PREPARATION"
 
@@ -548,6 +547,28 @@ remoteSign() {
   local package="$1"
 
   sshCommand "$host" "rpm --addsign $package &> /dev/null" 2> /dev/null
+}
+
+# Check and configure private key
+#
+# Code: No
+# Echo: No
+configurePrivateKey() {
+  if [[ -z "$key" ]] ; then
+    return
+  fi
+
+  if [[ ! -f "$key" ]] ; then
+    tmp_key_file=$(mktemp "${tmp:?}/$TMP_KEY_TEMPLATE")
+    echo "$key" | base64 -d 1> "$tmp_key_file" 2> /dev/null
+    chmod 600 "$tmp_key_file"
+    key="$tmp_key_file"
+  fi
+
+  if ! ssh-keygen -lf "$key" &> /dev/null ; then
+    error "Error! Private key is not valid."
+    doExit $ERROR_ARGS
+  fi
 }
 
 # Checks if parallel build is possible

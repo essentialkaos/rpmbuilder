@@ -13,7 +13,7 @@ fi
 APP="RPMBuilder"
 
 # Utility version (String)
-VER="3.2.0"
+VER="3.3.0"
 
 # Utility description (String)
 DESC="RPM package build helper"
@@ -177,6 +177,9 @@ WORKER_PREFIX=".rpmbuilder-worker"
 # Template used for temporary directory name generation (String)
 TMP_DIR_TEMPLATE="$TMP_PREFIX-XXXXXXXX"
 
+# Template used for temporary key (String)
+TMP_KEY_TEMPLATE="$TMP_PREFIX-XXXXXXXX.key"
+
 # Template used for temporary output file name generation (String)
 TMP_OUT_TEMPLATE="$TMP_PREFIX-XXXXXXXX.out"
 
@@ -196,6 +199,9 @@ tmp_dir=""
 
 # Path to temporary output file for current build (String)
 tmp_output=""
+
+# Path to temporary key file (String)
+tmp_key_file=""
 
 # Current user name (String)
 user=$(whoami)
@@ -485,7 +491,8 @@ usage() {
   showo "┌ --remote, -r" "Build rpm package on remote server"
   showo "│ --remote, -r" "Build rpm package on the remote server with specified host, username and password" "user:pass@host:port"
   showo "└ --remote, -r" "Build rpm package on the remote servers listed in specified file" "file"
-  showo "--key, -k" "Path to the private key for specified user" "file"
+  showo "┌ --key, -k" "Path to the private key for specified user" "file"
+  showo "└ --key, -k" "Base64 encoded private key for specified user" "data"
   showo "--node, -N" "Node index or name from file with build servers" "index-or-name"
   showo "--attach, -A" "Attach to parallel build session in tmux"
   show ""
@@ -494,6 +501,7 @@ usage() {
   show "    rpmbuilder package.spec -r builder@127.0.0.1" $GREY
   show "    rpmbuilder package.spec -r builder:mypass@127.0.0.1:2022~i386" $GREY
   show "    rpmbuilder package.spec --remote ~/servers.list --key ~/.ssh/id_ed25519" $GREY
+  show "    rpmbuilder package.spec --remote builder@127.0.0.1:5001 --key \$(base64 -w0 ~/.ssh/id_ed25519)" $GREY
   show "    rpmbuilder package.spec --parallel --remote ~/servers.list --node 1,2" $GREY
   show ""
   show "Build options:" $BOLD

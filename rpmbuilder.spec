@@ -6,7 +6,7 @@
 
 Summary:    RPM package build helper
 Name:       rpmbuilder
-Version:    3.2.0
+Version:    3.3.0
 Release:    0%{?dist}
 License:    Apache License, Version 2.0
 Group:      Development/Tools
@@ -63,6 +63,13 @@ rm -rf %{buildroot}
 ################################################################################
 
 %changelog
+* Tue Nov 28 2023 Anton Novojilov <andy@essentialkaos.com> - 3.3.0-0
+- Option '-k'/'--key' now accepts base64 encoded data with private key
+- Added private key validation
+- Added tmux check for parallel build
+- Run TMUX with UTF-8 support
+- Code refactoring
+
 * Mon Sep 25 2023 Anton Novojilov <andy@essentialkaos.com> - 3.2.0-0
 - Use spec-builddep instead of yum-builddep for installing dependencies
 - Added option '--install-latest/-IL' for installing the latest versions of
