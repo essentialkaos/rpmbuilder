@@ -39,6 +39,7 @@ test: ## Run shellcheck tests
 	shellcheck .docker/entrypoint
 	shellcheck .docker/node-entrypoint
 	shellcheck rpmbuilder-docker
+	shellcheck rpmbuilder-farm
 
 install: ## Install app to current system (requires sudo)
 ifneq ($(shell id -u), 0)

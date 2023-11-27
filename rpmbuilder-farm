@@ -1,0 +1,1685 @@
+#!/usr/bin/env bash
+# shellcheck disable=SC2120
+
+########################################################################################
+
+if [[ -n "${SCRIPT_DEBUG}" ]] ; then
+  set -x
+fi
+
+########################################################################################
+
+# App name
+APP="rpmbuilder-farm"
+
+# App version
+VER="1.0.0"
+
+# App description
+DESC="Helper for bootstrapping rpmbuilder build farm"
+
+########################################################################################
+
+# shellcheck disable=SC2034
+CL_PROMPT="\e[1m\e[7;${CYAN};49m"
+
+################################################################################
+
+CMD_INSTALL="install"
+CMD_UNINSTALL="uninstall"
+CMD_USER_ADD="add-user"
+CMD_USER_DEL="del-user"
+CMD_USER_MOD="mod-user"
+CMD_USER_LIST="list-users"
+CMD_UPDATE_IMAGES="update-images"
+CMD_LIST_IMAGES="list-images"
+CMD_CONTAINERS="containers"
+CMD_CONFIG="config"
+
+CMD_START="start"
+CMD_RESTART="restart"
+CMD_STOP="stop"
+CMD_START_ALL="start-all"
+CMD_RESTART_ALL="restart-all"
+CMD_STOP_ALL="stop-all"
+
+###############################################################################
+
+KEYS_DIR="/etc/rpmbuilder/keys"
+START_PORT=10000
+
+###############################################################################
+
+# Default image name
+image="ghcr.io/essentialkaos/rpmbuilder"
+
+# List of images
+images=("centos7" "ol7" "ol8" "ol9")
+
+###############################################################################
+
+# Main function
+#
+# *: All arguments passed to script
+#
+# Code: No
+# Echo: No
+main() {
+  prepare
+
+  if [[ "$1" == "--version" || "$1" == "-v" ]] ; then
+    about
+    exit 0
+  fi
+
+  if [[ $# -eq 0 || "$1" == "--help" || "$1" == "-h" ]] ; then
+    usage
+    exit 0
+  fi
+
+  execCommand "$@"
+
+  exit $?
+}
+
+# Make some checks before executing actions
+#
+# Code: No
+# Echo: No
+prepare() {
+  local answer
+
+  if ! isRoot ; then
+    exit 1
+  fi
+
+  if ! hasApp "docker" ; then
+    error "docker is required, install it first"
+    exit 1
+  fi
+
+  if ! hasApp "ssh-keygen" ; then
+    error "ssh-keygen is required, install it first"
+    exit 1
+  fi
+
+  if ! hasApp "curl" ; then
+    error "curl is required, install it first"
+    exit 1
+  fi
+
+  if ! hasApp "path" ; then
+    show ""
+    show "\e[1mpath is required, install it?\e[0m"
+    read -e -r -p "$(getPrompt 'Y/N')" answer
+    show ""
+
+    if [[ ${answer^^} != "Y" ]] ; then
+      error "Okay, you can install it from https://kaos.sh/path"
+      exit 1
+    fi
+
+    curl --max-redirs 2 -L -# -o "/usr/bin/path" "https://apps.kaos.st/path/latest/linux/x86_64/path"
+    chmod +x /usr/bin/path
+
+    show "\e[32mpath successfully installed\e[0m"
+  fi
+
+  if ! hasApp "fmtc" ; then
+    show ""
+    show "\e[1mfmtc is required, install it?\e[0m"
+    read -e -r -p "$(getPrompt 'Y/N')" answer
+    show ""
+
+    if [[ ${answer^^} != "Y" ]] ; then
+      error "Okay, you can install it from https://kaos.sh/fmtc"
+      exit 1
+    fi
+
+    curl --max-redirs 2 -L -# -o "/usr/bin/fmtc" "https://apps.kaos.st/fmtc/latest/linux/x86_64/fmtc"
+    chmod +x /usr/bin/fmtc
+
+    show "\e[32mfmtc successfully installed\e[0m"
+  fi
+}
+
+# Execute command
+#
+# 1: Command name (String)
+# *: Command arguments
+#
+# Code: No
+# Echo: No
+execCommand() {
+  local cmd="$1"
+
+  shift
+  show ""
+
+  if [[ "$cmd" != "$CMD_INSTALL" ]] && ! isFarmInstalled ; then
+    error "Farm is not installed on the system"
+    show ""
+    return 1
+  fi
+
+  case "$cmd" in
+    "$CMD_INSTALL")        cmdInstall "$@" ;;
+    "$CMD_UNINSTALL")      cmdUninstall "$@" ;;
+    "$CMD_USER_ADD")       cmdUserAdd "$@" ;;
+    "$CMD_USER_DEL")       cmdUserDel "$@" ;;
+    "$CMD_USER_MOD")       cmdUserMod "$@" ;;
+    "$CMD_USER_LIST")      cmdUserList "$@" ;;
+    "$CMD_LIST_IMAGES")    cmdListImages "$@" ;;
+    "$CMD_UPDATE_IMAGES")  cmdUpdateImages "$@" ;;
+    "$CMD_CONTAINERS")     cmdContainers "$@" ;;
+    "$CMD_CONFIG")         cmdConfig "$@" ;;
+    "$CMD_START")          cmdStart "$@" ;;
+    "$CMD_RESTART")        cmdRestart "$@" ;;
+    "$CMD_STOP")           cmdStop "$@" ;;
+    "$CMD_START_ALL")      cmdStartAll "$@" ;;
+    "$CMD_RESTART_ALL")    cmdRestartAll "$@" ;;
+    "$CMD_STOP_ALL")       cmdStopAll "$@" ;;
+    *) error "Unknown command \"$cmd\"\n"
+       exit 1 ;;
+  esac
+
+  local ec=$?
+
+  show ""
+
+  return "$ec"
+}
+
+################################################################################
+
+# "install" command handler
+#
+# 1: Restart delay in hours (Number) [Optional]
+#
+# Code: Yes
+# Echo: No
+cmdInstall() {
+  local delay="${1:-12}"
+
+  if isFarmInstalled ; then
+    error "Farm already installed on the system"
+    return 1
+  fi
+
+  mkdir -p "$KEYS_DIR" &> /dev/null
+  action "$?" "Create directory for keys"
+
+cat << EOF > /etc/systemd/system/rpmbuilder-farm-restart.timer
+[Unit]
+Description=This is the timer for restating build farm contenders
+Requires=rpmbuilder-farm-restart.service
+
+[Timer]
+OnCalendar=*-*-* 00/$delay:00:00
+Persistent=true
+
+[Install]
+WantedBy=timers.target
+EOF
+
+cat << EOF > /etc/systemd/system/rpmbuilder-farm-restart.service
+[Unit]
+Description=Restart all build farm containers
+Wants=rpmbuilder-farm-restart.timer
+
+[Service]
+Type=oneshot
+ExecStart=/usr/bin/rpmbuilder-farm restart-all
+
+[Install]
+WantedBy=multi-user.target
+EOF
+
+cat << EOF > /etc/systemd/system/rpmbuilder-farm.service
+[Unit]
+Description=RDS Sync Daemon
+Documentation=https://kaos.sh/rds
+Requires=network.target remote-fs.target
+After=network.target remote-fs.target
+
+[Service]
+Type=oneshot
+ExecStart=/usr/bin/rpmbuilder-farm start-all
+
+[Install]
+WantedBy=multi-user.target
+EOF
+
+  systemctl daemon-reload &> /dev/null
+  systemctl enable rpmbuilder-farm.service &> /dev/null
+  systemctl start rpmbuilder-farm-restart.timer &> /dev/null
+
+  action 0 "Install services and timer to systemd"
+
+  ln -sf /usr/bin/rpmbuilder-farm /usr/bin/farm
+
+  action $? "Create alias 'farm' → 'rpmbuilder-farm'"
+
+  show ""
+  show "{g}{*}RPMBuilder Farm{!*} successfully installed on the system{!}"
+  show ""
+
+  cmdUpdateImages
+
+  return $?
+}
+
+# "uninstall" command handler
+#
+# Code: Yes
+# Echo: No
+cmdUninstall() {
+  rm -rf "$KEYS_DIR" &> /dev/null
+  action "$?" "Remove directory for keys"
+
+  systemctl disable rpmbuilder-farm.service &> /dev/null
+  systemctl stop rpmbuilder-farm-restart.timer &> /dev/null
+
+  rm -f /etc/systemd/system/rpmbuilder-farm* &> /dev/null
+
+  systemctl daemon-reload &> /dev/null
+
+  action 0 "Remove services and timer from systemd"
+
+  rm -f /usr/bin/farm &> /dev/null
+
+  action $? "Remove alias 'farm' → 'rpmbuilder-farm'"
+
+  show ""
+  show "{g}{*}RPMBuilder Farm{!*} successfully uninstalled from the system{!}"
+
+  return 0
+}
+
+# "list-images" command handler
+#
+# Code: Yes
+# Echo: No
+cmdListImages() {
+  local image_name image_id
+
+  for image_name in "${images[@]}" ; do
+    image_id=$(docker image ls | grep "node-${image_name}" | tr -s ' ' | cut -f3 -d' ')
+    show "  {s-}•{!} $(getImageWithColor "$image_name") {s-}(${image_id:-—}){!}"
+  done
+
+  return 0
+}
+
+# "update-images" command handler
+#
+# Code: Yes
+# Echo: No
+cmdUpdateImages() {
+  local image_name has_errors
+
+  show "{*}Updating images…{!}"
+
+  for image_name in "${images[@]}" ; do
+    show ""
+    show "{c}{*}↓{!*} ${image}:{*}node-${image_name}{!*}…{!}"
+    
+    if ! docker pull "$image:node-$image_name" ; then
+      has_errors=true
+    fi
+  done
+
+  show ""
+
+  if [[ -n "$has_errors" ]] ; then
+    warn "Can't update one or more images"
+    return 1
+  fi
+
+  show "{g}Images successfully updated{!}"
+
+  return 0
+}
+
+# "containers" command handler
+#
+# Code: Yes
+# Echo: No
+cmdContainers() {
+  if ! hasUsers ; then
+    warn "There are no users or containers"
+    return 0
+  fi
+
+  local user image_name stat_info uptime_info fmtline 
+  local container_stat_info container_uptime_info cpu mem status host_port
+
+  fmtc -L "{s-}Collecting containers info…{!}"
+  stat_info=$(docker stats --no-stream --format '{{.Name}}\t{{.CPUPerc}}\t{{.MemUsage}}')
+  uptime_info=$(docker ps --format "{{.Names}}\t{{.Status}}")
+  printf '\e[2K\r'
+
+  printf "{*}%-16s %-10s %-10s %-12s %-10s %-24s %s{!}\n" "OWNER" "IMAGE" "PORT" "STATE" "CPU" "MEMORY" "STATUS" | fmtc
+  showSeparator 100
+
+  for user in $(getUserList) ; do
+    for image_name in "${images[@]}" ; do
+
+      if isCurrentUser "$user" ; then
+        fmtline="{*}%-16s{!}"
+      else
+        fmtline="{s}%-16s{!}"
+      fi
+
+      container_name="${user}-${image_name}"
+      container_stat_info=$(grep "$container_name" <<< "$stat_info")
+      container_uptime_info=$(grep "$container_name" <<< "$uptime_info")
+
+      fmtline="$fmtline $(getImageColor "$image_name")%-10s{!}"
+
+      if [[ -n "$container_stat_info" ]] ; then
+        fmtline="$fmtline {s-}:{!}{s}%-9s{!} {g}%-12s{!} %-10s %-24s %s\n"
+        cpu=$(echo "$container_stat_info" | cut -f2)
+        mem=$(echo "$container_stat_info" | cut -f3)
+        status=$(echo "$container_uptime_info" | cut -f2)
+        host_port=$(getHostPort "$user" "$image_name")
+        # shellcheck disable=SC2059
+        printf "$fmtline" "$user" "$image_name" "$host_port" "running" "$cpu" "$mem" "$status" | fmtc
+      else
+        fmtline="$fmtline {s-}%-10s{!} {s-}%-12s{!} {s-}%-10s{!} {s-}%-24s{!} {s-}%s{!}\n"
+        unset cpu mem status
+        # shellcheck disable=SC2059
+        printf "$fmtline" "$user" "$image_name" "-" "stopped" "-" "-" "-" | fmtc
+      fi
+    done
+
+    showSeparator 100
+  done
+
+  return 0
+}
+
+# "add-user" command handler
+#
+# 1: User name (String)
+#
+# Code: Yes
+# Echo: No
+cmdConfig() {
+  local user="$1"
+
+  if [[ -z "$user" ]] ; then
+    error "You must provide user name"
+    return 1
+  fi
+
+  if ! hasContainers "$user" ; then
+    error "There are no containers for user $user"
+    return 1
+  fi
+
+  local ip image_name host_port
+
+  read -e -r -p "$(getPrompt 'HOST PUBLIC IP / HOSTNAME')" ip
+
+  show ""
+  show "Add next lines to file {#172}~/.config/rpmbuilder/buildnodes.list{!}"
+  show ""
+
+  for image_name in "${images[@]}" ; do
+    if ! isContainerWorks "$user" "$image_name" ; then
+      continue
+    fi
+
+    host_port=$(getHostPort "$user" "$image_name")
+
+    show "{s}builder@${ip}:${host_port}{!}"
+  done
+
+  show ""
+
+  fmtc << EOF
+Add next lines to file {#172}~/.config/rpmbuilder/rpmbuilder.conf{!}
+
+{s-}# File with build nodes{!}
+{s}remote: ~/.config/rpmbuilder/buildnodes.list{!}
+
+{s-}# Path to private key{!}
+{s}key: ~/.ssh/buildnode{!}
+
+{y}Note that {*}~/.ssh/buildnode{!*} must be the path to your private key.{!}
+EOF
+}
+
+# "add-user" command handler
+#
+# 1: User name (String)
+#
+# Code: Yes
+# Echo: No
+cmdUserAdd() {
+  local user="$1"
+
+  if [[ -z "$user" ]] ; then
+    error "You must provide user name"
+    return 1
+  fi
+
+  if hasUser "$user" ; then
+    error "User \"$user\" already exist"
+    return 1
+  fi
+
+  if ! isValidUser "$user" ; then
+    error "\"$user\" is not valid user name"
+    return 1
+  fi
+
+  local pub_key answer
+
+  while : ; do
+    read -e -r -p "$(getPrompt 'PUBLIC KEY')" pub_key
+    show ""
+
+    if ! isValidKey "$pub_key" ; then
+      warn "Given public key is not valid"
+    else
+      break
+    fi
+  done
+
+  if ! addUser "$user" "$pub_key" ; then
+    error "Can't create new user"
+    return 1
+  fi
+
+  show "{g}User successfully created{!}"
+  show ""
+  show "Run containers for this user?"
+
+  read -e -r -p "$(getPrompt 'Y/N')" answer
+
+  if [[ ${answer^^} != "Y" ]] ; then
+    return 0
+  fi
+
+  # cmdStart "$user"
+
+  return $?
+}
+
+# "del-user" command handler
+#
+# 1: User name (String)
+#
+# Code: Yes
+# Echo: No
+cmdUserDel() {
+  local user="$1"
+
+  if [[ -z "$user" ]] ; then
+    error "You must provide user name"
+    return 1
+  fi
+
+  if ! hasUser "$user" ; then
+    error "There is no user \"$user\""
+    return 1
+  fi
+
+  if hasContainers "$user" ; then
+    if ! cmdStop "$user" ; then
+      return 1
+    fi
+
+    show ""
+  fi
+
+  if ! delUser "$user" ; then
+    error "Can't delete user"
+    return 1
+  fi
+
+  show "{g}User successfully deleted{!}"
+
+  return 0
+}
+
+# "mod-user" command handler
+#
+# 1: User name (String)
+#
+# Code: Yes
+# Echo: No
+cmdUserMod() {
+  local user="$1"
+
+  if [[ -z "$user" ]] ; then
+    error "You must provide user name"
+    return 1
+  fi
+
+  if ! hasUser "$user" ; then
+    error "There is no user \"$user\""
+    return 1
+  fi
+
+  if hasContainers "$user" ; then
+    if ! cmdStop "$user" ; then
+      return 1
+    fi
+
+    show ""
+  fi
+
+  local pub_key
+
+  while : ; do
+    read -e -r -p "$(getPrompt 'PUBLIC KEY')" pub_key
+    show ""
+
+    if ! isValidKey "$pub_key" ; then
+      warn "Given public key is not valid"
+    else
+      break
+    fi
+  done
+
+  if ! modUser "$user" "$pub_key" ; then
+    error "Can't update public key"
+    return 1
+  fi
+
+  show "{g}Public key successfully updated{!}"
+
+  return 0
+}
+
+# "list-users" command handler
+#
+# Code: Yes
+# Echo: No
+cmdUserList() {
+  if ! hasUsers ; then
+    warn "There are no users"
+    return 0
+  fi
+
+  local user key_info
+
+  for user in $(getUserList) ; do
+
+    key_info=$(getUserPubKeyInfo "$user")
+
+    if isCurrentUser "$user" ; then
+      show "  {s-}•{!} {*}$user{!} {s}—{!} {s-}$key_info{!}"
+    else
+      show "  {s-}•{!} {s}$user{!} {s}—{!} {s-}$key_info{!}"
+    fi
+
+  done
+
+  return 0
+}
+
+# "start" command handler
+#
+# 1: User name (String)
+# 2: Image name (String) [Optional]
+#
+# Code: Yes
+# Echo: No
+cmdStart() {
+  local user="$1"
+  local image_name="$2"
+
+  if [[ -z "$user" ]] ; then
+    error "You must provide user name"
+    return 1
+  fi
+
+  if ! hasUsers ; then
+    error "There are no farm users. Use \"add-user\" command to create a new user."
+    return 1
+  fi
+
+  if ! hasUser "$user" ; then
+    error "There is no user \"$user\""
+    return 1
+  fi
+
+  if [[ -n "$image_name" ]] ; then
+    cmdStartOne "$user" "$image_name"
+    return $?
+  fi
+
+  cmdStartMany "$user"
+
+  return $?
+}
+
+# "start" command handler for one container
+#
+# 1: User name (String)
+# 2: Image name (String)
+#
+# Code: Yes
+# Echo: No
+cmdStartOne() {
+  local user="$1"
+  local image_name="$2"
+
+  if ! hasImage "$image_name" ; then
+    error "There is no image \"$image_name\""
+    return 1
+  fi
+
+  if isContainerWorks "$user" "$image_name" ; then
+    error "Container \"$user/$image_name\" already works"
+    return 1
+  fi
+
+  show "{*}Starting container {#166}$user{!}{s}/{!}$(getImageWithColor "$image_name"){*}…{!}"
+
+  if ! startContainer "$user" "$image_name" ; then
+    error "Can't start container \"$user/$image_name\""
+    return 1
+  fi
+
+  show "{g}Container successfully started{!}"
+
+  return 0
+}
+
+# "start" command handler for many containers
+#
+# 1: User name (String)
+#
+# Code: Yes
+# Echo: No
+cmdStartMany() {
+  local user="$1"
+  local image_name has_actions has_problems
+
+  for image_name in "${images[@]}" ; do
+    if isContainerWorks "$user" "$image_name" ; then
+      continue
+    fi
+
+    has_actions=true
+
+    show "{*}Starting container {#166}$user{!}{s}/{!}$(getImageWithColor "$image_name"){*}…{!}"
+
+    if ! startContainer "$user" "$image_name" ; then
+      has_problems=true
+      error "Can't start container"
+      show ""
+      continue
+    fi
+
+    show "{g}Container successfully started{!}"
+    show ""
+  done
+
+  if [[ -z "$has_actions" ]] ; then
+    warn "All containers of user \"$user\" already work"
+    return 0
+  fi
+
+  if [[ -n "$has_problems" ]] ; then
+    warn "One or more containers started with errors"
+    return 1
+  fi
+
+  show "{g}All contenders successfully started{!}"
+
+  return 0
+}
+
+# "restart" command handler
+#
+# Code: Yes
+# Echo: No
+cmdRestart() {
+  local user="$1"
+  local image_name="$2"
+
+  if [[ -z "$user" ]] ; then
+    error "You must provide user name"
+    return 1
+  fi
+
+  if ! hasUsers ; then
+    error "There are no farm users. Use \"add-user\" command to create a new user."
+    return 1
+  fi
+
+  if ! hasUser "$user" ; then
+    error "There is no user \"$user\""
+    return 1
+  fi
+
+  if [[ -n "$image_name" ]] ; then
+    cmdRestartOne "$user" "$image_name"
+    return $?
+  fi
+
+  cmdRestartMany "$user"
+
+  return $?
+}
+
+# "restart" command handler for one container
+#
+# 1: User name (String)
+# 2: Image name (String)
+#
+# Code: Yes
+# Echo: No
+cmdRestartOne() {
+  local user="$1"
+  local image_name="$2"
+
+  if ! hasImage "$image_name" ; then
+    error "There is no image \"$image_name\""
+    return 1
+  fi
+
+  if isContainerWorks "$user" "$image_name" ; then
+    error "Container \"$user/$image_name\" is not running"
+    return 1
+  fi
+
+  show "{*}Restarting container {#166}$user{!}{s}/{!}$(getImageWithColor "$image_name"){*}…{!}"
+
+  if ! stopContainer "$user" "$image_name" ; then
+    error "Can't stop container \"$user/$image_name\""
+    return 1
+  fi
+
+  if ! startContainer "$user" "$image_name" ; then
+    error "Can't start container \"$user/$image_name\""
+    return 1
+  fi
+
+  show "{g}Container successfully restarted{!}"
+
+  return 0
+}
+
+# "restart" command handler for many containers
+#
+# 1: User name (String)
+#
+# Code: Yes
+# Echo: No
+cmdRestartMany() {
+  local user="$1"
+  local image_name has_actions has_problems
+
+  for image_name in "${images[@]}" ; do
+    if ! isContainerWorks "$user" "$image_name" ; then
+      continue
+    fi
+
+    has_actions=true
+
+    show "{*}Restarting container {#166}$user{!}{s}/{!}$(getImageWithColor "$image_name"){*}…{!}"
+
+    if ! stopContainer "$user" "$image_name" ; then
+      has_problems=true
+      error "Can't stop container \"$user/$image_name\""
+      show ""
+      continue
+    fi
+
+    if ! startContainer "$user" "$image_name" ; then
+      has_problems=true
+      error "Can't start container \"$user/$image_name\""
+      show ""
+      continue
+    fi
+
+    show "{g}Container successfully restarted{!}"
+    show ""
+  done
+
+  if [[ -z "$has_actions" ]] ; then
+    warn "All containers of user \"$user\" are stopped and no restart is required"
+    return 0
+  fi
+
+  if [[ -n "$has_problems" ]] ; then
+    warn "One or more containers restarted with errors"
+    return 1
+  fi
+
+  show "{g}All contenders successfully restarted{!}"
+
+  return 1
+}
+
+# "stop" command handler
+#
+# Code: Yes
+# Echo: No
+cmdStop() {
+  local user="$1"
+  local image_name="$2"
+
+  if [[ -z "$user" ]] ; then
+    error "You must provide user name"
+    return 1
+  fi
+
+  if ! hasUser "$user" ; then
+    error "There is no user \"$user\""
+    return 1
+  fi
+
+  if [[ -n "$image_name" ]] ; then
+    cmdStopOne "$user" "$image_name"
+    return $?
+  fi
+
+  cmdStopMany "$user"
+
+  return $?
+}
+
+# "stop" command handler for one container
+#
+# 1: User name (String)
+# 2: Image name (String)
+#
+# Code: Yes
+# Echo: No
+cmdStopOne() {
+  local user="$1"
+  local image_name="$2"
+
+  if ! hasImage "$image_name" ; then
+    error "There is no image \"$image_name\""
+    return 1
+  fi
+
+  if ! isContainerWorks "$user" "$image_name" ; then
+    error "Container \"$user/$image_name\" is stopped"
+    return 1
+  fi
+
+  show "{*}Stopping container {#166}$user{!}{s}/{!}$(getImageWithColor "$image_name"){*}…{!}"
+
+  if ! stopContainer "$user" "$image_name" ; then
+    error "Can't stop container \"$user/$image_name\""
+  fi
+
+  show "{g}Container successfully stopped{!}"
+
+  return 0
+}
+
+# "stop" command handler for many containers
+#
+# 1: User name (String)
+#
+# Code: Yes
+# Echo: No
+cmdStopMany() {
+  local user="$1"
+  local image_name has_actions has_problems
+
+  for image_name in "${images[@]}" ; do
+    if ! isContainerWorks "$user" "$image_name" ; then
+      continue
+    fi
+
+    has_actions=true
+
+    show "{*}Stopping container {#166}$user{!}{s}/{!}{#81}$image_name{!}{*}…{!}"
+
+    if ! stopContainer "$user" "$image_name" ; then
+      has_problems=true
+      error "Can't stop container"
+      show ""
+      continue
+    fi
+
+    show "{g}Container successfully stopped{!}"
+    show ""
+  done
+
+  if [[ -z "$has_actions" ]] ; then
+    warn "All containers of user \"$user\" already stopped"
+    return 0
+  fi
+
+  if [[ -n "$has_problems" ]] ; then
+    warn "One or more containers stopped with errors"
+    return 1
+  fi
+
+  show "{g}All contenders successfully stopped{!}"
+
+  return 0
+}
+
+# "start-all" command handler
+#
+# Code: Yes
+# Echo: No
+cmdStartAll() {
+  if ! hasUsers ; then
+    warn "There are no users or containers"
+    return 0
+  fi
+
+  local user has_problems
+
+  for user in $(getUserList) ; do
+    if ! cmdStartMany "$user" ; then
+      has_problems=true
+    fi
+  done
+
+  if [[ -n "$has_problems" ]] ; then
+    return 1
+  fi
+
+  return 0
+}
+
+# "restart-all" command handler
+#
+# Code: Yes
+# Echo: No
+cmdRestartAll() {
+  if ! hasUsers ; then
+    warn "There are no users or containers"
+    return 0
+  fi
+
+  local user has_problems
+
+  for user in $(getUserList) ; do
+    if ! cmdRestartMany "$user" ; then
+      has_problems=true
+    fi
+  done
+
+  if [[ -n "$has_problems" ]] ; then
+    return 1
+  fi
+
+  return 0
+}
+
+# "stop-all" command handler
+#
+# Code: Yes
+# Echo: No
+cmdStopAll() {
+  if ! hasUsers ; then
+    warn "There are no users or containers"
+    return 0
+  fi
+
+  local user has_problems
+
+  for user in $(getUserList) ; do
+    if ! cmdStopMany "$user" ; then
+      has_problems=true
+    fi
+  done
+
+  if [[ -n "$has_problems" ]] ; then
+    return 1
+  fi
+
+  return 0
+}
+
+################################################################################
+
+# Print action status
+#
+# 1: Status (Number)
+# 2: Description (String)
+#
+# Code: No
+# Echo: No
+action() {
+  local status="$1"
+  local desc="$2"
+
+  if [[ "$status" == "0" ]] ; then
+    show "{g}✔ {!} $desc"
+  else
+    show "{r}✖ {!} $desc"
+  fi
+}
+
+# Check if there is running containers for user
+#
+# 1: User name (String)
+#
+# Code: Yes
+# Echo: No
+hasContainers() {
+  local user="$1"
+
+  if [[ -n $(docker ps -q -f name="${user}-*") ]] ; then
+    return 0
+  fi
+
+  return 1
+}
+
+# Start user's container
+#
+# 1: User name (String)
+# 2: Image name (String)
+#
+# Code: Yes
+# Echo: No
+startContainer() {
+  local user="$1"
+  local image_name="$2"
+  local host_port target_port pub_key container_name
+
+  if ! hasImage "$image_name" ; then
+    return 1
+  fi
+
+  pub_key=$(getUserPubKeyData "$user")
+  host_port=$(getHostPort "$user" "$image_name")
+  target_port=$(getImageTargetPort "$image_name")
+
+  container_name="${user}-${image_name}"
+
+  if [[ -z "$host_port" || -z "$target_port" || -z "$pub_key" ]] ; then
+    return 1
+  fi
+
+  docker run --name "$container_name" \
+             -e PUB_KEY="$pub_key" \
+             -p "$host_port:$target_port" \
+             -d "$image:node-$image_name" &>/dev/null
+
+  return $?
+}
+
+# Stop one or all user's containers
+#
+# 1: User name (String)
+# 2: Image name (String)
+#
+# Code: Yes
+# Echo: No
+stopContainer() {
+  local user="$1"
+  local image_name="$2"
+  local container_name="${user}-${image_name}"
+
+  local cid
+
+  cid=$(docker ps -q -f name="$container_name")
+
+  if ! docker kill "$cid" &> /dev/null ; then
+    return 1
+  fi
+
+  if ! docker rm "$container_name" &> /dev/null ; then
+    return 1
+  fi
+
+  return 0
+}
+
+# Check if container for given user already works
+#
+# 1: User name (String)
+# 2: Image name (String) [Optional]
+#
+# Code: Yes
+# Echo: No
+isContainerWorks() {
+  local user="$1"
+  local image_name="$2"
+  local container_name="${user}-${image_name}"
+
+  if [[ -n $(docker ps -q -f name="${container_name}") ]] ; then
+    return 0
+  fi
+
+  return 1
+}
+
+# Check if rpmbuilder farm is installed
+#
+# Code: Yes
+# Echo: No
+isFarmInstalled() {
+  if [[ ! -d "$KEYS_DIR" ]] ; then
+    return 1
+  fi
+
+  return 0
+}
+
+# Add new user
+#
+# 1: User name (String)
+# 2: Public key (String)
+#
+# Code: Yes
+# Echo: No
+addUser() {
+  local user="$1"
+  local pub_key="$2"
+  local id pub_key_file
+
+  id=$(getFreeUserID)
+
+  if [[ -z "$id" ]] ; then
+    return 1
+  fi
+
+  mkdir "$KEYS_DIR/$id" &> /dev/null
+
+  pub_key_file="$KEYS_DIR/${id}/${user}.pub"
+
+  if ! echo "$pub_key" > "$pub_key_file" ; then
+    return 1
+  fi
+
+  chmod 600 "$pub_key_file" &> /dev/null
+
+  return $?
+}
+
+# Remove user
+#
+# 1: User name (String)
+#
+# Code: Yes
+# Echo: No
+delUser() {
+  local user="$1"
+  local pub_key_file pub_key_dir
+
+  pub_key_file=$(getUserPubKeyFile "$user")
+
+  if [[ -z "$pub_key_file" ]] ; then
+    return 1
+  fi
+
+  pub_key_dir=$(path dir "$pub_key_file")
+
+  rm -rf "$pub_key_dir" &> /dev/null
+
+  return $?
+}
+
+# Update user public key
+#
+# 1: User name (String)
+#
+# Code: Yes
+# Echo: No
+modUser() {
+  local user="$1"
+  local pub_key_file
+
+  pub_key_file=$(getUserPubKeyFile "$user")
+
+  if [[ -z "$pub_key_file" ]] ; then
+    return 1
+  fi
+
+  echo "$pub_key" > "$pub_key_file"
+
+  return 0
+}
+
+# Check if farm has any users
+#
+# Code: Yes
+# Echo: No
+hasUsers() {
+  if [[ -z $(find $KEYS_DIR -name '*.pub' -type f) ]] ; then
+    return 1
+  fi
+
+  return 0
+}
+
+# Check if user exist
+#
+# 1: User name (String)
+#
+# Code: Yes
+# Echo: No
+hasUser() {
+  local user="$1"
+
+  if [[ -n $(find $KEYS_DIR -name "${user}.pub" -type f) ]] ; then
+    return 0
+  fi
+
+  return 1
+}
+
+# Get user ID
+#
+# 1: User name (String)
+#
+# Code: No
+# Echo: User ID (String)
+getUserID() {
+  local user="$1"
+  local pub_key_file
+
+  pub_key_file=$(getUserPubKeyFile "$user")
+
+  if [[ -z "$pub_key_file" ]] ; then
+    return 1
+  fi
+
+  path dir "$pub_key_file" | path base
+}
+
+# Get path to user's public key file
+#
+# 1: User name (String)
+#
+# Code: No
+# Echo: Path to public key file (String)
+getUserPubKeyFile() {
+  local user="$1"
+  find $KEYS_DIR -name "${user}.pub" -type f
+}
+
+# Get info about user public key
+#
+# 1: User name (String)
+#
+# Code: No
+# Echo: Key info (String)
+getUserPubKeyInfo() {
+  local user="$1"
+  local pub_key_file
+
+  pub_key_file=$(find $KEYS_DIR -name "${user}.pub" -type f)
+
+  if [[ -z "$pub_key_file" ]] ; then
+    return
+  fi
+
+  ssh-keygen -lf "$pub_key_file" | sed 's/no comment //'
+}
+
+# Get list of users
+#
+# Code: No
+# Echo: User list (String)
+getUserList() {
+  find $KEYS_DIR -name "*.pub" -type f | path base | path del-suffix ".pub"
+}
+
+# Get user's public key data
+#
+# 1: Variable Description (Type)
+#
+# Code: No
+# Echo: No
+getUserPubKeyData() {
+  local user="$1"
+  local pub_key
+
+  pub_key=$(getUserPubKeyFile "$user")
+
+  if [[ -n "$pub_key" ]] ; then
+    cat "$pub_key"
+  fi
+}
+
+# Get free user ID
+#
+# Code: No
+# Echo: User ID (Number)
+getFreeUserID() {
+  for id in {1..256} ; do
+    if [[ ! -d "$KEYS_DIR/$id" ]] ; then
+      echo "$id"
+      return
+    fi
+  done
+}
+
+# Check if user name is valid
+#
+# 1: User name (String)
+#
+# Code: Yes
+# Echo: No
+isValidUser() {
+  local user="$1"
+
+  if [[ "$user" =~ ^[a-zA-Z0-9_-]+$ ]] ; then
+    return 0
+  fi
+
+  return 1
+}
+
+# Check if public key is valid
+#
+# 1: Public key data (String)
+#
+# Code: Yes
+# Echo: No
+isValidKey() {
+  local pub_key="$1"
+
+  echo "$pub_key" | ssh-keygen -lf - &> /dev/null
+
+  return $?
+}
+
+# Get target port for given image
+#
+# 1: Image name (String)
+#
+# Code: No
+# Echo: Port (Number)
+getImagePort() {
+  case "$1" in
+    "centos7") echo "27" ;;
+    "ol7")     echo "37" ;;
+    "ol8")     echo "38" ;;
+    "ol9")     echo "39" ;;
+  esac
+}
+
+# Get target port for given image
+#
+# 1: Image name (String)
+#
+# Code: No
+# Echo: Port (Number)
+getImageTargetPort() {
+  local image_name="$1"
+  local port
+
+  port=$(getImagePort "$image_name")
+
+  if [[ -z "$port" ]] ; then
+    return
+  fi
+
+  port=$(( 2000 + port ))
+
+  echo "$port"
+}
+
+# Get port for user container
+#
+# 1: User name (String)
+# 2: Image name (String)
+#
+# Code: No
+# Echo: Port (Number)
+getHostPort() {
+  local user="$1"
+  local image_name="$2"
+
+  local port image_port user_id
+
+  user_id=$(getUserID "$user")
+  image_port=$(getImagePort "$image_name")
+
+  if [[ -z "$user_id" || -z "$image_port" ]] ; then
+    return
+  fi
+
+  port=$(( ((user_id * 1000) + (START_PORT - 1000)) + image_port ))
+
+  echo "$port"
+}
+
+# Check if image exist
+#
+# 1: Image name (String)
+#
+# Code: No
+# Echo: No
+hasImage() {
+  if [[ -n $(getImagePort "$1") ]] ; then
+    return 0
+  fi
+
+  return 1
+}
+
+# Get colored image name
+#
+# 1: Image name (String)
+#
+# Code: No
+# Echo: Image name with color (String)
+getImageWithColor() {
+  case "$1" in
+    "centos7") echo "{#75}$1{!}" ;;
+    "ol7")     echo "{#113}$1{!}" ;;
+    "ol8")     echo "{#174}$1{!}" ;;
+    "ol9")     echo "{#99}$1{!}" ;;
+    *)         echo "$1"
+  esac
+}
+
+# Get image unique color
+#
+# 1: Image name (String)
+#
+# Code: No
+# Echo: Image color tag (String)
+getImageColor() {
+  case "$1" in
+    "centos7") echo "{#75}" ;;
+    "ol7")     echo "{#113}" ;;
+    "ol8")     echo "{#174}" ;;
+    "ol9")     echo "{#99}" ;;
+  esac
+}
+
+# Check if given name is current user name
+#
+# 1: User name (String)
+#
+# Code: Yes
+# Echo: No
+isCurrentUser() {
+  local user="$1"
+
+  if [[ "$SUDO_USER" == "$user" ]] ; then
+    return 0
+  fi
+
+  return 1
+}
+
+################################################################################
+
+# Check if user is root
+#
+# 1: Quiet check (Boolean) [Optional]
+#
+# Code: Yes
+# Echo: No
+isRoot() {
+  if [[ $(id -u) != "0" ]] ; then
+    if [[ -z "$1" ]] ; then
+      error "This command requires superuser privileges"
+    fi
+
+    return 1
+  fi
+
+  return 0
+}
+
+# Check if app is installed
+#
+# 1: Binary name (String)
+#
+# Code: Yes
+# Echo: No
+hasApp() {
+  if ! type -P "$1" &> /dev/null ; then
+    return 1
+  fi
+
+  return 0
+}
+
+# Print separator
+#
+# 1: Separator size (Number)
+#
+# Code: No
+# Echo: No
+showSeparator() {
+  local size="$1"
+  local sep i
+
+  # shellcheck disable=SC2034
+  for i in $(seq 0 "$size") ; do
+    sep="${sep}–"
+  done
+
+  show "{s-}$sep{!}"
+}
+
+# Get colored prompt
+#
+# 1: Prompt name (String)
+#
+# Code: No
+# Echo: No
+getPrompt() {
+  echo -e "\e[1m\e[7;36;49m ≡ ${1^^} \e[0m\e[0;36;49m\e[0m "
+}
+
+# Show error message
+#
+# 1: Message (String)
+#
+# Code: No
+# Echo: No
+error() {
+  echo -e "\e[0;31;49m▲ $*\e[0m" 1>&2
+}
+
+# Show warning message
+#
+# 1: Message (String)
+#
+# Code: No
+# Echo: No
+warn() {
+  echo -e "\e[0;33;49m▲ $*\e[0m" 1>&2
+}
+
+# Show message
+#
+# 1: Message (String)
+# 2: Color code (Number) [Optional]
+#
+# Code: No
+# Echo: No
+show() {
+  if [[ -z "$*" ]] ; then
+    echo -e ""
+  elif [[ $* =~ \{ ]] ; then
+    fmtc "$*"
+  else
+    echo -e "$*"
+  fi
+}
+
+################################################################################
+
+# Print usage info
+#
+# Code: No
+# Echo: No
+usage() {
+fmtc << EOF
+
+{*}Usage:{!} rpmbuilder-farm {y}{command}{!} {s}arg…{!}
+
+{*}Basic commands{!}
+
+  {y}${CMD_INSTALL}{!} {s-}restart-delay{!} {s-}..{!} Install farm on the system
+  {y}${CMD_UNINSTALL}{!} {s-}..............{!} Uninstall farm from the system
+  {y}${CMD_USER_ADD}{!} {s}user{!} {s-}..........{!} Add new user
+  {y}${CMD_USER_DEL}{!} {s}user{!} {s-}..........{!} Remove user and it containers
+  {y}${CMD_USER_MOD}{!} {s}user{!} {s-}..........{!} Modify user public key
+  {y}${CMD_USER_LIST}{!} {s-}..............{!} List users
+  {y}${CMD_LIST_IMAGES}{!} {s-}............{!} Show list of all official images
+  {y}${CMD_UPDATE_IMAGES}{!} {s-}..........{!} Update all official images
+  {y}${CMD_CONTAINERS}{!} {s-}.............{!} Show list of containers with their status
+  {y}${CMD_CONFIG}{!} {s-}.................{!} Show configuration guide
+
+{*}Containers commands{!}
+
+  {y}${CMD_START}{!} {s}user{!} {s-}image-name{!} {s-}....{!} Start containers for given user
+  {y}${CMD_RESTART}{!} {s}user{!} {s-}image-name{!} {s-}..{!} Restart containers for given user
+  {y}${CMD_STOP}{!} {s}user{!} {s-}image-name{!} {s-}.....{!} Stop containers for given user
+  {y}${CMD_START_ALL}{!} {s-}................{!} Start containers for all users
+  {y}${CMD_RESTART_ALL}{!} {s-}..............{!} Restart containers for all users
+  {y}${CMD_STOP_ALL}{!} {s-}.................{!} Stop containers for all users
+
+{*}Options{!}
+
+  {g}--help{!}, {g}-h{!} {s-}.....{!} Show this help message
+  {g}--version{!}, {g}-v{!} {s-}..{!} Show information about version
+
+{*}Examples{!}
+
+  $APP $CMD_STOP_ALL
+  {&}{s-}Stop all containers{!}
+
+  $APP $CMD_RESTART john
+  {&}{s-}Restart containers for user john{!}
+
+EOF
+}
+
+# Show info about version
+#
+# Code: No
+# Echo: No
+about() {
+  local docker_ver
+
+  if hasApp "docker" ; then
+    docker_ver=$(docker version -f '{{.Server.Version}} (git:{{.Server.GitCommit}})' 2>/dev/null)
+  fi
+
+fmtc << EOF
+
+{c*}$APP{!} {c}$VER{!} — $DESC
+{s-}│{!}
+{s-}└ Docker: ${docker_ver:-—}{!}
+
+{s-}Copyright (C) 2009-$(date +%Y) ESSENTIAL KAOS{!}
+{s-}Apache License, Version 2.0 <https://www.apache.org/licenses/LICENSE-2.0>{!}
+
+EOF
+}
+
+################################################################################
+
+main "$@"
