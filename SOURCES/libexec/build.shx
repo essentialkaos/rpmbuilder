@@ -246,11 +246,6 @@ checkOptions() {
     doExit $ERROR_ARGS
   fi
 
-  if [[ -n "$parallel" && -n "$dlcache" ]] ; then
-    error "Cannot start build process: you can't use a parallel build with download cache"
-    doExit $ERROR_ARGS
-  fi
-
   if [[ -n "$dlcache" && ! -d $dlcache ]] ; then
     error "Cannot start build process: download cached directory doesn't exist"
     doExit $ERROR_ARGS

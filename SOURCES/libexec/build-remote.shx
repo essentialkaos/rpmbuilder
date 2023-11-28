@@ -19,6 +19,11 @@ parallelBuild() {
     doExit $ERROR_ARGS
   fi
 
+  if [[ -n "$dlcache" ]] ; then
+    warn "Warning! You can't use a parallel build with download cache."
+    doExit $ERROR_ARGS
+  fi
+
   configurePrivateKey
 
   local host_list
