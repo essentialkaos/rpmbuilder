@@ -118,7 +118,8 @@ remoteBuild() {
   show ""
   show "All source files are ready for build" $GREEN
 
-  if [[ -r $remote ]] ; then
+  # If remote option is path to file or list of nodes use multibuild
+  if [[ -r $remote || $remote =~ \  ]] ; then
     remoteRunMultibuild "$spec"
   else
     remoteRunBuild "$spec"
@@ -134,26 +135,20 @@ remoteBuild() {
 remoteRunMultibuild() {
   local spec="$1"
 
-  local build_hosts host_info r_port r_user r_pass r_arch
+  local build_hosts
+  local counter=1
 
-  build_hosts=$(cat "$remote")
+  if [[ $remote =~ \  ]] ; then
+    build_hosts="$remote"
+  else
+    build_hosts=$(cat "$remote")
+  fi
 
   for build_host in $build_hosts ; do
-    IFS=" " read -r -a host_info <<< "$(extractHostInfo "$build_host")"
-
-    host="${host_info[0]/!/}"
-
-    r_port="${host_info[1]/!/}"
-    r_user="${host_info[2]/!/}"
-    r_pass="${host_info[3]/!/}"
-    r_arch="${host_info[4]/!/}"
-
-    port="${r_port:-$port}"
-    user="${r_user:-$user}"
-    pass="${r_pass:-$pass}"
-    arch="${r_arch:-$arch}"
-
+    show "\n${CL_BG_MAG} Build #${counter} ${CL_NORM} ${CL_MAG}Running remote build on ${CL_BL_MAG}${build_host}${CL_MAG}…${CL_NORM}"
+    remote="$build_host"
     remoteRunBuild "$spec"
+    (( counter++ ))
   done
 }
 
@@ -474,8 +469,6 @@ uploadSourcesToRemoteHost() {
   grc_time=$(getGraceDurationShort "$copy_start")
   showt "${CL_GREEN}✔ ${CL_NORM} ${spec} ${CL_DARK}${grc_time}${CL_NORM}"
   show ""
-
-  rm -rf "$tmp_dir" &> /dev/null
 }
 
 # Downloads packages from remote build host

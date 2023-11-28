@@ -22,6 +22,7 @@ DESC="RPM package build helper"
 
 NORM=0
 BOLD=1
+ITLC=3
 UNLN=4
 RED=31
 GREEN=32
@@ -34,6 +35,7 @@ DARK=90
 
 CL_NORM="\e[0m"
 CL_BOLD="\e[0;${BOLD};49m"
+CL_ITLC="\e[0;${ITLC};49m"
 CL_UNLN="\e[0;${UNLN};49m"
 CL_RED="\e[0;${RED};49m"
 CL_GREEN="\e[0;${GREEN};49m"
@@ -50,6 +52,7 @@ CL_BL_BLUE="\e[1;${BLUE};49m"
 CL_BL_MAG="\e[1;${MAG};49m"
 CL_BL_CYAN="\e[1;${CYAN};49m"
 CL_BL_GREY="\e[1;${GREY};49m"
+CL_BG_MAG="\e[1m\e[7m\e[${MAG}m"
 CL_BLNK_YELLOW="\e[5;${YELLOW};49m"
 CL_PODMAN="\033[38;5;91m"
 CL_DOCKER="\033[38;5;32m"
@@ -102,7 +105,8 @@ INSPEC_OPTS="git svn hg bzr branch revision tag svn_user svn_pass github
  bitbucket launchpad qa_rpaths no_lint no_validate relative_pack gopack strict 
  pedantic perfect exclude_package"
 
-MERGEABLE_OPTS="pack with without enable_repo disable_repo exclude_package define"
+MERGEABLE_OPTS="remote pack with without enable_repo disable_repo 
+ exclude_package define"
 
 KEEP_OPTS=true
 
@@ -363,24 +367,24 @@ showo() {
   optp="$3"
   prefix="  "
 
-  if [[ "${optn:0:1}" == "┌" || "${optn:0:1}" == "│" || "${optn:0:1}" == "└" ]] ; then
-    prefix="${CL_DARK}${optn:0:1}${CL_NORM} "
-    optn="${optn:2:999}"
+  if [[ $optn =~ ^(┌|│|└) ]] ; then
+    prefix="${CL_DARK}$(echo "$optn" | cut -f1 -d' ')${CL_NORM} "
+    optn=$(echo "$optn" | sed 's/\(┌\|│\|└\) //')
   fi
 
   if [[ -n "$DARK" ]] ; then
-    breadcrumbs="............................"
+    breadcrumbs="..............................................."
   else
-    breadcrumbs="                            "
+    breadcrumbs="                                               "
   fi
 
   if [[ -z "$optp" ]] ; then
     optt="$optn"
-    optf=$(( 32 - ${#optt} ))
+    optf=$(( 35 - ${#optt} ))
     echo -e "${prefix}${CL_GREEN}${optn}${CL_NORM} ${CL_DARK}${breadcrumbs:0:$optf}${CL_NORM} $optd"
   else
     optt="$optn $optp"
-    optf=$(( 32 - ${#optt} ))
+    optf=$(( 35 - ${#optt} ))
     echo -e "${prefix}${CL_GREEN}${optn}${CL_NORM} ${CL_GREY}${optp}${CL_NORM} ${CL_DARK}${breadcrumbs:0:$optf}${CL_NORM} $optd"
   fi
 }
@@ -489,7 +493,7 @@ usage() {
   show ""
   showo "--parallel, -P" "Parallel build on all build servers in same time ${CL_DARK}(tmux is required)${CL_NORM}"
   showo "┌ --remote, -r" "Build rpm package on remote server"
-  showo "│ --remote, -r" "Build rpm package on the remote server with specified host, username and password" "user:pass@host:port"
+  showo "│ --remote, -r" "Build rpm package on the remote server with specified host, username and password ${CL_DARK}(mergeable)${CL_NORM}" "user:pass@host:port"
   showo "└ --remote, -r" "Build rpm package on the remote servers listed in specified file" "file"
   showo "┌ --key, -k" "Path to the private key for specified user" "file"
   showo "└ --key, -k" "Base64 encoded private key for specified user" "data"
@@ -498,7 +502,7 @@ usage() {
   show ""
   show "  Examples:" $BOLD
   show ""
-  show "    rpmbuilder package.spec -r builder@127.0.0.1" $GREY
+  show "    rpmbuilder package.spec -r builder@192.168.1.100 -r builder@192.168.1.101" $GREY
   show "    rpmbuilder package.spec -r builder:mypass@127.0.0.1:2022~i386" $GREY
   show "    rpmbuilder package.spec --remote ~/servers.list --key ~/.ssh/id_ed25519" $GREY
   show "    rpmbuilder package.spec --remote builder@127.0.0.1:5001 --key \$(base64 -w0 ~/.ssh/id_ed25519)" $GREY
@@ -512,7 +516,7 @@ usage() {
   showo "--no-binary, -NR" "Don't build binary packages"
   showo "--no-source, -NS" "Don't build source package"
   showo "--arch, -a" "Override target arch for a build" "arch"
-  showo "--qa-rpaths" "Ignoring rpaths check" '"<value>,…"'
+  showo "--qa-rpaths" "Ignoring rpaths check" '"<value>,<value>,..."'
   show ""
   show "Arguments passing:" $BOLD
   show ""
@@ -523,7 +527,7 @@ usage() {
   show "  Examples:" $BOLD
   show ""
   show "    rpmbuilder package.spec --with ssl --with ldap" $GREY
-  show "    rpmbuilder package.spec -w ssl -W ldap" $GREY
+  show "    rpmbuilder package.spec -w ssl -w static -W ldap" $GREY
   show "    rpmbuilder package.spec --with \"ssl ldap\"" $GREY
   show "    rpmbuilder package.spec --define \"install_dir=/some/dir\" --define \"service_user=someone\"" $GREY
   show ""
@@ -532,9 +536,9 @@ usage() {
   show "Spec validation:" $BOLD
   show ""
   showo "--no-lint, -0" "Don't check spec file before package build"
-  showo "--strict, -1" "Don't build package if perfecto found major problems in spec file"
-  showo "--pedantic, -2" "Don't build package if perfecto found minor problems in spec file"
-  showo "--perfect, -3" "Don't build package if perfecto found any problems in spec file"
+  showo "--strict, -1" "Don't build package if ${CL_ITLC}perfecto${CL_NORM} found major problems in spec file"
+  showo "--pedantic, -2" "Don't build package if ${CL_ITLC}perfecto${CL_NORM} found minor problems in spec file"
+  showo "--perfect, -3" "Don't build package if ${CL_ITLC}perfecto${CL_NORM} found any problems in spec file"
   show ""
   show "Other:" $BOLD
   show ""
@@ -543,7 +547,7 @@ usage() {
   showo "--keep-log, -kl" "Save build log after an unsuccessful build"
   showo "--bump, -b" "Bump release in spec file after a successful build"
   showo "--bump-comment, -bc" "Comment which will be added while release bump" "comment"
-  showo "--tmp" "Path to a temporary directory" "dir"
+  showo "--tmp" "Path to a temporary directory ${CL_DARK}(default: ${tmp})${CL_NORM}" "dir"
   showo "--verbose, -V" "Verbose output"
   showo "--no-color, -nc" "Disable colors in output"
   showo "--help, -h" "Show this help message"
@@ -564,18 +568,21 @@ about() {
   sbd_ver=$(rpm -q spec-builddep --queryformat '%{version}' 2>/dev/null | grep -v 'installed')
 
   show ""
+
   if [[ -f "/.dockerenv" ]] ; then
-    show "${CL_BL_CYAN}$APP${CL_NORM} ${CL_CYAN}$VER${CL_NORM} × ${CL_DOCKER}Docker${CL_NORM} — $DESC"
+    show "${CL_BL_CYAN}$APP${CL_NORM} ${CL_CYAN}$VER${CL_NORM} ${CL_GREY}×${CL_NORM} ${CL_DOCKER}Docker${CL_NORM} — $DESC"
   elif [[ -f "/run/.containerenv" ]] ; then
-    show "${CL_BL_CYAN}$APP${CL_NORM} ${CL_CYAN}$VER${CL_NORM} × ${CL_PODMAN}Podman${CL_NORM} — $DESC"
+    show "${CL_BL_CYAN}$APP${CL_NORM} ${CL_CYAN}$VER${CL_NORM} ${CL_GREY}×${CL_NORM} ${CL_PODMAN}Podman${CL_NORM} — $DESC"
   else
     show "${CL_BL_CYAN}$APP${CL_NORM} ${CL_CYAN}$VER${CL_NORM} — $DESC"
-    show "│" $DARK
-    show "├ rpm: ${rpm_ver:-—}" $DARK
-    show "├ rpmlint: ${rpml_ver:-—}" $DARK
-    show "├ perfecto: ${perf_ver:-—}" $DARK
-    show "└ spec-builddep: ${sbd_ver:-—}" $DARK
   fi
+
+  show "│" $DARK
+  show "├ rpm: ${rpm_ver:-—}" $DARK
+  show "├ rpmlint: ${rpml_ver:-—}" $DARK
+  show "├ perfecto: ${perf_ver:-—}" $DARK
+  show "└ spec-builddep: ${sbd_ver:-—}" $DARK
+
   show ""
   show "Copyright (C) 2009-$(date +%Y) ESSENTIAL KAOS" $DARK
   show "Apache License, Version 2.0 <https://www.apache.org/licenses/LICENSE-2.0>" $DARK

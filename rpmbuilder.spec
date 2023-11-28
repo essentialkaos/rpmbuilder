@@ -65,10 +65,15 @@ rm -rf %{buildroot}
 %changelog
 * Tue Nov 28 2023 Anton Novojilov <andy@essentialkaos.com> - 3.3.0-0
 - Option '-k'/'--key' now accepts base64 encoded data with private key
+- Option '-r'/'--remote' can now be passed multiple times
 - Added private key validation
 - Added tmux check for parallel build
 - Run TMUX with UTF-8 support
 - Code refactoring
+- Improved version info output
+- Fixed bug with useless build host info parsing on multibuild
+- Fixed bug with cleaning temporary data on multibuild
+- Fixed bug with rendering help content when using Docker
 
 * Mon Sep 25 2023 Anton Novojilov <andy@essentialkaos.com> - 3.2.0-0
 - Use spec-builddep instead of yum-builddep for installing dependencies
