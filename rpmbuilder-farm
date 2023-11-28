@@ -423,7 +423,7 @@ cmdConfig() {
   read -e -r -p "$(getPrompt 'HOST PUBLIC IP / HOSTNAME')" ip
 
   show ""
-  show "Add next lines to file {#172}~/.config/rpmbuilder/buildnodes.list{!}"
+  show "Add next lines to the file {#172}~/.config/rpmbuilder/buildnodes.list{!}"
   show ""
 
   for image_name in "${images[@]}" ; do
@@ -439,7 +439,7 @@ cmdConfig() {
   show ""
 
   fmtc << EOF
-Add next lines to file {#172}~/.config/rpmbuilder/rpmbuilder.conf{!}
+Add next lines to the file {#172}~/.config/rpmbuilder/rpmbuilder.conf{!}
 
 {s-}# File with build nodes{!}
 {s}remote: ~/.config/rpmbuilder/buildnodes.list{!}
@@ -694,11 +694,14 @@ cmdStartOne() {
 # "start" command handler for many containers
 #
 # 1: User name (String)
+# 2: Quiet flag (Boolean) [Optional]
 #
 # Code: Yes
 # Echo: No
 cmdStartMany() {
   local user="$1"
+  local quiet="$2"
+
   local image_name has_actions has_problems
 
   for image_name in "${images[@]}" ; do
@@ -721,7 +724,7 @@ cmdStartMany() {
     show ""
   done
 
-  if [[ -z "$has_actions" ]] ; then
+  if [[ -z "$has_actions" && -z "$quiet" ]] ; then
     warn "All containers of user \"$user\" already work"
     return 0
   fi
@@ -731,7 +734,9 @@ cmdStartMany() {
     return 1
   fi
 
-  show "{g}All contenders successfully started{!}"
+  if [[ -z "$quiet" ]] ; then
+    show "{g}All contenders successfully started{!}"
+  fi
 
   return 0
 }
@@ -785,7 +790,7 @@ cmdRestartOne() {
     return 1
   fi
 
-  if isContainerWorks "$user" "$image_name" ; then
+  if ! isContainerWorks "$user" "$image_name" ; then
     error "Container \"$user/$image_name\" is not running"
     return 1
   fi
@@ -810,11 +815,14 @@ cmdRestartOne() {
 # "restart" command handler for many containers
 #
 # 1: User name (String)
+# 2: Quiet flag (Boolean) [Optional]
 #
 # Code: Yes
 # Echo: No
 cmdRestartMany() {
   local user="$1"
+  local quiet="$2"
+
   local image_name has_actions has_problems
 
   for image_name in "${images[@]}" ; do
@@ -844,7 +852,7 @@ cmdRestartMany() {
     show ""
   done
 
-  if [[ -z "$has_actions" ]] ; then
+  if [[ -z "$has_actions" && -z "$quiet" ]] ; then
     warn "All containers of user \"$user\" are stopped and no restart is required"
     return 0
   fi
@@ -854,7 +862,9 @@ cmdRestartMany() {
     return 1
   fi
 
-  show "{g}All contenders successfully restarted{!}"
+  if [[ -z "$quiet" ]] ; then
+    show "{g}All contenders successfully restarted{!}"
+  fi
 
   return 1
 }
@@ -922,11 +932,14 @@ cmdStopOne() {
 # "stop" command handler for many containers
 #
 # 1: User name (String)
+# 2: Quiet flag (Boolean) [Optional]
 #
 # Code: Yes
 # Echo: No
 cmdStopMany() {
   local user="$1"
+  local quiet="$2"
+
   local image_name has_actions has_problems
 
   for image_name in "${images[@]}" ; do
@@ -949,7 +962,7 @@ cmdStopMany() {
     show ""
   done
 
-  if [[ -z "$has_actions" ]] ; then
+  if [[ -z "$has_actions" && -z "$quiet" ]] ; then
     warn "All containers of user \"$user\" already stopped"
     return 0
   fi
@@ -959,7 +972,9 @@ cmdStopMany() {
     return 1
   fi
 
-  show "{g}All contenders successfully stopped{!}"
+  if [[ -z "$quiet" ]] ; then
+    show "{g}All contenders successfully stopped{!}"
+  fi
 
   return 0
 }
@@ -977,7 +992,7 @@ cmdStartAll() {
   local user has_problems
 
   for user in $(getUserList) ; do
-    if ! cmdStartMany "$user" ; then
+    if ! cmdStartMany "$user" true ; then
       has_problems=true
     fi
   done
@@ -985,6 +1000,8 @@ cmdStartAll() {
   if [[ -n "$has_problems" ]] ; then
     return 1
   fi
+
+  show "{g}All containers successfully started{!}"
 
   return 0
 }
@@ -1002,7 +1019,7 @@ cmdRestartAll() {
   local user has_problems
 
   for user in $(getUserList) ; do
-    if ! cmdRestartMany "$user" ; then
+    if ! cmdRestartMany "$user" true ; then
       has_problems=true
     fi
   done
@@ -1010,6 +1027,8 @@ cmdRestartAll() {
   if [[ -n "$has_problems" ]] ; then
     return 1
   fi
+
+  show "{g}All containers successfully restarted{!}"
 
   return 0
 }
@@ -1027,7 +1046,7 @@ cmdStopAll() {
   local user has_problems
 
   for user in $(getUserList) ; do
-    if ! cmdStopMany "$user" ; then
+    if ! cmdStopMany "$user" true ; then
       has_problems=true
     fi
   done
@@ -1035,6 +1054,8 @@ cmdStopAll() {
   if [[ -n "$has_problems" ]] ; then
     return 1
   fi
+
+  show "{g}All containers successfully stopped{!}"
 
   return 0
 }

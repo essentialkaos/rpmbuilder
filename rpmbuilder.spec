@@ -68,7 +68,7 @@ rm -rf %{buildroot}
 - Option '-r'/'--remote' can now be passed multiple times
 - Added private key validation
 - Added tmux check for parallel build
-- Run TMUX with UTF-8 support
+- Run tmux with UTF-8 support
 - Code refactoring
 - Improved version info output
 - Fixed bug with useless build host info parsing on multibuild

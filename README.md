@@ -84,6 +84,9 @@ export IMAGE=ghcr.io/essentialkaos/rpmbuilder:ol8
 # Build package
 cd my-package-dir
 rpmbuilder-docker my-package.spec
+
+# Build package using build nodes
+rpmbuilder-docker my-package.spec -r buildnode-ol7.acme.corp:2022 -r buildnode-ol8.acme.corp:2022
 ```
 
 Package build using build node image:
@@ -95,6 +98,27 @@ docker run -e PUB_KEY="$(cat ~/.ssh/buildnode.pub)" -p 2038:2038 -d ghcr.io/esse
 cd my-package-dir
 rpmbuilder my-package.spec -r builder@localhost:2038 -kk ~/.ssh/buildnode
 ```
+
+You can bootstrap your own build farm using Docker and `rpmbuilder-farm` script:
+
+```bash
+curl -fL# -o rpmbuilder-farm https://kaos.sh/rpmbuilder/rpmbuilder-farm
+chmod +x rpmbuilder-farm
+sudo mv rpmbuilder-farm /usr/bin/
+
+# Install farm script
+sudo rpmbuilder-farm install
+
+# Create user bob and add public key
+sudo farm add-user bob
+
+# Start all containers for user bob
+sudo farm start bob
+```
+
+<details><summary><b><pre>rpmbuilder-farm</pre> screenshot</b></summary><p>
+  <img src="https://gh.kaos.st/rpmbuilder-farm.png"  alt="rpmbuilder-farm preview" />
+</p></details>
 
 ### Tips
 
