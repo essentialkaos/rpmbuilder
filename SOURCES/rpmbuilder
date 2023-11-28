@@ -493,8 +493,7 @@ usage() {
   show "Remote build:" $BOLD
   show ""
   showo "--parallel, -P" "Parallel build on all build servers in same time ${CL_DARK}(tmux is required)${CL_NORM}"
-  showo "┌ --remote, -r" "Build rpm package on remote server"
-  showo "│ --remote, -r" "Build rpm package on the remote server with specified host, username and password ${CL_DARK}(mergeable)${CL_NORM}" "user:pass@host:port"
+  showo "┌ --remote, -r" "Build rpm package on the remote server with specified host, username and password ${CL_DARK}(mergeable)${CL_NORM}" "user:pass@host:port"
   showo "└ --remote, -r" "Build rpm package on the remote servers listed in specified file" "file"
   showo "┌ --key, -k" "Path to the private key for specified user" "file"
   showo "└ --key, -k" "Base64 encoded private key for specified user" "data"
@@ -537,9 +536,9 @@ usage() {
   show "Spec validation:" $BOLD
   show ""
   showo "--no-lint, -0" "Don't check spec file before package build"
-  showo "--strict, -1" "Don't build package if ${CL_ITLC}perfecto${CL_NORM} found major problems in spec file"
-  showo "--pedantic, -2" "Don't build package if ${CL_ITLC}perfecto${CL_NORM} found minor problems in spec file"
-  showo "--perfect, -3" "Don't build package if ${CL_ITLC}perfecto${CL_NORM} found any problems in spec file"
+  showo "--strict, -1" "Don't build package if perfecto found major problems in spec file"
+  showo "--pedantic, -2" "Don't build package if perfecto found minor problems in spec file"
+  showo "--perfect, -3" "Don't build package if perfecto found any problems in spec file"
   show ""
   show "Other:" $BOLD
   show ""

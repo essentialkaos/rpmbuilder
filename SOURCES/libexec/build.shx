@@ -36,12 +36,8 @@ startBuild() {
 
   trap termExit SIGINT SIGQUIT SIGTERM SIGHUP
 
-  if [[ -z "$download" && -n "$parallel" && $(wc -l "${remote/:*/}" | cut -f1 -d" ") -gt 1 ]] ; then
-    if [[ "${remote/:*/}" != "$remote" ]] ; then
-      basicBuild "$@"
-    else
-      parallelBuild "$@"
-    fi
+  if [[ -z "$download" && -n "$parallel" ]] && isNodeList "$remote" ; then
+    parallelBuild "$@"
   else
     basicBuild "$@"
   fi
@@ -51,7 +47,7 @@ startBuild() {
 
 # Start basic build
 #
-# *: All options passed to utility 
+# *: All options passed to utility
 #
 # Code: No
 # Echo: No
@@ -252,10 +248,8 @@ checkOptions() {
   fi
 
   if [[ -n "$remote" ]] ; then
-    if [[ ! -r "$remote" ]] ; then
-      if ! validateHostInfo "$remote" ; then
-        doExit $ERROR_ARGS
-      fi
+    if ! validateRemotetInfo "$remote" ; then
+      doExit $ERROR_ARGS
     fi
   fi
 
@@ -464,7 +458,7 @@ getRPMBuildDir() {
 
 # Convert utility options to yum options
 #
-# 1: Verbose mode (Boolean) [Options] 
+# 1: Verbose mode (Boolean) [Options]
 #
 # Code: No
 # Echo: Options (String)
