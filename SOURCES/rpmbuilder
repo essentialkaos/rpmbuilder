@@ -369,6 +369,7 @@ showo() {
 
   if [[ $optn =~ ^(┌|│|└) ]] ; then
     prefix="${CL_DARK}$(echo "$optn" | cut -f1 -d' ')${CL_NORM} "
+    # shellcheck disable=SC2001
     optn=$(echo "$optn" | sed 's/\(┌\|│\|└\) //')
   fi
 
