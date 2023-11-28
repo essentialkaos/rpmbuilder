@@ -116,9 +116,9 @@ sudo farm add-user bob
 sudo farm start bob
 ```
 
-<details><summary><b>rpmbuilder-farm screenshot</b></summary><p>
+<p align="center">
   <img src="https://gh.kaos.st/rpmbuilder-farm.png"  alt="rpmbuilder-farm preview" />
-</p></details>
+</p>
 
 ### Tips
 
