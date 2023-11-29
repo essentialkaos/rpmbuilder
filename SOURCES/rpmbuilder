@@ -492,21 +492,21 @@ usage() {
   show ""
   show "Remote build:" $BOLD
   show ""
-  showo "--parallel, -P" "Parallel build on all build servers in same time ${CL_DARK}(tmux is required)${CL_NORM}"
-  showo "┌ --remote, -r" "Build rpm package on the remote server with specified host, username and password ${CL_DARK}(mergeable)${CL_NORM}" "user:pass@host:port"
-  showo "└ --remote, -r" "Build rpm package on the remote servers listed in specified file" "file"
+  showo "--parallel, -P" "Parallel build on all build nodes in the same time ${CL_DARK}(tmux is required)${CL_NORM}"
+  showo "┌ --remote, -r" "Build rpm package on the remote node with specified host, username and password ${CL_DARK}(mergeable)${CL_NORM}" "user:pass@host:port"
+  showo "└ --remote, -r" "Build rpm package on the remote nodes listed in specified file" "file"
   showo "┌ --key, -k" "Path to the private key for specified user" "file"
-  showo "└ --key, -k" "Base64 encoded private key for specified user" "data"
-  showo "--node, -N" "Node index or name from file with build servers" "index-or-name"
+  showo "└ --key, -k" "Base64-encoded private key for specified user" "data"
+  showo "--node, -N" "Node index or name from the file with build nodes" "index-or-name"
   showo "--attach, -A" "Attach to parallel build session in tmux"
   show ""
   show "  Examples:" $BOLD
   show ""
   show "    rpmbuilder package.spec -r builder@192.168.1.100 -r builder@192.168.1.101" $GREY
   show "    rpmbuilder package.spec -r builder:mypass@127.0.0.1:2022~i386" $GREY
-  show "    rpmbuilder package.spec --remote ~/servers.list --key ~/.ssh/id_ed25519" $GREY
+  show "    rpmbuilder package.spec --remote ~/buildnodes.list --key ~/.ssh/id_ed25519" $GREY
   show "    rpmbuilder package.spec --remote builder@127.0.0.1:5001 --key \$(base64 -w0 ~/.ssh/id_ed25519)" $GREY
-  show "    rpmbuilder package.spec --parallel --remote ~/servers.list --node 1,2" $GREY
+  show "    rpmbuilder package.spec --parallel --remote ~/buildnodes.list --node 1,2" $GREY
   show ""
   show "Build options:" $BOLD
   show ""

@@ -69,7 +69,7 @@ Build node images:
 
 </p></details>
 
-Package build using basic image:
+Package build using base image:
 
 ```bash
 # Download and install rpmbuilder-docker script
@@ -77,16 +77,16 @@ curl -fL# -o rpmbuilder-docker https://kaos.sh/rpmbuilder/rpmbuilder-docker
 chmod +x rpmbuilder-docker
 sudo mv rpmbuilder-docker /usr/bin/
 
-# Pull image
+# Pull rpmbuilder image based on OracleLinux 8
 docker pull ghcr.io/essentialkaos/rpmbuilder:ol8
 export IMAGE=ghcr.io/essentialkaos/rpmbuilder:ol8
 
-# Build package
+# Build package locally
 cd my-package-dir
 rpmbuilder-docker my-package.spec
 
 # Build package using build nodes
-rpmbuilder-docker my-package.spec -r buildnode-ol7.acme.corp:2022 -r buildnode-ol8.acme.corp:2022
+rpmbuilder-docker my-package.spec -r buildnode-ol7.acme.corp:2022 -r buildnode-ol8.acme.corp:2022 -k $(base64 -w0 ~/.ssh/buildnode)
 ```
 
 Package build using build node image:
@@ -96,7 +96,12 @@ docker pull ghcr.io/essentialkaos/rpmbuilder:node-ol8
 docker run -e PUB_KEY="$(cat ~/.ssh/buildnode.pub)" -p 2038:2038 -d ghcr.io/essentialkaos/rpmbuilder:node-ol8
 
 cd my-package-dir
-rpmbuilder my-package.spec -r builder@localhost:2038 -kk ~/.ssh/buildnode
+
+# Using local version of rpmbuilder (if you are use RHEL, Alma, Rocky, CentOS…)
+rpmbuilder my-package.spec -r builder@localhost:2038 -k ~/.ssh/buildnode
+
+# With docker helper script (any Linux distro or macOS)
+rpmbuilder-docker my-package.spec -r builder@localhost:2038 -k $(base64 -w0 ~/.ssh/buildnode)
 ```
 
 You can bootstrap your own build farm using Docker and `rpmbuilder-farm` script:
@@ -192,21 +197,21 @@ Dependencies install:
 
 Remote build:
 
-  --parallel, -P                       Parallel build on all build servers in same time (tmux is required)
-┌ --remote, -r user:pass@host:port     Build rpm package on the remote server with specified host, username and password (mergeable)
-└ --remote, -r file                    Build rpm package on the remote servers listed in specified file
+  --parallel, -P                       Parallel build on all build nodes in the same time (tmux is required)
+┌ --remote, -r user:pass@host:port     Build rpm package on the remote node with specified host, username and password (mergeable)
+└ --remote, -r file                    Build rpm package on the remote nodes listed in specified file
 ┌ --key, -k file                       Path to the private key for specified user
-└ --key, -k data                       Base64 encoded private key for specified user
-  --node, -N index-or-name             Node index or name from file with build servers
+└ --key, -k data                       Base64-encoded private key for specified user
+  --node, -N index-or-name             Node index or name from the file with build nodes
   --attach, -A                         Attach to parallel build session in tmux
 
   Examples:
 
-    rpmbuilder package.spec -r builder@192.168.1.100 -r builder@192.168.1.101
-    rpmbuilder package.spec -r builder:mypass@127.0.0.1:2022~i386
-    rpmbuilder package.spec --remote ~/servers.list --key ~/.ssh/id_ed25519
+    rpmbuilder package.spec -r builder@192.168.1.100 -r builder@192.168.1.101 -k ~/.ssh/id_rsa
+    rpmbuilder package.spec -r builder:mypass@127.0.0.1:2022~i386 -k ~/.ssh/id_ed25519
+    rpmbuilder package.spec --remote ~/buildnodes.list --key ~/.ssh/id_ed25519
     rpmbuilder package.spec --remote builder@127.0.0.1:5001 --key $(base64 -w0 ~/.ssh/id_ed25519)
-    rpmbuilder package.spec --parallel --remote ~/servers.list --node 1,2
+    rpmbuilder package.spec --parallel --remote ~/buildnodes.list --node 1,2
 
 Build options:
 
