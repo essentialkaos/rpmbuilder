@@ -502,8 +502,8 @@ usage() {
   show ""
   show "  Examples:" $BOLD
   show ""
-  show "    rpmbuilder package.spec -r builder@192.168.1.100 -r builder@192.168.1.101" $GREY
-  show "    rpmbuilder package.spec -r builder:mypass@127.0.0.1:2022~i386" $GREY
+  show "    rpmbuilder package.spec -r builder@192.168.1.100 -r builder@192.168.1.101 -k ~/.ssh/id_rsa" $GREY
+  show "    rpmbuilder package.spec -r builder:mypass@127.0.0.1:2022~i386 -k ~/.ssh/id_ed25519" $GREY
   show "    rpmbuilder package.spec --remote ~/buildnodes.list --key ~/.ssh/id_ed25519" $GREY
   show "    rpmbuilder package.spec --remote builder@127.0.0.1:5001 --key \$(base64 -w0 ~/.ssh/id_ed25519)" $GREY
   show "    rpmbuilder package.spec --parallel --remote ~/buildnodes.list --node 1,2" $GREY
