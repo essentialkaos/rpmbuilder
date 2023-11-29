@@ -42,7 +42,7 @@ jobs:
       - name: Check scripts with Shellcheck
         uses: essentialkaos/shellcheck-action@v1
         with:
-          files: SOURCES/rpmbuilder SOURCES/libexec/*.shx SOURCES/rpmunbuilder SOURCES/buildmon SOURCES/initenv SOURCES/nodeinfo .docker/entrypoint .docker/node-entrypoint rpmbuilder-docker
+          files: SOURCES/rpmbuilder SOURCES/libexec/*.shx SOURCES/rpmunbuilder SOURCES/buildmon SOURCES/initenv SOURCES/nodeinfo .docker/entrypoint .docker/node-entrypoint rpmbuilder-docker rpmbuilder-farm
 
   Hadolint:
     name: Hadolint

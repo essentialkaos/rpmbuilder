@@ -14,7 +14,7 @@ parseSourceURL() {
   local url sources
 
   IFS=" " read -r -a sources <<< "$(getSources "$spec")"
- 
+
   url="${sources[0]}"
 
   if [[ "$url" =~ github ]] ; then
@@ -173,7 +173,7 @@ packSourcesFromGit() {
   local dir_name git_log git_opts abs_dir_path
 
   spec=$(getAbsPath "$1")
-  
+
   IFS=" " read -r -a sources <<< "$(getSources "$spec")"
 
   if findSource "${sources[0]}" &>/dev/null ; then
@@ -293,7 +293,7 @@ packSourcesFromHg() {
   local dir_name hg_log abs_dir_path
 
   spec=$(getAbsPath "$1")
-  
+
   IFS=" " read -r -a sources <<< "$(getSources "$spec")"
 
   if findSource "${sources[0]}" &>/dev/null ; then

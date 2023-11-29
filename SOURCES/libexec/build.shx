@@ -36,12 +36,8 @@ startBuild() {
 
   trap termExit SIGINT SIGQUIT SIGTERM SIGHUP
 
-  if [[ -z "$download" && -n "$parallel" && $(wc -l "${remote/:*/}" | cut -f1 -d" ") -gt 1 ]] ; then
-    if [[ "${remote/:*/}" != "$remote" ]] ; then
-      basicBuild "$@"
-    else
-      parallelBuild "$@"
-    fi
+  if [[ -z "$download" && -n "$parallel" ]] && isNodeList "$remote" ; then
+    parallelBuild "$@"
   else
     basicBuild "$@"
   fi
@@ -51,7 +47,7 @@ startBuild() {
 
 # Start basic build
 #
-# *: All options passed to utility 
+# *: All options passed to utility
 #
 # Code: No
 # Echo: No
@@ -231,94 +227,90 @@ processSpec() {
 # Code: No
 # Echo: No
 checkOptions() {
-  if [[ -n "$key" ]] ; then
-    if [[ ! -r "$key" && ! -r "$HOME/.ssh/$key" ]] ; then
-      error "Can't start build process: key file is not readable"
-      doExit $ERROR_ARGS
-    fi
-  fi
-
   if [[ -n "$parallel" && -z "$remote" ]] ; then
-    error "Can't start build process: remote build server not defined"
+    error "Cannot start build process: remote build server not defined"
     doExit $ERROR_ARGS
   fi
 
   if ! hasApp "perfecto" && [[ -n "$perfect" ]] ; then
-    error "Can't start build process: for using --perfect option, you must install perfecto first"
+    error "Cannot start build process: for using --perfect option, you must install perfecto first"
     doExit $ERROR_DEPS
   fi
 
   if [[ -n "$dest_dir" && ! -d $dest_dir ]] ; then
-    error "Can't start build process: destination directory doesn't exist"
+    error "Cannot start build process: destination directory doesn't exist"
     doExit $ERROR_ARGS
   fi
 
   if [[ -n "$dlcache" && ! -d $dlcache ]] ; then
-    error "Can't start build process: download cached directory doesn't exist"
+    error "Cannot start build process: download cached directory doesn't exist"
     doExit $ERROR_ARGS
   fi
 
   if [[ -n "$remote" ]] ; then
-    if [[ ! -r "$remote" ]] ; then
-      if ! validateHostInfo "$remote" ; then
-        doExit $ERROR_ARGS
-      fi
+    if ! validateRemotetInfo "$remote" ; then
+      doExit $ERROR_ARGS
     fi
   fi
 
+  if ! hasApp "tmux" && [[ -n "$parallel" ]] ; then
+    error "Cannot start build process: parallel build requires tmux, you need to install it first"
+    doExit $ERROR_DEPS
+  fi
+
   if ! hasApp "git" && [[ -n "$git" ]] ; then
-    error "Can't start build process: for using --git option, you must install git first"
+    error "Cannot start build process: to use the --git option, you must first install git"
     doExit $ERROR_DEPS
   fi
 
   if ! hasApp "svn" && [[ -n "$svn" ]] ; then
-    error "Can't start build process: for using --svn option, you must install svn first"
+    error "Cannot start build process: to use the --svn option, you must first install svn"
     doExit $ERROR_DEPS
   fi
 
   if ! hasApp "hg" && [[ -n "$hg" ]] ; then
-    error "Can't start build process: for using --hg option, you must install hg first"
+    error "Cannot start build process: to use the --hg option, you must first install mercurial"
     doExit $ERROR_DEPS
   fi
 
   if ! hasApp "bzr" && [[ -n "$bzr" ]] ; then
-    error "Can't start build process: for using --bzr option, you must install bzr first"
+    error "Cannot start build process: to use the --bzr option, you must first install bazaar"
     doExit $ERROR_DEPS
   fi
 
   if ! hasApp "gopack" && [[ -n "$gopack" ]] ; then
-    error "Can't start build process: for using --gopack option, you must install gopack first"
+    error "Cannot start build process: to use the --gopack option, you must first install gopack"
     doExit $ERROR_DEPS
   fi
 
   if ! hasApp "rpmbuild" "rpmlint" && [[ -z "$remote" ]] ; then
-    error "Can't start local build process:  you must install rpmbuild and rpmlint first"
+    error "Cannot start local build process: rpmbuild and rpmlint are required"
     doExit $ERROR_DEPS
   fi
 
   if ! hasApp "rpm" && [[ -n "$sign" && -z "$remote" ]] ; then
-    error "Can't start local build process: for signing packages you must install rpm first"
+    error "Cannot start local build process: for signing packages you must install rpm first"
     doExit $ERROR_DEPS
   fi
 
   if ! hasApp "spectool" ; then
-    error "Can't start local build process: spectool (part of rpmdevtools) is required"
+    error "Cannot start local build process: spectool (part of rpmdevtools) is required"
     doExit $ERROR_DEPS
   fi
 
   if [[ ! -d $tmp ]] ; then
-    error "Can't start build process: temp directory doesn't exist"
+    error "Cannot start build process: temp directory doesn't exist"
     doExit $ERROR_UNKNOWN
   fi
 
   if [[ -n "$dlcache" && ! -d $dlcache ]] ; then
-    error "Can't start build process: download cache directory doesn't exist"
+    error "Cannot start build process: download cache directory doesn't exist"
     doExit $ERROR_UNKNOWN
   fi
 
   if [[ -n "$bump" ]] ; then
     if ! hasApp "rpmdev-packager" "rpmdev-bumpspec" ; then
-      error "Can't start build process: for automatic release bumping you must install"
+      error "Cannot start build process: for automatic release bumping you must install"
       error "rpmdev-bumpspec and rpmdev-packager (from rpmdevtools package) first"
       doExit $ERROR_DEPS
     fi
@@ -326,7 +318,7 @@ checkOptions() {
     packager=$(rpmdev-packager)
 
     if [[ -z "$packager" ]] ; then
-      error "Can't start build process: for automatic release bumping you must define %packager"
+      error "Cannot start build process: for automatic release bumping you must define %packager"
       error "(name + email e.g. \"%packager John Smith <mail@smith.com>\") value in file ~/.rpmmacros"
       doExit $ERROR_UNKNOWN
     fi
@@ -371,6 +363,10 @@ clean() {
 
   if [[ -e "$tmp_output" ]] ; then
     rm -f "$tmp_output"
+  fi
+
+  if [[ -e "$tmp_key_file" ]] ; then
+    rm -f "$tmp_key_file"
   fi
 
   cleanGarbage
@@ -462,7 +458,7 @@ getRPMBuildDir() {
 
 # Convert utility options to yum options
 #
-# 1: Verbose mode (Boolean) [Options] 
+# 1: Verbose mode (Boolean) [Options]
 #
 # Code: No
 # Echo: Options (String)

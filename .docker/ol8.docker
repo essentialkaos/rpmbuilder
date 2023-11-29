@@ -6,7 +6,7 @@ ARG REGISTRY="docker.io"
 
 FROM ${REGISTRY}/essentialkaos/oraclelinux:8
 
-ARG GOSU_VER=1.16
+ARG GOSU_VER=1.17
 ARG HOSTNAME="rpmbuilder-ol8.docker.local"
 
 LABEL org.opencontainers.image.title="RPMBuilder" \
@@ -32,7 +32,7 @@ RUN echo "$HOSTNAME" > /etc/hostname && \
     mkdir -p /home/builder/rpmbuild/BUILD /home/builder/rpmbuild/BUILDROOT \
              /home/builder/rpmbuild/RPMS /home/builder/rpmbuild/SOURCES \
              /home/builder/rpmbuild/SPECS /home/builder/rpmbuild/SRPMS && \
-    mkdir -p /usr/libexec/rpmbuilder /home/builder/.config /rpmbuilder
+    mkdir -p /usr/libexec/rpmbuilder /home/builder/.config/rpmbuilder /rpmbuilder
 
 COPY SOURCES/conf/rpmmacros_el8 /home/builder/.rpmmacros
 COPY SOURCES/conf/builder.sudoers /etc/sudoers.d/rpmbuilder

@@ -9,27 +9,25 @@ require "build-remote-worker"
 
 # Starts parallel build in tmux
 #
-# *: All options passed to utility 
+# *: All options passed to utility
 #
 # Code: No
 # Echo: No
 parallelBuild() {
-  if [[ ! -r $remote ]] ; then
-    error "Error! Can't start parallel build process - builder list not readable."
-    doExit $ERROR_ARGS
-  fi
-
   if [[ -n "$dlcache" ]] ; then
     warn "Warning! You can't use a parallel build with download cache."
     doExit $ERROR_ARGS
   fi
 
-  local host_list
+  configurePrivateKey
 
+  local build_hosts
+
+  remote=$(flattenNodeList "$remote")
   # shellcheck disable=SC2207
-  host_list=($(filterNodeList "$remote"))
+  build_hosts=($(filterNodeList "$remote"))
 
-  if [[ ${#host_list[@]} -eq 0 ]] ; then
+  if [[ ${#build_hosts[@]} -eq 0 ]] ; then
     error "Error! Can't start parallel build process - there are no build nodes with given indices."
     doExit $ERROR_ARGS
   fi
@@ -57,25 +55,25 @@ parallelBuild() {
   parallel_build=true
   build_start=$(now)
 
-  local remote_host session_exist wid grc_time
+  local build_host session_exist wid grc_time
   local wids=()
 
-  for remote_host in "${host_list[@]}" ; do
+  for build_host in "${build_hosts[@]}" ; do
     wid=$(mktemp -u XXXXXXXXXXXX)
     wids+=("$wid")
 
     if [[ -z "$session_exist" ]] ; then
       if [[ -z "$TMUX" ]] ; then
-        tmux new-session -s "$TMUX_SESSION_NAME" -d "$0 $opts -r $remote_host --tmux-worker $wid" >/dev/null 2>&1
+        tmux -u new-session -s "$TMUX_SESSION_NAME" -d "$0 $opts -r $build_host --tmux-worker $wid" >/dev/null 2>&1
       else
-        tmux new-window "$0 $opts -r $remote_host --tmux-worker $wid"
+        tmux new-window "$0 $opts -r $build_host --tmux-worker $wid"
       fi
 
       tmux rename-window "$APP($spec)"
 
       session_exist=true
     else
-      tmux split-window "$0 $opts -r $remote_host --tmux-worker $wid" >/dev/null 2>&1
+      tmux split-window "$0 $opts -r $build_host --tmux-worker $wid" >/dev/null 2>&1
     fi
   done
 
@@ -105,13 +103,9 @@ parallelBuild() {
 remoteBuild() {
   local spec="$1"
 
-  showSeparator "PREPARATION"
+  configurePrivateKey
 
-  if [[ -n "$pre" ]] ; then
-    show "Executing pre-build script…"
-    # shellcheck disable=SC2091
-    $($pre)
-  fi
+  showSeparator "PREPARATION"
 
   packSources "$spec"
   processSpec "$spec"
@@ -119,7 +113,8 @@ remoteBuild() {
   show ""
   show "All source files are ready for build" $GREEN
 
-  if [[ -r $remote ]] ; then
+  # If remote option is path to file or list of nodes use multibuild
+  if [[ -r $remote || $remote =~ \  ]] ; then
     remoteRunMultibuild "$spec"
   else
     remoteRunBuild "$spec"
@@ -135,26 +130,18 @@ remoteBuild() {
 remoteRunMultibuild() {
   local spec="$1"
 
-  local build_hosts host_info r_port r_user r_pass r_arch
+  local build_host build_hosts
+  local counter=1
 
-  build_hosts=$(cat "$remote")
+  remote=$(flattenNodeList "$remote")
+  # shellcheck disable=SC2207
+  build_hosts=($(filterNodeList "$remote"))
 
-  for build_host in $build_hosts ; do
-    IFS=" " read -r -a host_info <<< "$(extractHostInfo "$build_host")"
-
-    host="${host_info[0]/!/}"
-
-    r_port="${host_info[1]/!/}"
-    r_user="${host_info[2]/!/}"
-    r_pass="${host_info[3]/!/}"
-    r_arch="${host_info[4]/!/}"
-
-    port="${r_port:-$port}"
-    user="${r_user:-$user}"
-    pass="${r_pass:-$pass}"
-    arch="${r_arch:-$arch}"
-
+  for build_host in "${build_hosts[@]}" ; do
+    show "\n${CL_BG_MAG} Build #${counter} ${CL_NORM} ${CL_MAG}Running remote build on ${CL_BL_MAG}${build_host}${CL_MAG}…${CL_NORM}"
+    remote="$build_host"
     remoteRunBuild "$spec"
+    (( counter++ ))
   done
 }
 
@@ -389,12 +376,6 @@ remoteBuildProcess() {
       doExit $ERROR_VALIDATE
     fi
 
-    if [[ -n "$post" ]] ; then
-      show "Executing post-build script…"
-      # shellcheck disable=SC2091
-      $($post)
-    fi
-
     [[ -n "$bump" ]] && releaseBump "$CWD/$spec"
 
     show ""
@@ -454,7 +435,7 @@ uploadSourcesToRemoteHost() {
     scpCommand "$source_file" "$user@$host:$rmpbuild_dir/SOURCES/" &> $verb_output
 
     grc_time=$(getGraceDurationShort "$copy_start")
-    
+
     showt "${CL_GREEN}✔ ${CL_NORM} ${source_file_name} ${CL_DARK}${grc_time}${CL_NORM}"
     show ""
   done
@@ -475,8 +456,6 @@ uploadSourcesToRemoteHost() {
   grc_time=$(getGraceDurationShort "$copy_start")
   showt "${CL_GREEN}✔ ${CL_NORM} ${spec} ${CL_DARK}${grc_time}${CL_NORM}"
   show ""
-
-  rm -rf "$tmp_dir" &> /dev/null
 }
 
 # Downloads packages from remote build host
@@ -548,6 +527,28 @@ remoteSign() {
   local package="$1"
 
   sshCommand "$host" "rpm --addsign $package &> /dev/null" 2> /dev/null
+}
+
+# Check and configure private key
+#
+# Code: No
+# Echo: No
+configurePrivateKey() {
+  if [[ -z "$key" ]] ; then
+    return
+  fi
+
+  if [[ ! -f "$key" ]] ; then
+    tmp_key_file=$(mktemp "${tmp:?}/$TMP_KEY_TEMPLATE")
+    echo "$key" | base64 -d 1> "$tmp_key_file" 2> /dev/null
+    chmod 600 "$tmp_key_file"
+    key="$tmp_key_file"
+  fi
+
+  if ! ssh-keygen -lf "$key" &> /dev/null ; then
+    error "Error! Private key is not valid."
+    doExit $ERROR_ARGS
+  fi
 }
 
 # Checks if parallel build is possible
@@ -789,9 +790,34 @@ extractHostInfo() {
   echo "${url:-!} ${port:-!} ${user:-!} ${pass:-!} ${arch:-!}"
 }
 
+# Validate info about remote node or nodes
+#
+# 1: Value of --remote option (String)
+#
+# Code: Yes
+# Echo: No
+validateRemotetInfo() {
+  local build_host build_hosts
+
+  build_hosts=$(flattenNodeList "$1")
+
+  for build_host in $build_hosts ; do
+    if [[ "$build_host" =~ \/ ]] ; then
+      error "Can't start remote build process: host \"$1\" is invalid"
+      return 1
+    fi
+
+    if ! validateHostInfo "$build_host" ; then
+      return 1
+    fi
+  done
+
+  return 0
+}
+
 # Check if URL is valid host info
 #
-# 1: URL (String)
+# 1: Host info (String)
 #
 # Code: Yes
 # Echo: No
@@ -808,35 +834,69 @@ validateHostInfo() {
 
   if [[ -n "$r_port" ]] ; then
     if ! isNum "$r_port" ; then
-      error "Can't start remote build process: remote server port must be a number"
+      error "Can't start remote build process: host \"$1\" is invalid - remote server port must be a number"
       return 1
     fi
   fi
 
   if [[ -n "$r_pass" ]] ; then
     if ! hasApp "sshpass" ; then
-      error "Can't start remote build process: remote server info contains password, using passwords requires sshpass"
+      error "Can't start remote build process: host \"$1\" is invalid - remote server info contains password, using passwords requires sshpass"
       return 1
     fi
   fi
 
   if [[ -z "$r_host" ]] ; then
-    error "Can't start remote build process: can't parse remote server info"
+    error "Can't start remote build process: host \"$1\" is invalid - can't parse remote server info"
     return 1
   fi
 
   return 0
 }
 
-# Function description
+# Flatten remote nodes info
 #
-# 1: Path to file with nodes (String)
+# 1: Value of --remote option (String)
+#
+# Code: No
+# Echo: List of nodes (String)
+flattenNodeList() {
+  if [[ -f "$1" && -r "$1" ]] ; then
+    cat "$1"
+  else
+    echo "$*"
+  fi
+}
+
+# Check if given option value is build node list
+#
+# 1: Option value (String)
+#
+# Code: Yes
+# Echo: No
+isNodeList() {
+  if [[ -f "$1" ]] ; then
+    return 0
+  fi
+
+  if [[ "$1" =~ \  ]] ; then
+    return 0
+  fi
+
+  return 1
+}
+
+# Filter node list by passed indices
+#
+# *: Node list
 #
 # Code: No
 # Echo: Node list (String)
 filterNodeList() {
+  # It's okay to split elements here
+  # shellcheck disable=SC2048
   if [[ -z "$node" ]] ; then
-    awk 1 "$1"
+    echo $*
     return
   fi
 
@@ -851,14 +911,15 @@ filterNodeList() {
     fi
   done
 
-  while read -r remote_host ; do
+  # It's okay to split elements here
+  # shellcheck disable=SC2068
+  for remote_host in $@ ; do
     (( line_num++ ))
 
     if [[ -n "${indices[$line_num]}" ]] ; then
       result+=("$remote_host")
     fi
-
-  done < <(awk 1 "$1")
+  done
 
   echo "${result[@]}"
 }

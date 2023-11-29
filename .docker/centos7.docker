@@ -6,7 +6,7 @@ ARG REGISTRY="docker.io"
 
 FROM ${REGISTRY}/essentialkaos/centos:7
 
-ARG GOSU_VER=1.16
+ARG GOSU_VER=1.17
 ARG HOSTNAME="rpmbuilder-centos7.docker.local"
 
 LABEL org.opencontainers.image.title="RPMBuilder" \

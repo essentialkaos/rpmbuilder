@@ -69,7 +69,7 @@ Build node images:
 
 </p></details>
 
-Package build using basic image:
+Package build using base image:
 
 ```bash
 # Download and install rpmbuilder-docker script
@@ -77,13 +77,16 @@ curl -fL# -o rpmbuilder-docker https://kaos.sh/rpmbuilder/rpmbuilder-docker
 chmod +x rpmbuilder-docker
 sudo mv rpmbuilder-docker /usr/bin/
 
-# Pull image
+# Pull rpmbuilder image based on OracleLinux 8
 docker pull ghcr.io/essentialkaos/rpmbuilder:ol8
 export IMAGE=ghcr.io/essentialkaos/rpmbuilder:ol8
 
-# Build package
+# Build package locally
 cd my-package-dir
 rpmbuilder-docker my-package.spec
+
+# Build package using build nodes
+rpmbuilder-docker my-package.spec -r buildnode-ol7.acme.corp:2022 -r buildnode-ol8.acme.corp:2022 -k $(base64 -w0 ~/.ssh/buildnode)
 ```
 
 Package build using build node image:
@@ -93,8 +96,34 @@ docker pull ghcr.io/essentialkaos/rpmbuilder:node-ol8
 docker run -e PUB_KEY="$(cat ~/.ssh/buildnode.pub)" -p 2038:2038 -d ghcr.io/essentialkaos/rpmbuilder:node-ol8
 
 cd my-package-dir
-rpmbuilder my-package.spec -r builder@localhost:2038 -kk ~/.ssh/buildnode
+
+# Using local version of rpmbuilder (if you are use RHEL, Alma, Rocky, CentOS…)
+rpmbuilder my-package.spec -r builder@localhost:2038 -k ~/.ssh/buildnode
+
+# With docker helper script (any Linux distro or macOS)
+rpmbuilder-docker my-package.spec -r builder@localhost:2038 -k $(base64 -w0 ~/.ssh/buildnode)
 ```
+
+You can bootstrap your own build farm using Docker and `rpmbuilder-farm` script:
+
+```bash
+curl -fL# -o rpmbuilder-farm https://kaos.sh/rpmbuilder/rpmbuilder-farm
+chmod +x rpmbuilder-farm
+sudo mv rpmbuilder-farm /usr/bin/
+
+# Install farm script
+sudo rpmbuilder-farm install
+
+# Create user bob and add public key
+sudo farm add-user bob
+
+# Start all containers for user bob
+sudo farm start bob
+```
+
+<p align="center">
+  <img src="https://gh.kaos.st/rpmbuilder-farm.png"  alt="rpmbuilder-farm preview" />
+</p>
 
 ### Tips
 
@@ -115,35 +144,35 @@ Spec file:
 
 Source packaging:
 
-  --pack, -p files                  Pack specified files to archive with default source name (mergeable)
-  --relative-pack, -R               Use relative path in source archive instead of absolute
-  --source-dir, -sd path            Path to a directory which contains source files specified in spec file
-  --source-list, -sl file           Path to file which contains a list of source files specified in spec file
-  --dlcache, -dc dir                Path to a directory for downloads caching
-  --download, -dl dir               Download all remote sources to a specified directory
-  --no-validate, -nv                Don't validate sources
+  --pack, -p files                     Pack specified files to archive with default source name (mergeable)
+  --relative-pack, -R                  Use relative path in source archive instead of absolute
+  --source-dir, -sd path               Path to a directory which contains source files specified in spec file
+  --source-list, -sl file              Path to file which contains a list of source files specified in spec file
+  --dlcache, -dc dir                   Path to a directory for downloads caching
+  --download, -dl dir                  Download all remote sources to a specified directory
+  --no-validate, -nv                   Don't validate sources
 
-  --git url                         Fetch sources from Git repository
-  --svn url                         Fetch sources from SVN repository
-  --hg url                          Fetch sources from Mercurial repository
-  --bzr url                         Fetch sources from Bazaar repository
-  --path, -rp path                  Path to a directory with sources in repository
-  --branch, -rb branch              Use specified repository branch
-  --revision, -rr rev               Use specified revision
-  --tag, -rt tag                    Use specified tag
-  --svn-user, -su username          Username for access to SVN repository
-  --svn-pass, -sp password          Password for access to SVN repository
+  --git url                            Fetch sources from Git repository
+  --svn url                            Fetch sources from SVN repository
+  --hg url                             Fetch sources from Mercurial repository
+  --bzr url                            Fetch sources from Bazaar repository
+  --path, -rp path                     Path to a directory with sources in repository
+  --branch, -rb branch                 Use specified repository branch
+  --revision, -rr rev                  Use specified revision
+  --tag, -rt tag                       Use specified tag
+  --svn-user, -su username             Username for access to SVN repository
+  --svn-pass, -sp password             Password for access to SVN repository
 
-┌ --github, -gh url                 Fetch sources from github.com repository by url
-│ --github, -gh user:project        Fetch sources from github.com repository by user and project
-└ --github, -gh user/project        Fetch sources from github.com repository by user and project
-┌ --bitbucket, -bb url              Fetch sources from bitbucket.org repository by url
-│ --bitbucket, -bb user:project     Fetch sources from bitbucket.org repository by user and project
-└ --bitbucket, -bb user/project     Fetch sources from bitbucket.org repository by user and project
-┌ --launchpad, -lp url              Fetch sources from launchpad.net repository by url
-└ --launchpad, -lp project-name     Fetch sources from launchpad.net repository by project name
+┌ --github, -gh url                    Fetch sources from github.com repository by url
+│ --github, -gh user:project           Fetch sources from github.com repository by user and project
+└ --github, -gh user/project           Fetch sources from github.com repository by user and project
+┌ --bitbucket, -bb url                 Fetch sources from bitbucket.org repository by url
+│ --bitbucket, -bb user:project        Fetch sources from bitbucket.org repository by user and project
+└ --bitbucket, -bb user/project        Fetch sources from bitbucket.org repository by user and project
+┌ --launchpad, -lp url                 Fetch sources from launchpad.net repository by url
+└ --launchpad, -lp project-name        Fetch sources from launchpad.net repository by project name
 
-  --gopack, -G url                  Fetch and pack golang sources using gopack
+  --gopack, -G url                     Fetch and pack golang sources using gopack
 
   Examples:
 
@@ -160,49 +189,50 @@ Source packaging:
 
 Dependencies install:
 
-  --install, -I                     Install build dependencies before build process
-  --install-latest, -IL             Install the latest versions of build dependencies before build process
-  --enable-repo, -ER repo-name      Enable repositories (mergeable)
-  --disable-repo, -DR repo-name     Disable repositories (mergeable)
-  --exclude-package, -EX package    Exclude package by name or glob (mergeable)
+  --install, -I                        Install build dependencies before build process
+  --install-latest, -IL                Install the latest versions of build dependencies before build process
+  --enable-repo, -ER repo-name         Enable repositories (mergeable)
+  --disable-repo, -DR repo-name        Disable repositories (mergeable)
+  --exclude-package, -EX package       Exclude package by name or glob (mergeable)
 
 Remote build:
 
-  --parallel, -P                    Parallel build on all build servers in same time (tmux is required)
-┌ --remote, -r                      Build rpm package on remote server
-│ --remote, -r user:pass@host:port  Build rpm package on the remote server with specified host, username and password
-└ --remote, -r file                 Build rpm package on the remote servers listed in specified file
-  --key, -k file                    Path to the private key for specified user
-  --node, -N index-or-name          Node index or name from file with build servers
-  --attach, -A                      Attach to parallel build session in tmux
+  --parallel, -P                       Parallel build on all build nodes in the same time (tmux is required)
+┌ --remote, -r user:pass@host:port     Build rpm package on the remote node with specified host, username and password (mergeable)
+└ --remote, -r file                    Build rpm package on the remote nodes listed in specified file
+┌ --key, -k file                       Path to the private key for specified user
+└ --key, -k data                       Base64-encoded private key for specified user
+  --node, -N index-or-name             Node index or name from the file with build nodes
+  --attach, -A                         Attach to parallel build session in tmux
 
   Examples:
 
-    rpmbuilder package.spec -r builder@127.0.0.1
-    rpmbuilder package.spec -r builder:mypass@127.0.0.1:2022~i386
-    rpmbuilder package.spec --remote ~/servers.list --key ~/.ssh/id_ed25519
-    rpmbuilder package.spec --parallel --remote ~/servers.list --node 1,2
+    rpmbuilder package.spec -r builder@192.168.1.100 -r builder@192.168.1.101 -k ~/.ssh/id_rsa
+    rpmbuilder package.spec -r builder:mypass@127.0.0.1:2022~i386 -k ~/.ssh/id_ed25519
+    rpmbuilder package.spec --remote ~/buildnodes.list --key ~/.ssh/id_ed25519
+    rpmbuilder package.spec --remote builder@127.0.0.1:5001 --key $(base64 -w0 ~/.ssh/id_ed25519)
+    rpmbuilder package.spec --parallel --remote ~/buildnodes.list --node 1,2
 
 Build options:
 
-  --no-build, -NB                   Don't execute any build stages
-  --no-clean, -NC                   Don't remove source files and spec file after build
-  --no-deps, -ND                    Don't verify build dependencies
-  --no-binary, -NR                  Don't build binary packages
-  --no-source, -NS                  Don't build source package
-  --arch, -a arch                   Override target arch for a build
-  --qa-rpaths "<value>,…"           Ignoring rpaths check
+  --no-build, -NB                      Don't execute any build stages
+  --no-clean, -NC                      Don't remove source files and spec file after build
+  --no-deps, -ND                       Don't verify build dependencies
+  --no-binary, -NR                     Don't build binary packages
+  --no-source, -NS                     Don't build source package
+  --arch, -a arch                      Override target arch for a build
+  --qa-rpaths "<value>,<value>,..."    Ignoring rpaths check
 
 Arguments passing:
 
-  --with, -w param                  Pass conditional parameters into a rpmbuild (mergeable)
-  --without, -W param               Pass conditional parameters into a rpmbuild (mergeable)
-  --define, -D "macro=value"        Define MACRO with value (exist macro will be not redefined) (mergeable)
+  --with, -w param                     Pass conditional parameters into a rpmbuild (mergeable)
+  --without, -W param                  Pass conditional parameters into a rpmbuild (mergeable)
+  --define, -D "macro=value"           Define MACRO with value (exist macro will be not redefined) (mergeable)
 
   Examples:
 
     rpmbuilder package.spec --with ssl --with ldap
-    rpmbuilder package.spec -w ssl -W ldap
+    rpmbuilder package.spec -w ssl -w static -W ldap
     rpmbuilder package.spec --with "ssl ldap"
     rpmbuilder package.spec --define "install_dir=/some/dir" --define "service_user=someone"
 
@@ -210,23 +240,23 @@ Arguments passing:
 
 Spec validation:
 
-  --no-lint, -0                     Don't check spec file before package build
-  --strict, -1                      Don't build package if perfecto found major problems in spec file
-  --pedantic, -2                    Don't build package if perfecto found minor problems in spec file
-  --perfect, -3                     Don't build package if perfecto found any problems in spec file
+  --no-lint, -0                        Don't check spec file before package build
+  --strict, -1                         Don't build package if perfecto found major problems in spec file
+  --pedantic, -2                       Don't build package if perfecto found minor problems in spec file
+  --perfect, -3                        Don't build package if perfecto found any problems in spec file
 
 Other:
 
-  --sign, -s                        Sign package after build
-  --dest, -d dir                    Save built packages to a specified directory
-  --keep-log, -kl                   Save build log after an unsuccessful build
-  --bump, -b                        Bump release in spec file after a successful build
-  --bump-comment, -bc comment       Comment which will be added while release bump
-  --tmp dir                         Path to a temporary directory
-  --verbose, -V                     Verbose output
-  --no-color, -nc                   Disable colors in output
-  --help, -h                        Show this help message
-  --version, -v                     Show information about version
+  --sign, -s                           Sign package after build
+  --dest, -d dir                       Save built packages to a specified directory
+  --keep-log, -kl                      Save build log after an unsuccessful build
+  --bump, -b                           Bump release in spec file after a successful build
+  --bump-comment, -bc comment          Comment which will be added while release bump
+  --tmp dir                            Path to a temporary directory (default: /var/tmp)
+  --verbose, -V                        Verbose output
+  --no-color, -nc                      Disable colors in output
+  --help, -h                           Show this help message
+  --version, -v                        Show information about version
 ```
 
 ### Build Status

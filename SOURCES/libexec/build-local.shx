@@ -16,12 +16,6 @@ localBuild() {
 
   setupBuildTree
 
-  if [[ -n "$pre" ]] ; then
-    show "Executing pre-build script…"
-    # shellcheck disable=SC2091
-    $($pre)
-  fi
-
   packSources "$spec"
   processSpec "$spec"
 
@@ -285,16 +279,6 @@ localBuildProcess() {
         removeLocalLock
         doExit $ERROR_VALIDATE
       fi
-
-      pushd "$CWD" &> /dev/null || printErrorAndExit "Can't set working dir to $CWD"
-
-      if [[ -n "$post" ]] ; then
-        show "Executing post-build script…"
-        # shellcheck disable=SC2091
-        $($post)
-      fi
-
-      popd &> /dev/null || printErrorAndExit "Can't set working dir"
 
       [[ -n "$bump" ]] && releaseBump "$CWD/$spec"
 
