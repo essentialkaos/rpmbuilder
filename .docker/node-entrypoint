@@ -23,7 +23,7 @@ echo "$PUB_KEY" > /home/builder/.ssh/authorized_keys
 
 # Export proxy configuration
 if [[ -n "$http_proxy" || -n "$HTTP_PROXY" ]] ; then
-  cat < EOF >> /etc/environment
+  cat << EOF >> /etc/environment
 HTTP_PROXY=${HTTP_PROXY:-$http_proxy}
 http_proxy=${http_proxy:-$HTTP_PROXY}
 HTTPS_PROXY=${HTTPS_PROXY:-$https_proxy}
