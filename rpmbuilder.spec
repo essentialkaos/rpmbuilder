@@ -6,7 +6,7 @@
 
 Summary:    RPM package build helper
 Name:       rpmbuilder
-Version:    3.3.0
+Version:    3.3.1
 Release:    0%{?dist}
 License:    Apache License, Version 2.0
 Group:      Development/Tools
@@ -63,6 +63,9 @@ rm -rf %{buildroot}
 ################################################################################
 
 %changelog
+* Wed Nov 29 2023 Anton Novojilov <andy@essentialkaos.com> - 3.3.1-0
+- Code refactoring
+
 * Tue Nov 28 2023 Anton Novojilov <andy@essentialkaos.com> - 3.3.0-0
 - Option '-k'/'--key' now accepts base64 encoded data with private key
 - Option '-r'/'--remote' can now be passed multiple times
