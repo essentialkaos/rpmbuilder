@@ -13,7 +13,7 @@ fi
 APP="RPMBuilder"
 
 # Utility version (String)
-VER="3.3.0"
+VER="3.3.1"
 
 # Utility description (String)
 DESC="RPM package build helper"
@@ -33,29 +33,29 @@ CYAN=36
 GREY=37
 DARK=90
 
-CL_NORM="\e[0m"
-CL_BOLD="\e[0;${BOLD};49m"
-CL_ITLC="\e[0;${ITLC};49m"
-CL_UNLN="\e[0;${UNLN};49m"
-CL_RED="\e[0;${RED};49m"
-CL_GREEN="\e[0;${GREEN};49m"
-CL_YELLOW="\e[0;${YELLOW};49m"
-CL_BLUE="\e[0;${BLUE};49m"
-CL_MAG="\e[0;${MAG};49m"
-CL_CYAN="\e[0;${CYAN};49m"
-CL_GREY="\e[0;${GREY};49m"
-CL_DARK="\e[0;${DARK};49m"
-CL_BL_RED="\e[1;${RED};49m"
-CL_BL_GREEN="\e[1;${GREEN};49m"
-CL_BL_YELLOW="\e[1;${YELLOW};49m"
-CL_BL_BLUE="\e[1;${BLUE};49m"
-CL_BL_MAG="\e[1;${MAG};49m"
-CL_BL_CYAN="\e[1;${CYAN};49m"
-CL_BL_GREY="\e[1;${GREY};49m"
+CL_NORM="\e[${NORM}m"
+CL_BOLD="\e[${BOLD}m"
+CL_ITLC="\e[${ITLC}m"
+CL_UNLN="\e[${UNLN}m"
+CL_RED="\e[${RED}m"
+CL_GREEN="\e[${GREEN}m"
+CL_YELLOW="\e[${YELLOW}m"
+CL_BLUE="\e[${BLUE}m"
+CL_MAG="\e[${MAG}m"
+CL_CYAN="\e[${CYAN}m"
+CL_GREY="\e[${GREY}m"
+CL_DARK="\e[${DARK}m"
+CL_BL_RED="\e[1;${RED}m"
+CL_BL_GREEN="\e[1;${GREEN}m"
+CL_BL_YELLOW="\e[1;${YELLOW}m"
+CL_BL_BLUE="\e[1;${BLUE}m"
+CL_BL_MAG="\e[1;${MAG}m"
+CL_BL_CYAN="\e[1;${CYAN}m"
+CL_BL_GREY="\e[1;${GREY}m"
 CL_BG_MAG="\e[1m\e[7m\e[${MAG}m"
-CL_BLNK_YELLOW="\e[5;${YELLOW};49m"
-CL_PODMAN="\033[38;5;91m"
-CL_DOCKER="\033[38;5;32m"
+CL_BLNK_YELLOW="\e[5;${YELLOW}m"
+CL_PODMAN="\e[38;5;91m"
+CL_DOCKER="\e[38;5;32m"
 
 ERROR_UNKNOWN=1
 ERROR_ARGS=2

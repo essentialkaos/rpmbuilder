@@ -5,7 +5,7 @@ export PATH := shellcheck-latest:$(PATH)
 
 ########################################################################################
 
-IMAGE_REPO ?= essentialkaos/rpmbuilder
+IMAGE_REPO ?= ghcr.io/essentialkaos/rpmbuilder
 PUB_KEY_FILE ?= ~/.ssh/buildnode.pub
 
 ########################################################################################
