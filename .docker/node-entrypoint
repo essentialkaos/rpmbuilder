@@ -1,4 +1,5 @@
 #!/usr/bin/env bash
+# shellcheck disable=SC2269
 
 set -e
 
@@ -19,6 +20,17 @@ passwd -fu builder
 
 # Export public key to authorized_keys file
 echo "$PUB_KEY" > /home/builder/.ssh/authorized_keys
+
+# Export proxy configuration
+if [[ -n "$http_proxy" || -n "$HTTP_PROXY" ]] ; then
+  cat < EOF >> /etc/environment
+HTTP_PROXY=${HTTP_PROXY:-$http_proxy}
+http_proxy=${http_proxy:-$HTTP_PROXY}
+HTTPS_PROXY=${HTTPS_PROXY:-$https_proxy}
+https_proxy=${https_proxy:-$HTTPS_PROXY}
+no_proxy=$no_proxy
+EOF
+fi
 
 # Change permissions for builder files and directories
 chown -R builder:builder /home/builder
