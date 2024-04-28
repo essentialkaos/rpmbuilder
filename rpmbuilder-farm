@@ -13,7 +13,7 @@ fi
 APP="rpmbuilder-farm"
 
 # App version
-VER="1.1.0"
+VER="1.2.0"
 
 # App description
 DESC="Helper for bootstrapping rpmbuilder build farm"
@@ -1133,10 +1133,16 @@ startContainer() {
     return 1
   fi
 
+  cid=$(docker ps -aq -f name="$container_name" -f status=exited)
+
+  if [[ -n "$cid" ]] ; then
+    docker rm "$container_name" &> /dev/null
+  fi
+
   docker run --name "$container_name" \
              -e PUB_KEY="$pub_key" \
              -p "$host_port:$target_port" \
-             -d "$image:node-$image_name" &>/dev/null
+             -d "$image:node-$image_name" &> /dev/null
 
   return $?
 }
@@ -1155,13 +1161,11 @@ stopContainer() {
 
   local cid
 
-  cid=$(docker ps -q -f name="$container_name")
+  cid=$(docker ps -aq -f name="$container_name")
+
+  docker rm "$container_name" &> /dev/null
 
   if ! docker kill "$cid" &> /dev/null ; then
-    return 1
-  fi
-
-  if ! docker rm "$container_name" &> /dev/null ; then
     return 1
   fi
 
@@ -1658,7 +1662,7 @@ fmtc << EOF
   {y}${CMD_USER_ADD}{!} {s}user{!} {s-}..........{!} Add new user
   {y}${CMD_USER_DEL}{!} {s}user{!} {s-}..........{!} Remove user and it containers
   {y}${CMD_USER_MOD}{!} {s}user{!} {s-}..........{!} Modify user public key
-  {y}${CMD_USER_LIST}{!} {s-}..............{!} List users
+  {y}${CMD_USER_LIST}{!} {s-}.............{!} List users
   {y}${CMD_LIST_IMAGES}{!} {s-}............{!} Show list of all official images
   {y}${CMD_UPDATE_IMAGES}{!} {s-}..........{!} Update all official images
   {y}${CMD_CONTAINERS}{!} {s-}.............{!} Show list of containers with their status
