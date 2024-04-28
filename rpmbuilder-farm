@@ -1698,17 +1698,22 @@ EOF
 # Code: No
 # Echo: No
 about() {
-  local docker_ver
+  local docker_ver fmtc_ver
 
   if hasApp "docker" ; then
     docker_ver=$(docker version -f '{{.Server.Version}} (git:{{.Server.GitCommit}})' 2>/dev/null)
+  fi
+
+  if hasApp "fmtc" ; then
+    fmtc_ver=$(fmtc -v simple)
   fi
 
 fmtc << EOF
 
 {c*}$APP{!} {c}$VER{!} — $DESC
 {s-}│{!}
-{s-}└ Docker: ${docker_ver:-—}{!}
+{s-}├ fmtc: ${fmtc_ver:-—}{!}
+{s-}└ docker: ${docker_ver:-—}{!}
 
 {s-}Copyright (C) 2009-$(date +%Y) ESSENTIAL KAOS{!}
 {s-}Apache License, Version 2.0 <https://www.apache.org/licenses/LICENSE-2.0>{!}
