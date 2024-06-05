@@ -19,6 +19,7 @@ LABEL org.opencontainers.image.title="RPMBuilder" \
 
 # hadolint ignore=DL3031,DL3033
 RUN echo "$HOSTNAME" > /etc/hostname && \
+    yum -y -q update oraclelinux-release && \
     yum -y -q install https://pkgs.kaos.st/kaos-repo-latest.el7.noarch.rpm && \
     yum -y -q install https://mirror.yandex.ru/epel/7/x86_64/Packages/e/epel-release-7-14.noarch.rpm && \
     yum -y -q install https://mirror.yandex.ru/centos/7/extras/x86_64/Packages/centos-release-scl-rh-2-3.el7.centos.noarch.rpm && \
