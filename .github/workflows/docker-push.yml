@@ -157,18 +157,7 @@ jobs:
             exit 0
           fi
 
-      - name: Build and push images (DockerHub)
-        if: ${{ steps.build_check.outputs.build == 'true' }}
-        uses: docker/build-push-action@v5
-        with:
-          push: true
-          context: .
-          file: ${{steps.metadata.outputs.dockerfile}}
-          build-args: |
-            REGISTRY=docker.io
-          tags: ${{steps.metadata.outputs.dh_tags}}
-
-      - name: Build and push images (GHCR)
+      - name: Build and push image
         if: ${{ steps.build_check.outputs.build == 'true' }}
         uses: docker/build-push-action@v5
         with:
@@ -177,18 +166,10 @@ jobs:
           file: ${{steps.metadata.outputs.dockerfile}}
           build-args: |
             REGISTRY=ghcr.io
-          tags: ${{steps.metadata.outputs.gh_tags}}
-
-      - name: Build and push images (YCCR)
-        if: ${{ steps.build_check.outputs.build == 'true' }}
-        uses: docker/build-push-action@v5
-        with:
-          push: true
-          context: .
-          file: ${{steps.metadata.outputs.dockerfile}}
-          build-args: |
-            REGISTRY=ghcr.io
-          tags: ${{steps.metadata.outputs.yc_tags}}
+          tags: |
+            ${{ steps.metadata.outputs.dh_tags }}
+            ${{ steps.metadata.outputs.gh_tags }}
+            ${{ steps.metadata.outputs.yc_tags }}
 
       - name: Show info about built image
         if: ${{ steps.build_check.outputs.build == 'true' }}
