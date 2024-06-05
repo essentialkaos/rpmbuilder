@@ -19,6 +19,7 @@ LABEL org.opencontainers.image.title="RPMBuilder" \
 
 # hadolint ignore=DL3031,DL3041
 RUN echo "$HOSTNAME" > /etc/hostname && \
+    yum -y -q update oraclelinux-release && \
     dnf -y -q install https://pkgs.kaos.st/kaos-repo-latest.el9.noarch.rpm && \
     dnf -y -q install https://dl.fedoraproject.org/pub/epel/epel-release-latest-9.noarch.rpm && \
     sed -i 's/gpgcheck=1/gpgcheck=1\nmodule_hotfixes=1/g' /etc/yum.repos.d/epel.repo && \
