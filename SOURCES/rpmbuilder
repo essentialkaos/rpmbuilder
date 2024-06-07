@@ -13,7 +13,7 @@ fi
 APP="RPMBuilder"
 
 # Utility version (String)
-VER="3.3.1"
+VER="3.3.2"
 
 # Utility description (String)
 DESC="RPM package build helper"
@@ -431,13 +431,13 @@ usage() {
   show ""
   show "${CL_BOLD}Usage:${CL_NORM} rpmbuilder ${CL_YELLOW}{spec-file}${CL_NORM} ${CL_GREEN}{options}${CL_NORM}"
   show ""
-  show "${CL_BOLD}Spec file:${CL_NORM}"
+  show "${CL_BOLD}Spec file${CL_NORM}"
   show ""
-  show "  You can define absolute or relative path to spec file. You also can define only spec name (without extension)."
-  show "  In this case, rpmbuilder try use ${CL_YELLOW}{name}${CL_NORM}.spec file for build and try to find ${CL_YELLOW}{name}${CL_NORM}.source file and use as "
-  show "  sources list."
+  show "  You can specify an absolute or relative path to the spec file. You can also specify spec"
+  show "  name only (without extension). In this case, rpmbuilder will try to use ${CL_YELLOW}{name}${CL_NORM}.spec file"
+  show "  for build and try to find ${CL_YELLOW}{name}${CL_NORM}.source file and use it as source list."
   show ""
-  show "Source packaging:" $BOLD
+  show "Source packaging" $BOLD
   show ""
   showo "--pack, -p" "Pack specified files to archive with default source name ${CL_DARK}(mergeable)${CL_NORM}" "files"
   showo "--relative-pack, -R" "Use relative path in source archive instead of absolute"
@@ -469,7 +469,7 @@ usage() {
   show ""
   showo "--gopack, -G" "Fetch and pack golang sources using gopack" "url"
   show ""
-  show "  Examples:" $BOLD
+  show "  Examples" $BOLD
   show ""
   show "    rpmbuilder package.spec -sl sources/current -d ~/mypackages" $GREY
   show "    rpmbuilder package.spec --source-list files.list --dest ~/mypackages" $GREY
@@ -482,7 +482,7 @@ usage() {
   show "    rpmbuilder package.spec --github https://github.com/user/project/" $GREY
   show "    rpmbuilder package.spec --gopack github.com/user/project --tag v1.2.3" $GREY
   show ""
-  show "Dependencies install:" $BOLD
+  show "Dependencies install" $BOLD
   show ""
   showo "--install, -I" "Install build dependencies before build process"
   showo "--install-latest, -IL" "Install the latest versions of build dependencies before build process"
@@ -490,7 +490,7 @@ usage() {
   showo "--disable-repo, -DR" "Disable repositories ${CL_DARK}(mergeable)${CL_NORM}" "repo-name"
   showo "--exclude-package, -EX" "Exclude package by name or glob ${CL_DARK}(mergeable)${CL_NORM}" "package"
   show ""
-  show "Remote build:" $BOLD
+  show "Remote build" $BOLD
   show ""
   showo "--parallel, -P" "Parallel build on all build nodes in the same time ${CL_DARK}(tmux is required)${CL_NORM}"
   showo "┌ --remote, -r" "Build rpm package on the remote node with specified host, username and password ${CL_DARK}(mergeable)${CL_NORM}" "user:pass@host:port"
@@ -500,7 +500,7 @@ usage() {
   showo "--node, -N" "Node index or name from the file with build nodes" "index-or-name"
   showo "--attach, -A" "Attach to parallel build session in tmux"
   show ""
-  show "  Examples:" $BOLD
+  show "  Examples" $BOLD
   show ""
   show "    rpmbuilder package.spec -r builder@192.168.1.100 -r builder@192.168.1.101 -k ~/.ssh/id_rsa" $GREY
   show "    rpmbuilder package.spec -r builder:mypass@127.0.0.1:2022~i386 -k ~/.ssh/id_ed25519" $GREY
@@ -508,7 +508,7 @@ usage() {
   show "    rpmbuilder package.spec --remote builder@127.0.0.1:5001 --key \$(base64 -w0 ~/.ssh/id_ed25519)" $GREY
   show "    rpmbuilder package.spec --parallel --remote ~/buildnodes.list --node 1,2" $GREY
   show ""
-  show "Build options:" $BOLD
+  show "Build options" $BOLD
   show ""
   showo "--no-build, -NB" "Don't execute any build stages"
   showo "--no-clean, -NC" "Don't remove source files and spec file after build"
@@ -518,13 +518,13 @@ usage() {
   showo "--arch, -a" "Override target arch for a build" "arch"
   showo "--qa-rpaths" "Ignoring rpaths check" '"<value>,<value>,..."'
   show ""
-  show "Arguments passing:" $BOLD
+  show "Arguments passing" $BOLD
   show ""
   showo "--with, -w" "Pass conditional parameters into a rpmbuild ${CL_DARK}(mergeable)${CL_NORM}" "param"
   showo "--without, -W" "Pass conditional parameters into a rpmbuild ${CL_DARK}(mergeable)${CL_NORM}" "param"
   showo "--define, -D" "Define MACRO with value (exist macro will be not redefined) ${CL_DARK}(mergeable)${CL_NORM}" "\"macro=value\""
   show ""
-  show "  Examples:" $BOLD
+  show "  Examples" $BOLD
   show ""
   show "    rpmbuilder package.spec --with ssl --with ldap" $GREY
   show "    rpmbuilder package.spec -w ssl -w static -W ldap" $GREY
@@ -533,14 +533,14 @@ usage() {
   show ""
   show "  More info: https://kaos.sh/rpmbuilder/w/Conditional-Builds" $DARK
   show ""
-  show "Spec validation:" $BOLD
+  show "Spec validation" $BOLD
   show ""
   showo "--no-lint, -0" "Don't check spec file before package build"
   showo "--strict, -1" "Don't build package if perfecto found major problems in spec file"
   showo "--pedantic, -2" "Don't build package if perfecto found minor problems in spec file"
   showo "--perfect, -3" "Don't build package if perfecto found any problems in spec file"
   show ""
-  show "Other:" $BOLD
+  show "Other" $BOLD
   show ""
   showo "--sign, -s" "Sign package after build"
   showo "--dest, -d" "Save built packages to a specified directory" "dir"
