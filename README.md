@@ -131,7 +131,13 @@ sudo farm start bob
 
 ### Usage
 
+#### `rpmbuilder`
+
 <p align="center"><img src=".github/images/usage.svg"/></p>
+
+#### `rpmbuilder-farm`
+
+<p align="center"><img src=".github/images/farm-usage.svg"/></p>
 
 ### Build Status
 
