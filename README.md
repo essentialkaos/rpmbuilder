@@ -17,7 +17,7 @@ https://github.com/essentialkaos/rpmbuilder/assets/182020/d0ae6d9c-663e-46cf-a3f
 
 ### Installation
 
-#### From [ESSENTIAL KAOS Public Repository](https://pkgs.kaos.st)
+#### From [ESSENTIAL KAOS Public Repository](https://kaos.sh/kaos-repo)
 
 ```bash
 sudo yum install -y https://pkgs.kaos.st/kaos-repo-latest.el$(grep 'CPE_NAME' /etc/os-release | tr -d '"' | cut -d':' -f5).noarch.rpm
@@ -121,9 +121,7 @@ sudo farm add-user bob
 sudo farm start bob
 ```
 
-<p align="center">
-  <img src="https://gh.kaos.st/rpmbuilder-farm.png"  alt="rpmbuilder-farm preview" />
-</p>
+<p align="center"><img src=".github/images/farm-preview.png"  alt="rpmbuilder-farm preview" /></p>
 
 ### Tips
 
@@ -133,7 +131,7 @@ sudo farm start bob
 
 ### Usage
 
-<img src=".github/images/usage.svg" />
+<p align="center"><img src=".github/images/usage.svg"/></p>
 
 ### Build Status
 
