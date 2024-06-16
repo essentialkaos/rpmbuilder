@@ -13,7 +13,7 @@ fi
 APP="rpmbuilder-farm"
 
 # App version
-VER="1.2.0"
+VER="1.2.1"
 
 # App description
 DESC="Helper for bootstrapping rpmbuilder build farm"
@@ -65,18 +65,19 @@ images=("centos7" "ol7" "ol8" "ol9")
 # Code: No
 # Echo: No
 main() {
+  if hasApp "fmtc" ; then
+    if [[ "$1" == "--version" || "$1" == "-v" ]] ; then
+      about
+      exit 0
+    fi
+
+    if [[ $# -eq 0 || "$1" == "--help" || "$1" == "-h" ]] ; then
+      usage
+      exit 0
+    fi
+  fi
+
   prepare
-
-  if [[ "$1" == "--version" || "$1" == "-v" ]] ; then
-    about
-    exit 0
-  fi
-
-  if [[ $# -eq 0 || "$1" == "--help" || "$1" == "-h" ]] ; then
-    usage
-    exit 0
-  fi
-
   execCommand "$@"
 
   exit $?
