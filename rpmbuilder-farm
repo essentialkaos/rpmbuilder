@@ -13,7 +13,7 @@ fi
 APP="rpmbuilder-farm"
 
 # App version
-VER="1.2.1"
+VER="1.2.2"
 
 # App description
 DESC="Helper for bootstrapping rpmbuilder build farm"
@@ -54,7 +54,7 @@ START_PORT=10000
 image="ghcr.io/essentialkaos/rpmbuilder"
 
 # List of images
-images=("centos7" "ol7" "ol8" "ol9")
+images=("ol8" "ol9")
 
 ###############################################################################
 
@@ -1432,8 +1432,6 @@ isValidKey() {
 # Echo: Port (Number)
 getImagePort() {
   case "$1" in
-    "centos7") echo "27" ;;
-    "ol7")     echo "37" ;;
     "ol8")     echo "38" ;;
     "ol9")     echo "39" ;;
   esac
@@ -1507,8 +1505,6 @@ hasImage() {
 # Echo: Image name with color (String)
 getImageWithColor() {
   case "$1" in
-    "centos7") echo "{#75}$1{!}" ;;
-    "ol7")     echo "{#113}$1{!}" ;;
     "ol8")     echo "{#174}$1{!}" ;;
     "ol9")     echo "{#99}$1{!}" ;;
     *)         echo "$1"
@@ -1523,8 +1519,6 @@ getImageWithColor() {
 # Echo: Image color tag (String)
 getImageColor() {
   case "$1" in
-    "centos7") echo "{#75}" ;;
-    "ol7")     echo "{#113}" ;;
     "ol8")     echo "{#174}" ;;
     "ol9")     echo "{#99}" ;;
   esac
