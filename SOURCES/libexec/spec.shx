@@ -22,11 +22,22 @@ isSpecFile() {
     return 1
   fi
 
-  if ! grep -q "%prep" "$1" ; then
+  if ! spectool -n "$1" &> /dev/null ; then
     return 1
   fi
 
   return 0
+}
+
+# Validate spec using spectool
+#
+# 1: Path to spec file (String)
+#
+# Code: Yes
+# Echo: Validation error (String)
+validateSpec() {
+  spectool -n "$1" 1>/dev/null
+  return $?
 }
 
 # Read options from spec file

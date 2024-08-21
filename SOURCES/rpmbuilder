@@ -13,7 +13,7 @@ fi
 APP="RPMBuilder"
 
 # Utility version (String)
-VER="3.3.2"
+VER="3.3.3"
 
 # Utility description (String)
 DESC="RPM package build helper"

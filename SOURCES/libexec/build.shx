@@ -21,13 +21,16 @@ require "utils"
 # Echo: No
 startBuild() {
   local spec="$1"
+  local err
 
   if ! isSpecFile "$spec" ; then
     if isSpecFile "${spec}.spec" ; then
       [[ -r "${spec}.source" && -z "$source_list" ]] && source_list="$spec.source"
       spec="${spec}.spec"
     else
+      err=$(validateSpec "$spec")
       error "${CL_BL_RED}${spec}${CL_RED} is not a spec file!${CL_NORM}"
+      error "${CL_BL_RED}${err}${CL_NORM}"
       doExit $ERROR_SPEC
     fi
   fi
