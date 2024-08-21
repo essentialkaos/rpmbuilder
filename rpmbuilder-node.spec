@@ -1,57 +1,13 @@
 ################################################################################
 
-%define _posixroot        /
-%define _root             /root
-%define _bin              /bin
-%define _sbin             /sbin
-%define _srv              /srv
-%define _home             /home
-%define _lib32            %{_posixroot}lib
-%define _lib64            %{_posixroot}lib64
-%define _libdir32         %{_prefix}%{_lib32}
-%define _libdir64         %{_prefix}%{_lib64}
-%define _logdir           %{_localstatedir}/log
-%define _rundir           %{_localstatedir}/run
-%define _lockdir          %{_localstatedir}/lock/subsys
-%define _cachedir         %{_localstatedir}/cache
-%define _spooldir         %{_localstatedir}/spool
-%define _crondir          %{_sysconfdir}/cron.d
-%define _loc_prefix       %{_prefix}/local
-%define _loc_exec_prefix  %{_loc_prefix}
-%define _loc_bindir       %{_loc_exec_prefix}/bin
-%define _loc_libdir       %{_loc_exec_prefix}/%{_lib}
-%define _loc_libdir32     %{_loc_exec_prefix}/%{_lib32}
-%define _loc_libdir64     %{_loc_exec_prefix}/%{_lib64}
-%define _loc_libexecdir   %{_loc_exec_prefix}/libexec
-%define _loc_sbindir      %{_loc_exec_prefix}/sbin
-%define _loc_bindir       %{_loc_exec_prefix}/bin
-%define _loc_datarootdir  %{_loc_prefix}/share
-%define _loc_includedir   %{_loc_prefix}/include
-%define _loc_mandir       %{_loc_datarootdir}/man
-%define _rpmstatedir      %{_sharedstatedir}/rpm-state
-%define _pkgconfigdir     %{_libdir}/pkgconfig
-
-%define __ln              %{_bin}/ln
-%define __touch           %{_bin}/touch
-%define __service         %{_sbin}/service
-%define __chkconfig       %{_sbin}/chkconfig
-%define __ldconfig        %{_sbin}/ldconfig
-%define __groupadd        %{_sbindir}/groupadd
-%define __useradd         %{_sbindir}/useradd
-%define __userdel         %{_sbindir}/userdel
-%define __systemctl       %{_bindir}/systemctl
-
-################################################################################
-
-%define user_name         builder
-%define home_dir          %{_home}/%{user_name}
-%define service_name      buildmon
+%define user_name  builder
+%define home_dir   /home/%{user_name}
 
 ################################################################################
 
 Summary:         Configuration package for rpmbuilder node
 Name:            rpmbuilder-node
-Version:         1.5.0
+Version:         1.6.0
 Release:         0%{?dist}
 License:         Apache License, Version 2.0
 Group:           Development/Tools
@@ -63,8 +19,7 @@ BuildArch:       noarch
 
 BuildRoot:       %{_tmppath}/%{name}-%{version}-%{release}-root-%(%{__id_u} -n)
 
-Requires:        rpm >= 4.8.0 rpm-build rpmdevtools
-Requires:        kaosv yum-utils spec-builddep
+Requires:        rpm >= 4.8.0 rpm-build rpmdevtools yum-utils spec-builddep
 Requires:        perfecto >= 2.0 rpmlint
 
 Provides:        %{name} = %{version}-%{release}
@@ -84,16 +39,15 @@ utility.
 %install
 rm -rf %{buildroot}
 
-install -dm 755 %{buildroot}%{_initddir}
-install -dm 755 %{buildroot}%{_sysconfdir}/sysconfig
-install -dm 755 %{buildroot}%{_sysconfdir}/sudoers.d
-install -dm 755 %{buildroot}%{home_dir}
-install -dm 755 %{buildroot}%{home_dir}/.config
-install -dm 700 %{buildroot}%{home_dir}/.ssh
+install -dDm 755 %{buildroot}%{_unitdir}
+install -pm 644 buildmon.service %{buildroot}%{_unitdir}/
 
-install -pm 755 buildmon %{buildroot}%{home_dir}/
-install -pm 755 buildmon.init %{buildroot}%{_initddir}/%{service_name}
+install -dDm 755 %{buildroot}%{_sysconfdir}/sudoers.d
 install -pm 644 builder.sudoers %{buildroot}%{_sysconfdir}/sudoers.d/%{user_name}
+
+install -dDm 755 %{buildroot}%{home_dir}/.config
+install -dDm 700 %{buildroot}%{home_dir}/.ssh
+install -pm 755 buildmon %{buildroot}%{home_dir}/
 install -pm 755 nodeinfo %{buildroot}%{home_dir}/
 install -pm 755 initenv %{buildroot}%{home_dir}/
 install -pm 644 rpmlint %{buildroot}%{home_dir}/.config/
@@ -102,8 +56,8 @@ install -pm 644 rpmlint %{buildroot}%{home_dir}/.config/
 install -pm 755 rpmmacros_el8 %{buildroot}%{home_dir}/.rpmmacros_rpmbuilder
 %endif
 
-%if 0%{?rhel} == 7
-install -pm 755 rpmmacros_el7 %{buildroot}%{home_dir}/.rpmmacros_rpmbuilder
+%if 0%{?rhel} == 9
+install -pm 755 rpmmacros_el9 %{buildroot}%{home_dir}/.rpmmacros_rpmbuilder
 %endif
 
 %clean
@@ -113,7 +67,7 @@ rm -rf %{buildroot}
 
 %pre
 getent group %{user_name} >/dev/null || groupadd -r %{user_name}
-getent passwd %{user_name} >/dev/null || useradd -r -g %{user_name} -d %{_home}/%{user_name} -s /bin/bash %{user_name}
+getent passwd %{user_name} >/dev/null || useradd -r -g %{user_name} -d /home/%{user_name} -s /bin/bash %{user_name}
 
 %post
 chown -h -R %{user_name}:%{user_name} %{home_dir}
@@ -129,24 +83,25 @@ if [[ $1 -eq 1 ]] ; then
 
   cat %{home_dir}/.rpmmacros_rpmbuilder > %{home_dir}/.rpmmacros
 
-  %{__service} %{service_name} start &> /dev/null || :
-  %{__chkconfig} --add %{service_name}
-
   chown -h -R %{user_name}:%{user_name} %{home_dir}
 
-  %{__systemctl} restart sshd.service &>/dev/null || :
+  systemctl enable buildmon.service &>/dev/null || :
+  systemctl start buildmon.service &>/dev/null || :
+
+  systemctl reload sshd.service &>/dev/null || :
 fi
 
 %preun
 if [[ $1 -eq 0 ]] ; then
-  %{__service} %{service_name} stop &> /dev/null || :
+  systemctl --no-reload disable buildmon.service &>/dev/null || :
+  systemctl stop buildmon.service &>/dev/null || :
+  userdel -r %{user_name}
+  rm -rf %{home_dir}
 fi
 
 %postun
-if [[ $1 -eq 0 ]] ; then
-  %{__chkconfig} --del %{service_name}
-  %{__userdel} -r %{user_name}
-  rm -rf %{home_dir}
+if [[ $1 -ge 1 ]] ; then
+  systemctl daemon-reload &>/dev/null || :
 fi
 
 ################################################################################
@@ -154,13 +109,17 @@ fi
 %files
 %defattr(-,root,root,-)
 %doc LICENSE
-%{_initddir}/%{service_name}
+%{_unitdir}/buildmon.service
 %{_sysconfdir}/sudoers.d/%{user_name}
 %{home_dir}
 
 ################################################################################
 
 %changelog
+* Wed Aug 21 2024 Anton Novojilov <andy@essentialkaos.com> - 1.6.0-0
+- Removed EL 7 support
+- Init script replaced by systemd service
+
 * Mon Sep 25 2023 Anton Novojilov <andy@essentialkaos.com> - 1.5.0-0
 - Added spec-builddep to dependencies
 

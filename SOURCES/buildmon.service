@@ -1,0 +1,13 @@
+[Unit]
+Description=Startup script for buildmon
+Documentation=https://kaos.sh/rpmbuilder
+After=network-online.target remote-fs.target nss-lookup.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+User=builder
+ExecStart=/home/builder/buildmon
+
+[Install]
+WantedBy=multi-user.target
