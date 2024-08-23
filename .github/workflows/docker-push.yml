@@ -28,7 +28,7 @@ jobs:
 
     strategy:
       matrix:
-        image: [ 'centos7', 'ol7', 'ol8', 'ol9', 'node-centos7', 'node-ol7', 'node-ol8', 'node-ol9' ]
+        image: [ 'ol8', 'ol9', 'node-ol8', 'node-ol9' ]
 
     steps:
       - name: Checkout
@@ -159,7 +159,7 @@ jobs:
 
       - name: Build and push image
         if: ${{ steps.build_check.outputs.build == 'true' }}
-        uses: docker/build-push-action@v5
+        uses: docker/build-push-action@v6
         with:
           push: true
           context: .

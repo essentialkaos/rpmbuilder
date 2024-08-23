@@ -6,7 +6,7 @@
 
 Summary:    RPM package build helper
 Name:       rpmbuilder
-Version:    3.3.2
+Version:    3.3.3
 Release:    0%{?dist}
 License:    Apache License, Version 2.0
 Group:      Development/Tools
@@ -63,6 +63,9 @@ rm -rf %{buildroot}
 ################################################################################
 
 %changelog
+* Wed Aug 21 2024 Anton Novojilov <andy@essentialkaos.com> - 3.3.3-0
+- Improved spec validation
+
 * Fri Jun 07 2024 Anton Novojilov <andy@essentialkaos.com> - 3.3.2-0
 - Improved formatting of help content
 
