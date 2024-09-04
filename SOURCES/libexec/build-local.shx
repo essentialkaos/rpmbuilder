@@ -119,7 +119,7 @@ localDepsInstall() {
 # Echo: No
 localSpecValidate() {
   if ! hasApp "perfecto" ; then
-    error "Can't validate spec file - perfecto not installed!"
+    error "Can't validate spec file - perfecto is not installed!"
     return 1
   fi
 

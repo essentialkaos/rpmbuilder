@@ -13,7 +13,7 @@ fi
 APP="RPMBuilder"
 
 # Utility version (String)
-VER="3.3.3"
+VER="3.3.4"
 
 # Utility description (String)
 DESC="RPM package build helper"
@@ -560,12 +560,12 @@ usage() {
 # Code: No
 # Echo: No
 about() {
-  local rpm_ver rpml_ver perf_ver
+  local rpm_ver perfecto_ver builddep_ver rpmlint_ver
 
   rpm_ver=$(rpm -q rpm --queryformat '%{version}' 2>/dev/null | grep -v 'installed')
-  rpml_ver=$(rpm -q rpmlint --queryformat '%{version}' 2>/dev/null | grep -v 'installed')
-  perf_ver=$(rpm -q perfecto --queryformat '%{version}' 2>/dev/null | grep -v 'installed')
-  sbd_ver=$(rpm -q spec-builddep --queryformat '%{version}' 2>/dev/null | grep -v 'installed')
+  perfecto_ver=$(rpm -q perfecto --queryformat '%{version}' 2>/dev/null | grep -v 'installed')
+  builddep_ver=$(rpm -q spec-builddep --queryformat '%{version}' 2>/dev/null | grep -v 'installed')
+  rpmlint_ver=$(rpmlint --version 2>/dev/null)
 
   show ""
 
@@ -579,9 +579,9 @@ about() {
 
   show "│" $DARK
   show "├ rpm: ${rpm_ver:-—}" $DARK
-  show "├ rpmlint: ${rpml_ver:-—}" $DARK
-  show "├ perfecto: ${perf_ver:-—}" $DARK
-  show "└ spec-builddep: ${sbd_ver:-—}" $DARK
+  show "├ rpmlint: ${rpmlint_ver:-—}" $DARK
+  show "├ perfecto: ${perfecto_ver:-—}" $DARK
+  show "└ spec-builddep: ${builddep_ver:-—}" $DARK
 
   show ""
   show "Copyright (C) 2009-$(date +%Y) ESSENTIAL KAOS" $DARK
