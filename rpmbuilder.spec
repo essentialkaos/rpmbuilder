@@ -6,7 +6,7 @@
 
 Summary:    RPM package build helper
 Name:       rpmbuilder
-Version:    3.3.3
+Version:    3.3.4
 Release:    0%{?dist}
 License:    Apache License, Version 2.0
 Group:      Development/Tools
