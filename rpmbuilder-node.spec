@@ -5,24 +5,23 @@
 
 ################################################################################
 
-Summary:         Configuration package for rpmbuilder node
-Name:            rpmbuilder-node
-Version:         1.6.0
-Release:         0%{?dist}
-License:         Apache License, Version 2.0
-Group:           Development/Tools
-URL:             https://kaos.sh/rpmbuilder
+Summary:    Configuration package for rpmbuilder node
+Name:       rpmbuilder-node
+Version:    1.6.1
+Release:    0%{?dist}
+License:    Apache License, Version 2.0
+Group:      Development/Tools
+URL:        https://kaos.sh/rpmbuilder
 
-Source0:         %{name}-%{version}.tar.bz2
+Source0:    %{name}-%{version}.tar.bz2
 
-BuildArch:       noarch
+BuildArch:  noarch
 
-BuildRoot:       %{_tmppath}/%{name}-%{version}-%{release}-root-%(%{__id_u} -n)
+BuildRoot:  %{_tmppath}/%{name}-%{version}-%{release}-root-%(%{__id_u} -n)
 
-Requires:        rpm >= 4.8.0 rpm-build rpmdevtools yum-utils spec-builddep
-Requires:        perfecto >= 2.0 rpmlint
+Requires:   rpm rpm-build rpmdevtools yum-utils spec-builddep perfecto
 
-Provides:        %{name} = %{version}-%{release}
+Provides:   %{name} = %{version}-%{release}
 
 ################################################################################
 
@@ -50,7 +49,6 @@ install -dDm 700 %{buildroot}%{home_dir}/.ssh
 install -pm 755 buildmon %{buildroot}%{home_dir}/
 install -pm 755 nodeinfo %{buildroot}%{home_dir}/
 install -pm 755 initenv %{buildroot}%{home_dir}/
-install -pm 644 rpmlint %{buildroot}%{home_dir}/.config/
 
 %if 0%{?rhel} == 8
 install -pm 755 rpmmacros_el8 %{buildroot}%{home_dir}/.rpmmacros_rpmbuilder
@@ -75,7 +73,7 @@ chown -h -R %{user_name}:%{user_name} %{home_dir}
 if [[ $1 -eq 1 ]] ; then
   touch %{home_dir}/.ssh/authorized_keys
 
-  # perfecto:absolve
+  # perfecto:ignore
   chmod 0600 %{home_dir}/.ssh/authorized_keys
 
   sudo -u %{user_name} rpmdev-setuptree
@@ -116,6 +114,9 @@ fi
 ################################################################################
 
 %changelog
+* Thu Sep 05 2024 Anton Novojilov <andy@essentialkaos.com> - 1.6.1-0
+- Removed rpmlint from dependencies
+
 * Wed Aug 21 2024 Anton Novojilov <andy@essentialkaos.com> - 1.6.0-0
 - Removed EL 7 support
 - Init script replaced by systemd service

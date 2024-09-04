@@ -6,7 +6,7 @@
 
 Summary:    RPM package build helper
 Name:       rpmbuilder
-Version:    3.3.3
+Version:    3.3.4
 Release:    0%{?dist}
 License:    Apache License, Version 2.0
 Group:      Development/Tools
@@ -19,9 +19,8 @@ Source100:  checksum.sha512
 BuildArch:  noarch
 BuildRoot:  %{_tmppath}/%{name}-%{version}-%{release}-root-%(%{__id_u} -n)
 
-Requires:   rpm >= 4.8.0 rpm-build rpmdevtools spec-builddep yum-utils
-Requires:   sshpass coreutils gawk tmux
-Requires:   perfecto >= 3.0 rpmlint
+Requires:   rpm rpm-build rpmdevtools spec-builddep yum-utils
+Requires:   sshpass coreutils gawk tmux perfecto
 
 Provides:   %{name} = %{version}-%{release}
 
@@ -63,6 +62,10 @@ rm -rf %{buildroot}
 ################################################################################
 
 %changelog
+* Thu Sep 05 2024 Anton Novojilov <andy@essentialkaos.com> - 3.3.4-0
+- Removed rpmlint from dependencies
+- Improved support of rpmlint installed from pip/uv
+
 * Wed Aug 21 2024 Anton Novojilov <andy@essentialkaos.com> - 3.3.3-0
 - Improved spec validation
 
