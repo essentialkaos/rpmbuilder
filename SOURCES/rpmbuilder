@@ -13,7 +13,7 @@ fi
 APP="RPMBuilder"
 
 # Utility version (String)
-VER="3.3.4"
+VER="3.4.0"
 
 # Utility description (String)
 DESC="RPM package build helper"
@@ -473,8 +473,8 @@ usage() {
   show ""
   show "    rpmbuilder package.spec -sl sources/current -d ~/mypackages" $GREY
   show "    rpmbuilder package.spec --source-list files.list --dest ~/mypackages" $GREY
-  show "    rpmbuilder package.spec --pack \"file1 file2 dir1 dir2 file3\"" $GREY
-  show "    rpmbuilder package.spec -p \"file1 file2\" -p \"dir1 dir2 file3\" -p file4" $GREY
+  show '    rpmbuilder package.spec --pack "file1 file2 dir1 dir2 file3"' $GREY
+  show '    rpmbuilder package.spec -p "file1 file2" -p "dir1 dir2 file3" -p file4' $GREY
   show "    rpmbuilder package.spec --git git://github.com/user/project.git --tag 1.3-12" $GREY
   show "    rpmbuilder package.spec --git git://github.com/user/project.git -rb develop" $GREY
   show "    rpmbuilder package.spec --git git://github.com/user/project.git -rr f8debbfdbebb97f5d0ee2218edf1425ac219cff5" $GREY
@@ -505,7 +505,8 @@ usage() {
   show "    rpmbuilder package.spec -r builder@192.168.1.100 -r builder@192.168.1.101 -k ~/.ssh/id_rsa" $GREY
   show "    rpmbuilder package.spec -r builder:mypass@127.0.0.1:2022~i386 -k ~/.ssh/id_ed25519" $GREY
   show "    rpmbuilder package.spec --remote ~/buildnodes.list --key ~/.ssh/id_ed25519" $GREY
-  show "    rpmbuilder package.spec --remote builder@127.0.0.1:5001 --key \$(base64 -w0 ~/.ssh/id_ed25519)" $GREY
+  # shellcheck disable=SC2016
+  show '    rpmbuilder package.spec --remote builder@127.0.0.1:5001 --key $(base64 -w0 ~/.ssh/id_ed25519)' $GREY
   show "    rpmbuilder package.spec --parallel --remote ~/buildnodes.list --node 1,2" $GREY
   show ""
   show "Build options" $BOLD
@@ -522,14 +523,14 @@ usage() {
   show ""
   showo "--with, -w" "Pass conditional parameters into a rpmbuild ${CL_DARK}(mergeable)${CL_NORM}" "param"
   showo "--without, -W" "Pass conditional parameters into a rpmbuild ${CL_DARK}(mergeable)${CL_NORM}" "param"
-  showo "--define, -D" "Define MACRO with value (exist macro will be not redefined) ${CL_DARK}(mergeable)${CL_NORM}" "\"macro=value\""
+  showo "--define, -D" "Define MACRO with value (exist macro will be not redefined) ${CL_DARK}(mergeable)${CL_NORM}" 'name:value'
   show ""
   show "  Examples" $BOLD
   show ""
   show "    rpmbuilder package.spec --with ssl --with ldap" $GREY
   show "    rpmbuilder package.spec -w ssl -w static -W ldap" $GREY
-  show "    rpmbuilder package.spec --with \"ssl ldap\"" $GREY
-  show "    rpmbuilder package.spec --define \"install_dir=/some/dir\" --define \"service_user=someone\"" $GREY
+  show '    rpmbuilder package.spec --with "ssl ldap"' $GREY
+  show '    rpmbuilder package.spec --define="_install_dir:/some/dir" --define="_service_user:someone' $GREY
   show ""
   show "  More info: https://kaos.sh/rpmbuilder/w/Conditional-Builds" $DARK
   show ""

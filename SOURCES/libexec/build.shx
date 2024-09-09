@@ -326,6 +326,17 @@ checkOptions() {
       doExit $ERROR_UNKNOWN
     fi
   fi
+
+  if [[ -n "$define" ]] ; then
+    local macro_def
+
+    for macro_def in $define ; do
+      if [[ ${macro_def:0:1} != "_" ]] ; then
+        error "Invalid macro name definition (must start with \"_\")"
+        doExit $ERROR_UNKNOWN
+      fi
+    done
+  fi
 }
 
 # Print message and exit from utility
@@ -525,11 +536,11 @@ getBuildOpts() {
 # Code: No
 # Echo: Options (String)
 getDefineOpts() {
-  local opts macros_def
+  local opts macro_def
 
   if [[ -n "$define" ]] ; then
-    for macros_def in $define ; do
-      opts="--define=\"${macros_def/=/ }\" ${opts}"
+    for macro_def in $define ; do
+      opts="--define=\"${macro_def/:/ }\" ${opts}"
     done
   fi
 
