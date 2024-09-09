@@ -397,7 +397,7 @@ showo() {
 # Code: No
 # Echo: No
 error() {
-  show "▲ $*" $RED 1>&2
+  show "$*" $RED 1>&2
 }
 
 # Print warning message
@@ -407,7 +407,7 @@ error() {
 # Code: No
 # Echo: No
 warn() {
-  show "▲ $*" $YELLOW 1>&2
+  show "$*" $YELLOW 1>&2
 }
 
 # Show message about unknown option
