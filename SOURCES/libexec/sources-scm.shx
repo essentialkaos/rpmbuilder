@@ -614,7 +614,7 @@ packSourcesFromSvn() {
 
       if [[ -n "$path" ]] ; then
         if [[ ! -d "${source_name}_tmp/$path" ]] ; then
-          error "Can't find path ${CL_BL_RED}${path}${CL_NORM} in svn repository"
+          error "Can't find path \"$path\" in svn repository"
           doExit $ERROR_SOURCE
         else
           mv "${source_name}_tmp/$path" "$source_name"
