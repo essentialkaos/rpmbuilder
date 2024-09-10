@@ -60,6 +60,7 @@ install -pm 644 libexec/* %{buildroot}%{_libexecdir}/%{name}/
 %changelog
 * Mon Sep 09 2024 Anton Novojilov <andy@essentialkaos.com> - 3.4.0-0
 - Added 'define' option validation
+- Pass macros from 'define' option to spec-builddep
 - Changed macro definition from 'name=value' to 'name:value'
 - Code refactoring
 
