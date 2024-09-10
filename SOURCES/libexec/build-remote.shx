@@ -15,7 +15,7 @@ require "build-remote-worker"
 # Echo: No
 parallelBuild() {
   if [[ -n "$dlcache" ]] ; then
-    warn "Warning! You can't use a parallel build with download cache."
+    warn "You can't use a parallel build with download cache."
     doExit $ERROR_ARGS
   fi
 
@@ -28,7 +28,7 @@ parallelBuild() {
   build_hosts=($(filterNodeList "$remote"))
 
   if [[ ${#build_hosts[@]} -eq 0 ]] ; then
-    error "Error! Can't start parallel build process - there are no build nodes with given indices."
+    error "Can't start parallel build process - there are no build nodes with given indices"
     doExit $ERROR_ARGS
   fi
 
@@ -199,11 +199,11 @@ remoteCheckEnv() {
 
   if isRemoteServerReachable "$host" ; then
     if ! isSSHConnectionWorks "$host" ; then
-      error "Can't connect to host ${CL_BL_RED}${host}:${port:-22}${CL_RED} (server is reachable but SSH command returned an error)"
+      error "Can't connect to host \"${host}:${port:-22}\" (server is reachable but SSH command returned an error)"
       doExit $ERROR_REMOTE
     fi
   else
-    error "Remote server ${CL_BL_RED}${host}:${port:-22}${CL_RED} is not reachable!"
+    error "Remote server \"${host}:${port:-22}\" is not reachable!"
     doExit $ERROR_REMOTE
   fi
 
@@ -232,10 +232,17 @@ remoteDepsInstall() {
   yum_opts=$(getYumOpts "$verbose")
 
   if [[ -n "$install_latest" ]] ; then
-    yum_opts="$yum_opts --actual"
+    yum_opts="$yum_opts -A"
   fi
 
-  sshCommand "$host" "cd $specs_dir && sudo spec-builddep --clean $yum_opts $spec_name"
+  if [[ -n "$define" ]] ; then
+    local macro_def
+    for macro_def in $define ; do
+      yum_opts="$yum_opts -D $macro_def"
+    done
+  fi
+
+  sshCommand "$host" "cd $specs_dir && sudo spec-builddep -C $yum_opts $spec_name"
 
   if [[ $? -ne 0 ]] ; then
     doExit $ERROR_DEPS
@@ -386,7 +393,7 @@ remoteBuildProcess() {
       show "All rpm packages saved to a current directory" $GREEN
     fi
   else
-    error "Error! Can't build a package."
+    error "Can't build a package"
 
     if [[ -z "$verbose" ]] ; then
       error "Last $LOG_QUOTE_SIZE lines from build log:"
@@ -546,7 +553,7 @@ configurePrivateKey() {
   fi
 
   if ! ssh-keygen -lf "$key" &> /dev/null ; then
-    error "Error! Private key is not valid."
+    error "Private key is not valid"
     doExit $ERROR_ARGS
   fi
 }

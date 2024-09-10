@@ -6,7 +6,7 @@
 
 Summary:    RPM package build helper
 Name:       rpmbuilder
-Version:    3.3.4
+Version:    3.4.0
 Release:    0%{?dist}
 License:    Apache License, Version 2.0
 Group:      Development/Tools
@@ -32,9 +32,8 @@ RPM package build helper.
 ################################################################################
 
 %prep
-%{crc_check}
-
-%setup -q
+%crc_check
+%autosetup
 
 %build
 %install
@@ -46,9 +45,6 @@ install -dm 755 %{buildroot}%{_libexecdir}/%{name}
 install -pm 755 rpmbuilder %{buildroot}%{_bindir}/rpmbuilder
 install -pm 755 rpmunbuilder %{buildroot}%{_bindir}/rpmunbuilder
 install -pm 644 libexec/* %{buildroot}%{_libexecdir}/%{name}/
-
-%clean
-rm -rf %{buildroot}
 
 ################################################################################
 
@@ -62,6 +58,12 @@ rm -rf %{buildroot}
 ################################################################################
 
 %changelog
+* Mon Sep 09 2024 Anton Novojilov <andy@essentialkaos.com> - 3.4.0-0
+- Added 'define' option validation
+- Pass macros from 'define' option to spec-builddep
+- Changed macro definition from 'name=value' to 'name:value'
+- Code refactoring
+
 * Thu Sep 05 2024 Anton Novojilov <andy@essentialkaos.com> - 3.3.4-0
 - Removed rpmlint from dependencies
 - Improved support of rpmlint installed from pip/uv

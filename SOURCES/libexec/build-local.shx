@@ -60,12 +60,12 @@ copySourcesToBuildDir() {
 
       if [[ $? -ne 0 ]] ; then
         source_file_name=$(basename "$source_file")
-        error "Can't copy source file ${CL_BL_RED}${source_file_name}${CL_RED} to directory ${CL_BL_RED}${src_dir}${CL_RED} - error while copy process"
+        error "Can't copy source file \"$source_file_name\" to directory \"$src_dir\" - error while copying file"
         doExit $ERROR_SOURCE
       fi
     done
   else
-    error "Error! Can't copy source files - directory ${CL_BL_RED}${src_dir}${CL_RED} doesn't exist"
+    error "Can't copy source files - directory \"$src_dir\" doesn't exist"
     doExit $ERROR_SOURCE
   fi
 
@@ -79,7 +79,7 @@ copySourcesToBuildDir() {
 
     [[ -n "$bump" ]] && releaseBump "$specs_dir/$spec"
   else
-    error "Error! Can't copy spec file - directory ${CL_BL_RED}${specs_dir}${CL_RED} doesn't exist."
+    error "Can't copy spec file - directory \"$specs_dir\" doesn't exist"
     doExit $ERROR_SOURCE
   fi
 }
@@ -203,7 +203,7 @@ localBuildProcess() {
       stopStatusObserver
       show ""
 
-      error "Error! Can't build a package."
+      error "Can't build a package"
 
       if [[ -z "$verbose" ]] ; then
         error "Last $LOG_QUOTE_SIZE lines from build log:"
@@ -221,7 +221,7 @@ localBuildProcess() {
 
         cp "$tmp_output" "$CWD/$lname"
 
-        error "Build log saved to current directory as ${CL_BL_RED}${lname}"
+        error "Build log saved to current directory as \"${lname}\""
       fi
 
       removeLocalLock

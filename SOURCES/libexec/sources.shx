@@ -71,12 +71,12 @@ packLocalSources() {
 
   if [[ -n "$source_list" ]] ; then
     if [[ ! -r $source_list ]] ; then
-      error "Can't pack sources - file ${CL_BL_RED}${source_list}${CL_RED} not readable"
+      error "Can't pack sources - file \"$source_list\" not readable"
       doExit $ERROR_SOURCE
     fi
 
     if [[ ! -s $source_list ]] ; then
-      error "Can't pack sources - file ${CL_BL_RED}${source_list}${CL_RED} is empty"
+      error "Can't pack sources - file \"$source_list\" is empty"
       doExit $ERROR_SOURCE
     fi
 
@@ -87,7 +87,7 @@ packLocalSources() {
 
   for src_target in $pack ; do
     if [[ ! -a $src_target ]] ; then
-      error "Can't pack sources - ${CL_BL_RED}${src_target}${CL_RED} not exist or not accessible"
+      error "Can't pack sources - \"$src_target\" not exist or not accessible"
       doExit $ERROR_SOURCE
     fi
   done
@@ -158,7 +158,7 @@ packDir() {
     elif [[ "$ext" == "tar.xz" || "$ext" == "txz" ]] ; then
       tar cf - "$dir_name" | xz -9 -c - > "$arch_name.$ext"
     else
-      error "Error! Unknown archive type."
+      error "Unknown archive type"
       doExit $ERROR_SOURCE
     fi
 
@@ -243,7 +243,7 @@ validateSources() {
         show ""
       fi
 
-      error "Can't use file ${CL_BL_RED}${source_name}${CL_RED} for build - file type doesn't match to file content"
+      error "Can't use file \"$source_name\" for build - file type doesn't match to file content"
       has_errors=true
     fi
   done

@@ -51,7 +51,7 @@ downloadRemoteSources() {
       downloadSource "$source_file" "$download"
 
       if [[ $? -ne 0 ]] ; then
-        error "Error! Can't download file ${CL_BL_RED}${source_file}${CL_RED}."
+        error "Can't download file \"$source_file\""
         doExit $ERROR_SOURCE
       fi
 
@@ -82,7 +82,7 @@ downloadSource() {
   file_name=$(basename "$url")
 
   if ! isAccessibleURL "$url" ; then
-    error "Can't download file ${CL_BL_RED}${file_name}${CL_RED} - server return error code"
+    error "Can't download file \"$file_name\" - server return non-ok status code"
     doExit $ERROR_SOURCE
   else
     start=$(now)
@@ -100,7 +100,7 @@ downloadSource() {
     fi
 
     if ! validateSourceFile "$dir/$file_name" ; then
-      error "Invalid file ${CL_BL_RED}${source_name}${CL_RED} - file type doesn't match to file content"
+      error "Invalid file \"$source_name\" - file type doesn't match to file content"
       doExit $ERROR_SOURCE
     fi
   fi

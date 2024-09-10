@@ -29,8 +29,13 @@ startBuild() {
       spec="${spec}.spec"
     else
       err=$(validateSpec "$spec")
-      error "${CL_BL_RED}${spec}${CL_RED} is not a spec file!${CL_NORM}"
-      error "${CL_BL_RED}${err}${CL_NORM}"
+
+      error "\"$spec\" is not a spec file!"
+
+      if [[ -n "$err" ]] ; then
+        error "$err"
+      fi
+
       doExit $ERROR_SPEC
     fi
   fi
@@ -153,7 +158,7 @@ processSpec() {
           downloadSource "$source_file" "$dlcache"
 
           if [[ $? -ne 0 ]] ; then
-            error "Error! Can't download file ${CL_BL_RED}${source_file}${CL_RED}."
+            error "Can't download file \"$source_file\""
             doExit $ERROR_SOURCE
           fi
 
@@ -167,7 +172,7 @@ processSpec() {
         downloadSource "$source_file" "$tmp_dir"
 
         if [[ $? -ne 0 ]] ; then
-          error "Error! Can't download file ${CL_BL_RED}${source_file}${CL_RED}."
+          error "Can't download file \"$source_file\""
           doExit $ERROR_SOURCE
         fi
 
@@ -205,7 +210,7 @@ processSpec() {
 
         source_num=$(( source_num + 1 )) && continue
       else
-        error "Can't use file ${CL_BL_RED}${source_file}${CL_RED} for build - file not found in sources directory"
+        error "Can't use file \"$source_file\" for build - file not found in sources directory"
         doExit $ERROR_SOURCE
       fi
     fi
@@ -325,6 +330,17 @@ checkOptions() {
       error "(name + email e.g. \"%packager John Smith <mail@smith.com>\") value in file ~/.rpmmacros"
       doExit $ERROR_UNKNOWN
     fi
+  fi
+
+  if [[ -n "$define" ]] ; then
+    local macro_def
+
+    for macro_def in $define ; do
+      if [[ ${macro_def:0:1} != "_" ]] ; then
+        error "Invalid macro name definition (must start with \"_\")"
+        doExit $ERROR_UNKNOWN
+      fi
+    done
   fi
 }
 
@@ -525,11 +541,11 @@ getBuildOpts() {
 # Code: No
 # Echo: Options (String)
 getDefineOpts() {
-  local opts macros_def
+  local opts macro_def
 
   if [[ -n "$define" ]] ; then
-    for macros_def in $define ; do
-      opts="--define=\"${macros_def/=/ }\" ${opts}"
+    for macro_def in $define ; do
+      opts="--define=\"${macro_def/:/ }\" ${opts}"
     done
   fi
 
