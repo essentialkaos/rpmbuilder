@@ -24,10 +24,10 @@ startBuild() {
   local err
 
   if isSpecFile "${spec}.spec" ; then
-    spec="${spec}.spec"
     if [[ -r "${spec}.source" && -z "$source_list" ]] ; then
       source_list="$spec.source"
     fi
+    spec="${spec}.spec"
   fi
 
   if ! isSpecFile "$spec" ; then
