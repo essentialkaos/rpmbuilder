@@ -23,21 +23,23 @@ startBuild() {
   local spec="$1"
   local err
 
-  if ! isSpecFile "$spec" ; then
-    if isSpecFile "${spec}.spec" ; then
-      [[ -r "${spec}.source" && -z "$source_list" ]] && source_list="$spec.source"
-      spec="${spec}.spec"
-    else
-      err=$(validateSpec "$spec")
-
-      error "\"$spec\" is not a spec file!"
-
-      if [[ -n "$err" ]] ; then
-        error "$err"
-      fi
-
-      doExit $ERROR_SPEC
+  if isSpecFile "${spec}.spec" ; then
+    if [[ -r "${spec}.source" && -z "$source_list" ]] ; then
+      source_list="$spec.source"
     fi
+    spec="${spec}.spec"
+  fi
+
+  if ! isSpecFile "$spec" ; then
+    err=$(validateSpec "$spec")
+
+    error "\"$spec\" is not a valid spec file!"
+
+    if [[ -n "$err" ]] ; then
+      error "$err"
+    fi
+
+    doExit $ERROR_SPEC
   fi
 
   checkOptions
