@@ -6,7 +6,7 @@
 
 Summary:    RPM package build helper
 Name:       rpmbuilder
-Version:    3.4.1
+Version:    3.4.2
 Release:    0%{?dist}
 License:    Apache License, Version 2.0
 Group:      Development/Tools
@@ -58,6 +58,9 @@ install -pm 644 libexec/* %{buildroot}%{_libexecdir}/%{name}/
 ################################################################################
 
 %changelog
+* Fri Dec 06 2024 Anton Novojilov <andy@essentialkaos.com> - 3.4.2-0
+- Improved options parsing
+
 * Wed Sep 11 2024 Anton Novojilov <andy@essentialkaos.com> - 3.4.1-0
 - Improved spec validation
 
