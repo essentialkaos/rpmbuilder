@@ -13,7 +13,7 @@ fi
 APP="RPMBuilder"
 
 # Utility version (String)
-VER="3.4.1"
+VER="3.4.2"
 
 # Utility description (String)
 DESC="RPM package build helper"
@@ -272,8 +272,9 @@ main() {
   fi
 
   require "build"
-
   startBuild "$@"
+
+  exit $?
 }
 
 # Load libexec script
@@ -612,16 +613,15 @@ if [[ "$*" =~ "--tmux-worker" ]] ; then
   unset remote parallel
 fi
 
-## OPTIONS PARSING 5 ###################################################################
+## OPTIONS PARSING 6 ###########################################################
 
 if [[ $# -eq 0 ]] ; then
   main
-  exit $?
 fi
 
 unset opt optn optm optv optt optk
 
-optv="$*" ; optt=""
+optv="$*" ; optt=()
 
 while [[ -n "$1" ]] ; do
   if [[ "$1" =~ \  && -n "$optn" ]] ; then
@@ -711,8 +711,7 @@ while [[ -n "$1" ]] ; do
     fi
   fi
 
-  optt="$optt $1" ; shift
-
+  optt+=("$1") ; shift
 done
 
 [[ -n "$optn" ]] && declare "$optn=true"
@@ -720,6 +719,6 @@ done
 unset opt optn optm optk
 
 # shellcheck disable=SC2015,SC2086
-[[ -n "$KEEP_OPTS" ]] && main $optv || main ${optt:1}
+[[ -n "$KEEP_OPTS" ]] && main $optv || main "${optt[@]}"
 
-########################################################################################
+################################################################################
