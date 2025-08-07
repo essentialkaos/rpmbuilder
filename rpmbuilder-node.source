@@ -1,6 +1,7 @@
 SOURCES/conf/builder.sudoers
 SOURCES/conf/rpmmacros_el8
 SOURCES/conf/rpmmacros_el9
+SOURCES/conf/rpmmacros_el10
 SOURCES/nodeinfo
 SOURCES/initenv
 SOURCES/buildmon

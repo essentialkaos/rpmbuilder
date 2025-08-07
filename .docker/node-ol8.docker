@@ -7,7 +7,7 @@ ARG REGISTRY="docker.io"
 FROM ${REGISTRY}/essentialkaos/oraclelinux:8
 
 ARG USER_ID=9001
-ARG PORT=2038
+ARG PORT=2008
 ARG HOSTNAME="rpmbuilder-node-ol8.docker.local"
 
 ENV PUB_KEY=""

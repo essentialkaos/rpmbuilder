@@ -58,6 +58,11 @@ install -pm 755 rpmmacros_el8 %{buildroot}%{home_dir}/.rpmmacros_rpmbuilder
 install -pm 755 rpmmacros_el9 %{buildroot}%{home_dir}/.rpmmacros_rpmbuilder
 %endif
 
+%if 0%{?rhel} == 10
+install -pm 755 rpmmacros_el10 %{buildroot}%{home_dir}/.rpmmacros_rpmbuilder
+%endif
+
+
 %clean
 rm -rf %{buildroot}
 
@@ -114,6 +119,9 @@ fi
 ################################################################################
 
 %changelog
+* Thu Aug 07 2025 Anton Novojilov <andy@essentialkaos.com> - 1.7.0-0
+- Add EL 10 support
+
 * Thu Sep 05 2024 Anton Novojilov <andy@essentialkaos.com> - 1.6.1-0
 - Removed rpmlint from dependencies
 
