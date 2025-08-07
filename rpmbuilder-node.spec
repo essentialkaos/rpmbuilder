@@ -7,7 +7,7 @@
 
 Summary:    Configuration package for rpmbuilder node
 Name:       rpmbuilder-node
-Version:    1.6.1
+Version:    1.7.0
 Release:    0%{?dist}
 License:    Apache License, Version 2.0
 Group:      Development/Tools
