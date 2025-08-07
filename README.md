@@ -49,15 +49,19 @@ Basic images:
 
 - `ghcr.io/essentialkaos/rpmbuilder:ol8` (_OracleLinux 8_)
 - `ghcr.io/essentialkaos/rpmbuilder:ol9` (_OracleLinux 9_)
+- `ghcr.io/essentialkaos/rpmbuilder:ol10` (_OracleLinux 10_)
 - `essentialkaos/rpmbuilder:ol8` (_OracleLinux 8_)
 - `essentialkaos/rpmbuilder:ol9` (_OracleLinux 9_)
+- `essentialkaos/rpmbuilder:ol10` (_OracleLinux 10_)
 
 Build node images:
 
-- `ghcr.io/essentialkaos/rpmbuilder:node-ol8` (_OracleLinux 8_ | Port: `2038`)
-- `ghcr.io/essentialkaos/rpmbuilder:node-ol9` (_OracleLinux 9_ | Port: `2039`)
-- `essentialkaos/rpmbuilder:node-ol8` (_OracleLinux 8_ | Port: `2038`)
-- `essentialkaos/rpmbuilder:node-ol9` (_OracleLinux 9_ | Port: `2039`)
+- `ghcr.io/essentialkaos/rpmbuilder:node-ol8` (_OracleLinux 8_ | Port: `2008`)
+- `ghcr.io/essentialkaos/rpmbuilder:node-ol9` (_OracleLinux 9_ | Port: `2009`)
+- `ghcr.io/essentialkaos/rpmbuilder:node-ol10` (_OracleLinux 9_ | Port: `2010`)
+- `essentialkaos/rpmbuilder:node-ol8` (_OracleLinux 8_ | Port: `2008`)
+- `essentialkaos/rpmbuilder:node-ol9` (_OracleLinux 9_ | Port: `2009`)
+- `essentialkaos/rpmbuilder:node-ol10` (_OracleLinux 9_ | Port: `2010`)
 
 </p></details>
 
@@ -69,9 +73,9 @@ curl -fL# -o rpmbuilder-docker https://kaos.sh/rpmbuilder/rpmbuilder-docker
 chmod +x rpmbuilder-docker
 sudo mv rpmbuilder-docker /usr/bin/
 
-# Pull rpmbuilder image based on OracleLinux 8
-docker pull ghcr.io/essentialkaos/rpmbuilder:ol8
-export IMAGE=ghcr.io/essentialkaos/rpmbuilder:ol8
+# Pull rpmbuilder image based on OracleLinux 9
+docker pull ghcr.io/essentialkaos/rpmbuilder:ol9
+export IMAGE=ghcr.io/essentialkaos/rpmbuilder:ol9
 
 # Build package locally
 cd my-package-dir
@@ -84,16 +88,16 @@ rpmbuilder-docker my-package.spec -r buildnode-ol7.acme.corp:2022 -r buildnode-o
 Package build using build node image:
 
 ```bash
-docker pull ghcr.io/essentialkaos/rpmbuilder:node-ol8
-docker run -e PUB_KEY="$(cat ~/.ssh/buildnode.pub)" -p 2038:2038 -d ghcr.io/essentialkaos/rpmbuilder:node-ol8
+docker pull ghcr.io/essentialkaos/rpmbuilder:node-ol9
+docker run -e PUB_KEY="$(cat ~/.ssh/buildnode.pub)" -p 2009:2009 -d ghcr.io/essentialkaos/rpmbuilder:node-ol9
 
 cd my-package-dir
 
 # Using local version of rpmbuilder (if you are use RHEL, Alma, Rocky, CentOS…)
-rpmbuilder my-package.spec -r builder@localhost:2038 -k ~/.ssh/buildnode
+rpmbuilder my-package.spec -r builder@localhost:2009 -k ~/.ssh/buildnode
 
 # With docker helper script (any Linux distro or macOS)
-rpmbuilder-docker my-package.spec -r builder@localhost:2038 -k $(base64 -w0 ~/.ssh/buildnode)
+rpmbuilder-docker my-package.spec -r builder@localhost:2009 -k $(base64 -w0 ~/.ssh/buildnode)
 ```
 
 You can bootstrap your own build farm using Docker and `rpmbuilder-farm` script:
