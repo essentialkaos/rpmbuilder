@@ -20,7 +20,7 @@ BuildArch:  noarch
 BuildRoot:  %{_tmppath}/%{name}-%{version}-%{release}-root-%(%{__id_u} -n)
 
 Requires:   rpm rpm-build rpmdevtools spec-builddep yum-utils
-Requires:   sshpass coreutils gawk ncurses tmux perfecto
+Requires:   sshpass coreutils gawk ncurses perl tmux perfecto
 
 Provides:   %{name} = %{version}-%{release}
 
@@ -59,7 +59,7 @@ install -pm 644 libexec/* %{buildroot}%{_libexecdir}/%{name}/
 
 %changelog
 * Fri Aug 08 2025 Anton Novojilov <andy@essentialkaos.com> - 3.4.3-1
-- ncurses added to dependencies
+- ncurses and perl added to dependencies
 
 * Thu Aug 07 2025 Anton Novojilov <andy@essentialkaos.com> - 3.4.3-0
 - Fixed using stray slash before %%
