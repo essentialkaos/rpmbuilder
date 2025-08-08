@@ -27,7 +27,7 @@ RUN <<EOF
   sed -i 's/gpgcheck=1/gpgcheck=1\nmodule_hotfixes=1/g' /etc/yum.repos.d/epel.repo
   dnf config-manager --set-enabled ol9_codeready_builder
   dnf -y -q install sudo make which file
-  dnf -y -q install rpm-build spec-builddep rpmdevtools sshpass epel-rpm-macros
+  dnf -y -q install rpm-build spec-builddep rpmdevtools sshpass
   dnf -y -q install perfecto pwgen uv
   XDG_DATA_HOME=/usr/share uv tool install rpmlint --no-cache --no-progress --force
   ln -sf /usr/share/uv/tools/rpmlint/bin/rpmlint /usr/bin/rpmlint
