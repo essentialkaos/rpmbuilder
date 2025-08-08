@@ -10,12 +10,12 @@ user_id=${LOCAL_USER_ID:-9001}
 useradd -s /bin/bash -u "$user_id" -M -d /home/builder builder
 
 # Unlock account
-passwd -d builder
+passwd -d builder &> /dev/null
 
 if [[ $(grep 'CPE_NAME' /etc/os-release | tr -d '"' | cut -d':' -f5) == "10" ]] ; then
-  passwd -u builder
+  passwd -u builder &> /dev/null
 else
-  passwd -fu builder
+  passwd -fu builder &> /dev/null
 fi
 
 # Generate password for superuser
