@@ -59,6 +59,7 @@ install -pm 644 libexec/* %{buildroot}%{_libexecdir}/%{name}/
 
 %changelog
 * Thu Aug 07 2025 Anton Novojilov <andy@essentialkaos.com> - 3.4.3-0
+- Fixed using stray slash before %%
 - Code refactoring
 
 * Fri Dec 06 2024 Anton Novojilov <andy@essentialkaos.com> - 3.4.2-0
