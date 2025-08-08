@@ -7,7 +7,7 @@
 Summary:    RPM package build helper
 Name:       rpmbuilder
 Version:    3.4.3
-Release:    0%{?dist}
+Release:    1%{?dist}
 License:    Apache License, Version 2.0
 Group:      Development/Tools
 URL:        https://kaos.sh/rpmbuilder
