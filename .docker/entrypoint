@@ -11,7 +11,12 @@ useradd -s /bin/bash -u "$user_id" -M -d /home/builder builder
 
 # Unlock account
 passwd -d builder
-passwd -u builder
+
+if [[ $(grep 'CPE_NAME' /etc/os-release | tr -d '"' | cut -d':' -f5) == "10" ]] ; then
+  passwd -u builder
+else
+  passwd -fu builder
+fi
 
 # Generate password for superuser
 su_pass=$(pwgen -sB1 18)
