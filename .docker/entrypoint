@@ -9,6 +9,10 @@ user_id=${LOCAL_USER_ID:-9001}
 # Create builder user
 useradd -s /bin/bash -u "$user_id" -M -d /home/builder builder
 
+# Unlock account
+passwd -d builder
+passwd -u builder
+
 # Generate password for superuser
 su_pass=$(pwgen -sB1 18)
 

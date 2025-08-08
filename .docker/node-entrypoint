@@ -15,6 +15,10 @@ chmod 777 /dev/stdout
 # Create builder user
 useradd -s /bin/bash -u "$USER_ID" -M -d /home/builder builder
 
+# Unlock account
+passwd -d builder
+passwd -u builder
+
 # Export public key to authorized_keys file
 echo "$PUB_KEY" > /home/builder/.ssh/authorized_keys
 
