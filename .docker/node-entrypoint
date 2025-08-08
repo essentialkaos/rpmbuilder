@@ -15,8 +15,14 @@ chmod 777 /dev/stdout
 # Create builder user
 useradd -s /bin/bash -u "$USER_ID" -M -d /home/builder builder
 
-# Unlock user account
-passwd -u builder
+# Unlock account
+passwd -d builder
+
+if [[ $(grep 'CPE_NAME' /etc/os-release | tr -d '"' | cut -d':' -f5) == "10" ]] ; then
+  passwd -u builder
+else
+  passwd -fu builder
+fi
 
 # Export public key to authorized_keys file
 echo "$PUB_KEY" > /home/builder/.ssh/authorized_keys
