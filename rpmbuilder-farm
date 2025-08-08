@@ -54,7 +54,7 @@ START_PORT=10000
 image="ghcr.io/essentialkaos/rpmbuilder"
 
 # List of images
-images=("ol8" "ol9")
+images=("ol8" "ol9" "ol10")
 
 ###############################################################################
 
@@ -1432,8 +1432,9 @@ isValidKey() {
 # Echo: Port (Number)
 getImagePort() {
   case "$1" in
-    "ol8")     echo "38" ;;
-    "ol9")     echo "39" ;;
+    "ol8")   echo "8" ;;
+    "ol9")   echo "9" ;;
+    "ol10")  echo "10" ;;
   esac
 }
 
@@ -1505,9 +1506,10 @@ hasImage() {
 # Echo: Image name with color (String)
 getImageWithColor() {
   case "$1" in
-    "ol8")     echo "{#174}$1{!}" ;;
-    "ol9")     echo "{#99}$1{!}" ;;
-    *)         echo "$1"
+    "ol8")   echo "{#174}$1{!}" ;;
+    "ol9")   echo "{#99}$1{!}" ;;
+    "ol10")  echo "{#35}$1{!}" ;;
+    *)       echo "$1"
   esac
 }
 
@@ -1519,8 +1521,9 @@ getImageWithColor() {
 # Echo: Image color tag (String)
 getImageColor() {
   case "$1" in
-    "ol8")     echo "{#174}" ;;
-    "ol9")     echo "{#99}" ;;
+    "ol8")   echo "{#174}" ;;
+    "ol9")   echo "{#99}" ;;
+    "ol10")  echo "{#35}" ;;
   esac
 }
 

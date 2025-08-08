@@ -1,0 +1,24 @@
+################################################################################
+
+%_topdir  %(echo $HOME)/rpmbuild
+
+# Use all available cores on build node
+%_smp_mflags  -j%(cat /proc/cpuinfo | grep -c processor)
+
+# Disable debug packages
+%debug_package  %{nil}
+
+# Added check-buildroot for post install actions
+%__arch_install_post  /usr/lib/rpm/check-rpaths /usr/lib/rpm/check-buildroot
+
+# Prevent creation of the build ids in /usr/lib
+%_build_id_links  none
+
+# Fix default dist name
+%dist  .el10
+
+# Use xz/zstd compression for payload by default
+%_source_payload  w7T.xzdio
+%_binary_payload  w19.zstdio
+
+################################################################################

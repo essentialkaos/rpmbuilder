@@ -86,7 +86,7 @@ packLocalSources() {
   local src_target sources arch_name arch_ext arch_size
 
   for src_target in $pack ; do
-    if [[ ! -a $src_target ]] ; then
+    if [[ ! -e $src_target ]] ; then
       error "Can't pack sources - \"$src_target\" not exist or not accessible"
       doExit $ERROR_SOURCE
     fi

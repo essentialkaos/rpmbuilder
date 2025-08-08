@@ -4,17 +4,13 @@ ARG REGISTRY="docker.io"
 
 ## FINAL IMAGE #################################################################
 
-FROM ${REGISTRY}/essentialkaos/oraclelinux:9
+FROM ${REGISTRY}/essentialkaos/oraclelinux:10
 
-ARG USER_ID=9001
-ARG PORT=2009
-ARG HOSTNAME="rpmbuilder-node-ol9.docker.local"
+ARG GOSU_VER=1.17
+ARG HOSTNAME="rpmbuilder-ol10.docker.local"
 
-ENV PUB_KEY=""
-ENV SSH_PORT=$PORT
-
-LABEL org.opencontainers.image.title="RPMBuilder Node" \
-      org.opencontainers.image.description="RPMBuilder Build Node (OracleLinux 9)" \
+LABEL org.opencontainers.image.title="RPMBuilder" \
+      org.opencontainers.image.description="RPM package build helper (OracleLinux 10)" \
       org.opencontainers.image.vendor="ESSENTIAL KAOS" \
       org.opencontainers.image.authors="Anton Novojilov" \
       org.opencontainers.image.licenses="Apache-2.0" \
@@ -26,44 +22,44 @@ RUN <<EOF
   # Configure image environment
   echo "$HOSTNAME" > /etc/hostname
   dnf -y -q update oraclelinux-release
-  dnf -y -q install https://pkgs.kaos.st/kaos-repo-latest.el9.noarch.rpm
-  dnf -y -q install https://dl.fedoraproject.org/pub/epel/epel-release-latest-9.noarch.rpm
+  dnf -y -q install https://pkgs.kaos.st/kaos-repo-latest.el10.noarch.rpm
+  dnf -y -q install https://dl.fedoraproject.org/pub/epel/epel-release-latest-10.noarch.rpm
   sed -i 's/gpgcheck=1/gpgcheck=1\nmodule_hotfixes=1/g' /etc/yum.repos.d/epel.repo
-  dnf config-manager --set-enabled ol9_codeready_builder
-  dnf -y -q install sudo make which file openssh-server openssh-clients
-  dnf -y -q install rpm-build spec-builddep rpmdevtools
+  dnf config-manager --set-enabled ol10_codeready_builder
+  dnf -y -q install sudo make which file
+  dnf -y -q install rpm-build spec-builddep rpmdevtools sshpass epel-rpm-macros
   dnf -y -q install perfecto pwgen uv
   XDG_DATA_HOME=/usr/share uv tool install rpmlint --no-cache --no-progress --force
   ln -sf /usr/share/uv/tools/rpmlint/bin/rpmlint /usr/bin/rpmlint
   dnf -y -q remove uv
   dnf clean all
   rm -rf /var/cache/dnf /var/log/dnf.*
+  curl -o /usr/local/bin/gosu -sSL "https://github.com/tianon/gosu/releases/download/$GOSU_VER/gosu-amd64"
   mkdir -p /home/builder/rpmbuild/BUILD \
            /home/builder/rpmbuild/BUILDROOT \
            /home/builder/rpmbuild/RPMS \
-             /home/builder/rpmbuild/SOURCES \
-             /home/builder/rpmbuild/SPECS \
-             /home/builder/rpmbuild/SRPMS \
-             /home/builder/.ssh
-  touch /home/builder/.ssh/authorized_keys
-  chmod 0600 /home/builder/.ssh/authorized_keys
+           /home/builder/rpmbuild/SOURCES \
+           /home/builder/rpmbuild/SPECS \
+           /home/builder/rpmbuild/SRPMS
+  mkdir -p /usr/libexec/rpmbuilder \
+           /home/builder/.config/rpmbuilder \
+           /rpmbuilder
 EOF
 
-COPY --chown=$USER_ID SOURCES/conf/rpmmacros_el9 /home/builder/.rpmmacros
-COPY --chown=$USER_ID SOURCES/initenv /home/builder/initenv
-COPY --chown=$USER_ID SOURCES/nodeinfo /home/builder/nodeinfo
-
+COPY SOURCES/conf/rpmmacros_el10 /home/builder/.rpmmacros
 COPY SOURCES/conf/builder.sudoers /etc/sudoers.d/rpmbuilder
-COPY .docker/sshd_config /etc/ssh/sshd_config
+COPY SOURCES/rpmbuilder /usr/bin/rpmbuilder
+COPY SOURCES/libexec/* /usr/libexec/rpmbuilder/
 
-COPY .docker/node-entrypoint /usr/local/bin/entrypoint
+COPY .docker/entrypoint /usr/local/bin/entrypoint
 
 RUN chmod +x /usr/local/bin/entrypoint \
-             /home/builder/initenv \
-             /home/builder/nodeinfo
+             /usr/local/bin/gosu \
+             /usr/bin/rpmbuilder
 
-EXPOSE $PORT
+VOLUME /rpmbuilder
+WORKDIR /rpmbuilder
 
-CMD ["/usr/local/bin/entrypoint"]
+ENTRYPOINT ["/usr/local/bin/entrypoint"]
 
 ################################################################################
