@@ -320,11 +320,11 @@ remoteBuildProcess() {
 
   show ""
 
-  local has_errors dl_start grc_time packages package_name package_file
+  local exit_code has_errors dl_start grc_time packages package_name package_file
 
-  has_errors=$(tail -100 "$tmp_output" | grep -E '^\+' | tail -1 | grep -v "+ exit 0")
+  exit_code=$(tail -100 "$tmp_output" | grep -E '^\+' | tail -1 | grep "+ exit 0")
 
-  if [[ -z "$has_errors" ]] ; then
+  if [[ -n "$exit_code" ]] ; then
     grc_time=$(getGraceDuration "$build_start")
 
     show "Build complete! The build took $grc_time." $GREEN
