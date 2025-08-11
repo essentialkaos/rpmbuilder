@@ -6,8 +6,8 @@
 
 Summary:    RPM package build helper
 Name:       rpmbuilder
-Version:    3.4.3
-Release:    1%{?dist}
+Version:    3.4.4
+Release:    0%{?dist}
 License:    Apache License, Version 2.0
 Group:      Development/Tools
 URL:        https://kaos.sh/rpmbuilder
@@ -58,6 +58,9 @@ install -pm 644 libexec/* %{buildroot}%{_libexecdir}/%{name}/
 ################################################################################
 
 %changelog
+* Mon Aug 11 2025 Anton Novojilov <andy@essentialkaos.com> - 3.4.4-0
+- Improved support of rpmbuild on EL10
+
 * Fri Aug 08 2025 Anton Novojilov <andy@essentialkaos.com> - 3.4.3-1
 - ncurses and perl added to dependencies
 

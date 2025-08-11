@@ -322,7 +322,7 @@ remoteBuildProcess() {
 
   local has_errors dl_start grc_time packages package_name package_file
 
-  has_errors=$(tail -1 "$tmp_output" | grep -v "exit 0")
+  has_errors=$(tail -100 "$tmp_output" | grep -E '^\+' | tail -1 | grep -v "+ exit 0")
 
   if [[ -z "$has_errors" ]] ; then
     grc_time=$(getGraceDuration "$build_start")
