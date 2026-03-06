@@ -159,7 +159,7 @@ jobs:
 
       - name: Build and push image
         if: ${{ steps.build_check.outputs.build == 'true' }}
-        uses: docker/build-push-action@v6
+        uses: docker/build-push-action@v7
         with:
           push: true
           context: .
