@@ -49,13 +49,6 @@ jobs:
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Login to Yandex Container Registry
-        uses: docker/login-action@v3
-        with:
-          registry: cr.yandex
-          username: oauth
-          password: ${{ secrets.YC_TOKEN }}
-
       - name: Checkout the latest tag
         run: |
           rev=$(git rev-list --tags --max-count=1)
@@ -92,12 +85,10 @@ jobs:
 
           dh_tags="${{env.IMAGE_NAME}}:${{matrix.image}}-$version,${{env.IMAGE_NAME}}:${{matrix.image}}"
           gh_tags="ghcr.io/${{env.IMAGE_NAME}}:${{matrix.image}}-$version,ghcr.io/${{env.IMAGE_NAME}}:${{matrix.image}}"
-          yc_tags="cr.yandex/${{secrets.YC_REGISTRY_ID}}/${{github.event.repository.name}}:${{matrix.image}}-$version,cr.yandex/${{secrets.YC_REGISTRY_ID}}/${{github.event.repository.name}}:${{matrix.image}}"
 
           if [[ -n "${{env.LATEST_IMAGE}}" && "${{env.LATEST_IMAGE}}" == "${{matrix.image}}" ]] ; then
             dh_tags="$dh_tags,${{env.IMAGE_NAME}}:latest"
             gh_tags="$gh_tags,ghcr.io/${{env.IMAGE_NAME}}:latest"
-            yc_tags="$yc_tags,cr.yandex/${{secrets.YC_REGISTRY_ID}}/${{github.event.repository.name}}:latest"
           fi
 
           echo "version=$version" >> $GITHUB_OUTPUT
@@ -105,7 +96,6 @@ jobs:
           echo "baseimage=$base_image" >> $GITHUB_OUTPUT
           echo "dh_tags=$dh_tags" >> $GITHUB_OUTPUT
           echo "gh_tags=$gh_tags" >> $GITHUB_OUTPUT
-          echo "yc_tags=$yc_tags" >> $GITHUB_OUTPUT
 
           echo -e "\033[34mVersion:\033[0m    $version"
           echo -e "\033[34mDockerfile:\033[0m $docker_file"
@@ -169,7 +159,6 @@ jobs:
           tags: |
             ${{ steps.metadata.outputs.dh_tags }}
             ${{ steps.metadata.outputs.gh_tags }}
-            ${{ steps.metadata.outputs.yc_tags }}
 
       - name: Show info about built image
         if: ${{ steps.build_check.outputs.build == 'true' }}
