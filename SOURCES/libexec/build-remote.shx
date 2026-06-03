@@ -323,8 +323,9 @@ remoteBuildProcess() {
   local exit_code has_errors dl_start grc_time packages package_name package_file
 
   exit_code=$(tail -100 "$tmp_output" | grep -E '^\+' | tail -1 | grep "+ exit 0")
+  has_errors=$(tail -100 "$tmp_output" | grep "RPM build errors:")
 
-  if [[ -n "$exit_code" ]] ; then
+  if [[ -n "$exit_code" && -z "$has_errors" ]] ; then
     grc_time=$(getGraceDuration "$build_start")
 
     show "Build complete! The build took $grc_time." $GREEN
@@ -393,7 +394,7 @@ remoteBuildProcess() {
       show "All rpm packages saved to a current directory" $GREEN
     fi
   else
-    error "Can't build a package"
+    error "Package build was canceled due to errors"
 
     if [[ -z "$verbose" ]] ; then
       error "Last $LOG_QUOTE_SIZE lines from build log:"

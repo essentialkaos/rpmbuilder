@@ -1,7 +1,7 @@
 <p align="center"><a href="#readme"><img src=".github/images/card.svg"/></a></p>
 
 <p align="center">
-  <a href="https://kaos.sh/w/rpmbuilder/ci"><img src="https://kaos.sh/w/rpmbuilder/ci.svg" alt="GitHub Actions CI Status" /></a>
+  <a href="https://kaos.sh/w/rpmbuilder/ci"><img src="https://github.com/essentialkaos/rpmbuilder/actions/workflows/ci.yml/badge.svg" alt="GitHub Actions CI Status" /></a>
   <a href="#license"><img src=".github/images/license.svg"/></a>
 </p>
 
@@ -20,14 +20,14 @@ https://github.com/essentialkaos/rpmbuilder/assets/182020/d0ae6d9c-663e-46cf-a3f
 #### From [ESSENTIAL KAOS Public Repository](https://kaos.sh/kaos-repo)
 
 ```bash
-sudo dnf install -y https://pkgs.kaos.st/kaos-repo-latest.el$(grep 'CPE_NAME' /etc/os-release | tr -d '"' | cut -d':' -f5).noarch.rpm
+sudo dnf install -y https://pkgs.kaos.st/kaos-repo-latest.el$(rpm -E '%{rhel}').noarch.rpm
 sudo dnf install rpmbuilder
 ```
 
 Build node:
 
 ```bash
-sudo dnf install -y https://pkgs.kaos.st/kaos-repo-latest.el$(grep 'CPE_NAME' /etc/os-release | tr -d '"' | cut -d':' -f5).noarch.rpm
+sudo dnf install -y https://pkgs.kaos.st/kaos-repo-latest.el$(rpm -E '%{rhel}').noarch.rpm
 sudo dnf install rpmbuilder-node
 ```
 
@@ -139,8 +139,8 @@ sudo farm start bob
 
 | Branch | Status |
 |--------|--------|
-| `master` | [![CI](https://kaos.sh/w/rpmbuilder/ci.svg?branch=master)](https://kaos.sh/w/rpmbuilder/ci?query=branch:master) |
-| `develop` | [![CI](https://kaos.sh/w/rpmbuilder/ci.svg?branch=master)](https://kaos.sh/w/rpmbuilder/ci?query=branch:develop) |
+| `master` | [![CI](https://github.com/essentialkaos/rpmbuilder/actions/workflows/ci.yml/badge.svg?branch=master)](https://kaos.sh/w/rpmbuilder/ci?query=branch:master) |
+| `develop` | [![CI](https://github.com/essentialkaos/rpmbuilder/actions/workflows/ci.yml/badge.svg?branch=master)](https://kaos.sh/w/rpmbuilder/ci?query=branch:develop) |
 
 ### Contributing
 
@@ -150,4 +150,4 @@ Before contributing to this project please read our [Contributing Guidelines](ht
 
 [Apache License, Version 2.0](https://www.apache.org/licenses/LICENSE-2.0)
 
-<p align="center"><a href="https://essentialkaos.com"><img src="https://gh.kaos.st/ekgh.svg"/></a></p>
+<p align="center"><a href="https://kaos.dev"><img src="https://raw.githubusercontent.com/essentialkaos/.github/refs/heads/master/images/ekgh.svg"/></a></p>
