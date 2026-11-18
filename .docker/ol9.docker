@@ -6,7 +6,7 @@ ARG REGISTRY="docker.io"
 
 FROM ${REGISTRY}/essentialkaos/oraclelinux:9
 
-ARG GOSU_VER=1.17
+ARG GOSU_VER=1.20
 ARG HOSTNAME="rpmbuilder-ol9.docker.local"
 
 LABEL org.opencontainers.image.title="RPMBuilder" \
