@@ -65,6 +65,7 @@ main() {
 # Echo: No
 run() {
   local image user_id
+  local args=()
 
   image=$(getImage)
   user_id=$(getUserID)
@@ -77,9 +78,18 @@ run() {
     fi
   fi
 
+  args+=(-e LOCAL_USER_ID="$user_id")
+
+  if [[ -n "$HTTP_PROXY" || -n "$HTTPS_PROXY" ]] ; then
+    args+=(-e HTTP_PROXY="$HTTP_PROXY")
+    args+=(-e HTTPS_PROXY="$HTTPS_PROXY")
+  fi
+
   show "\nIMAGE: $image" $DARK
 
-  docker run --rm -e LOCAL_USER_ID="$user_id" -v "$(pwd):/rpmbuilder" "$image" rpmbuilder "$@"
+  docker run --rm "${args[@]}" \
+             -v "$(pwd):/rpmbuilder" \
+             "$image" rpmbuilder "$@"
 
   return $?
 }
