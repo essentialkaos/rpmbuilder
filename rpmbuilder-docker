@@ -85,6 +85,8 @@ run() {
     args+=(-e http_proxy="$HTTP_PROXY")
     args+=(-e HTTPS_PROXY="$HTTPS_PROXY")
     args+=(-e https_proxy="$HTTPS_PROXY")
+    args+=(-e NO_PROXY="localhost,127.0.0.1")
+    args+=(-e no_proxy="localhost,127.0.0.1")
   fi
 
   show "\nIMAGE: $image" $DARK
