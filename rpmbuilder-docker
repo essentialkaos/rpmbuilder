@@ -82,7 +82,9 @@ run() {
 
   if [[ -n "$HTTP_PROXY" || -n "$HTTPS_PROXY" ]] ; then
     args+=(-e HTTP_PROXY="$HTTP_PROXY")
+    args+=(-e http_proxy="$HTTP_PROXY")
     args+=(-e HTTPS_PROXY="$HTTPS_PROXY")
+    args+=(-e https_proxy="$HTTPS_PROXY")
   fi
 
   show "\nIMAGE: $image" $DARK
