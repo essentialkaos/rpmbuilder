@@ -12,7 +12,7 @@ useradd -s /bin/bash -u "$user_id" -M -d /home/builder builder
 # Unlock account
 passwd -d builder &> /dev/null
 
-if [[ $(grep 'CPE_NAME' /etc/os-release | tr -d '"' | cut -d':' -f5) == "10" ]] ; then
+if [[ $(rpm --eval '%{rhel}') == "10" ]] ; then
   passwd -u builder &> /dev/null
 else
   passwd -fu builder &> /dev/null
