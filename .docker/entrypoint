@@ -31,4 +31,9 @@ chmod 400 /home/builder/superuser.txt
 # Change permissions for builder files and directories
 chown -R builder:builder /home/builder
 
+# Update dnf proxy settings if proxy is set
+if [[ -n "$HTTP_PROXY" || -n "$HTTPS_PROXY" ]] ; then
+  echo "proxy=${HTTP_PROXY:-$HTTPS_PROXY}" >> /etc/dnf/dnf.conf
+fi
+
 exec /usr/local/bin/gosu builder "$@"
