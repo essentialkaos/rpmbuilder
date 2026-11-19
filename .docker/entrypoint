@@ -1,4 +1,5 @@
 #!/usr/bin/env bash
+# shellcheck disable=SC2154
 
 set -e
 
@@ -12,7 +13,7 @@ useradd -s /bin/bash -u "$user_id" -M -d /home/builder builder
 # Unlock account
 passwd -d builder &> /dev/null
 
-if [[ $(grep 'CPE_NAME' /etc/os-release | tr -d '"' | cut -d':' -f5) == "10" ]] ; then
+if [[ $(rpm --eval '%{rhel}') == "10" ]] ; then
   passwd -u builder &> /dev/null
 else
   passwd -fu builder &> /dev/null
@@ -30,5 +31,16 @@ chmod 400 /home/builder/superuser.txt
 
 # Change permissions for builder files and directories
 chown -R builder:builder /home/builder
+
+if [[ -n "$http_proxy" || -n "$HTTP_PROXY" ]] ; then
+  cat << EOF >> /etc/environment
+HTTP_PROXY=${HTTP_PROXY:-$http_proxy}
+http_proxy=${http_proxy:-$HTTP_PROXY}
+HTTPS_PROXY=${HTTPS_PROXY:-$https_proxy}
+https_proxy=${https_proxy:-$HTTPS_PROXY}
+no_proxy=$no_proxy
+EOF
+  echo "proxy=${HTTP_PROXY:-$http_proxy}" >> /etc/dnf/dnf.conf
+fi
 
 exec /usr/local/bin/gosu builder "$@"

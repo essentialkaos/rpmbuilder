@@ -36,6 +36,7 @@ HTTPS_PROXY=${HTTPS_PROXY:-$https_proxy}
 https_proxy=${https_proxy:-$HTTPS_PROXY}
 no_proxy=$no_proxy
 EOF
+  echo "proxy=${HTTP_PROXY:-$http_proxy}" >> /etc/dnf/dnf.conf
 fi
 
 # Change permissions for builder files and directories
